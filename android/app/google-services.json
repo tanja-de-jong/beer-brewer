@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "116124637798",
+    "project_id": "beerbrewer-a7e42",
+    "storage_bucket": "beerbrewer-a7e42.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116124637798:android:5e0c192db4aff6ce186ba7",
+        "android_client_info": {
+          "package_name": "com.tanjadejong.beer_brewer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "116124637798-7j0vhut8blogeei0i6a8saoibitdbab7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_O6wT5HlgNoTbdPN57FvQ_vaXEG8lPZ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "116124637798-7j0vhut8blogeei0i6a8saoibitdbab7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
