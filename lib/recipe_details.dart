@@ -1,0 +1,437 @@
+import 'package:beer_brewer/main.dart';
+import 'package:beer_brewer/recipe_creator.dart';
+import 'package:beer_brewer/recipes_overview.dart';
+import 'package:flutter/material.dart';
+import 'batch_creator.dart';
+import 'data/store.dart';
+
+class RecipeDetails extends StatefulWidget {
+  final Recipe? recipe;
+
+  const RecipeDetails({Key? key, this.recipe}) : super(key: key);
+
+  @override
+  State<RecipeDetails> createState() => _RecipeDetailsState();
+}
+
+class _RecipeDetailsState extends State<RecipeDetails> {
+  late Recipe recipe;
+
+  Row _getRow(String label, Widget value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "$label:",
+          style: TextStyle(fontStyle: FontStyle.italic),
+        ),
+        value
+      ],
+    );
+  }
+
+  Future<bool> _onWillPop() async {
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute<void>(
+      builder: (BuildContext context) =>
+          MyHomePage(title: 'Bier Brouwen'),
+    ), (route) => false);
+    return true;
+  }
+
+  @override
+  void initState() {
+    recipe = widget.recipe!;
+    super.initState();
+  }
+
+  Widget leftColumn() {
+    return SizedBox(width: 300, child: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Algemeen",
+            style: TextStyle(
+                fontWeight:
+                FontWeight
+                    .bold),
+          ),
+          SizedBox(height: 10),
+          _getRow("Naam", Text(recipe.name)),
+          _getRow("Stijl", Text(recipe.style)),
+          _getRow("Bron",
+              Text(recipe.source ?? "-")),
+          _getRow("Hoeveelheid",
+              Text("${recipe.amount} liter")),
+          SizedBox(height: 10),
+          _getRow(
+              "Start",
+              Text(recipe.expStartSG == null
+                  ? "-"
+                  : ("${recipe.expStartSG!.toStringAsFixed(3)} SG"))),
+          _getRow(
+              "Eind",
+              Text(recipe.expFinalSG == null
+                  ? "-"
+                  : ("${recipe.expFinalSG!.toStringAsFixed(3)} SG"))),
+          _getRow(
+              "Alcohol",
+              Text(recipe.expFinalSG == null ||
+                  recipe.expStartSG == null
+                  ? "-"
+                  : ("${((recipe.expStartSG! - recipe.expFinalSG!) * 131.25).toStringAsFixed(1)}%"))),
+          _getRow(
+              "Rendement",
+              Text((recipe.efficiency == null
+                  ? "-"
+                  : "${recipe.efficiency! * 100}%"))),
+          SizedBox(height: 10),
+          _getRow(
+              "Kleur",
+              Text(recipe.color == null
+                  ? "-"
+                  : "${recipe.color} EBC")),
+          _getRow(
+              "Bitterheid",
+              Text(recipe.bitter == null
+                  ? "-"
+                  : "${recipe.bitter} EBU")),
+          SizedBox(height: 10),
+          _getRow(
+              "Maischwater",
+              Text(
+                  "${recipe.mashing.water} liter")),
+          _getRow(
+              "Spoelwater",
+              Text(
+                  "${recipe.rinsingWater} liter")),
+          _getRow(
+              "Bottelsuiker",
+              Text(
+                  recipe.bottleSugar.getProductString())),
+          SizedBox(height: 20),
+          Row(
+              mainAxisAlignment:
+              MainAxisAlignment.start,
+              children: [
+                Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
+                    mainAxisAlignment:
+                    MainAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Maischen",
+                        style: TextStyle(
+                            fontWeight:
+                            FontWeight
+                                .bold),
+                      ),
+                      SizedBox(height: 10),
+                      recipe.mashing.malts.isEmpty ? Text("Geen mouten beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                        border:
+                        TableBorder.all(),
+                        defaultColumnWidth:
+                        const IntrinsicColumnWidth(),
+                        children: [
+                          TableRow(
+                              children: [
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("Type", style: TextStyle(fontWeight: FontWeight.bold),)),
+                                Padding(
+                                    padding: const EdgeInsets.all(
+                                        10),
+                                    child: Text("EBC", style: TextStyle(fontWeight: FontWeight.bold))),
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold)))
+                              ]),
+                        ...recipe.mashing.malts
+                            .map(
+                              (m) => TableRow(
+                              children: [
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text(m.getName())),
+                                Padding(
+                                    padding: const EdgeInsets.all(
+                                        10),
+                                    child: Text(m.ebcToString())),
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("${m.amount} g"))
+                              ]),
+                        )],
+                      ),
+                      const SizedBox(
+                          height: 10),
+                      recipe.mashing.steps.isEmpty ? Text("Geen moutschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                        border:
+                        TableBorder.all(),
+                        defaultColumnWidth:
+                        const IntrinsicColumnWidth(),
+                        children: [
+                          TableRow(
+                              children: [
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold),)),
+                                Padding(
+                                    padding: const EdgeInsets.all(
+                                        10),
+                                    child: Text("Tijd", style: TextStyle(fontWeight: FontWeight.bold))),
+                              ]),
+                        ...recipe.mashing.steps
+                            .map(
+                              (s) => TableRow(
+                              children: [
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("${s.temp}ºC")),
+                                Padding(
+                                    padding:
+                                    const EdgeInsets.all(10),
+                                    child: Text("${s.time} min"))
+                              ]),
+                        )]
+                      )
+                    ])
+              ]),
+        ]));
+  }
+
+  Widget rightColumn() {
+    return SizedBox(width: 350, child: Column(children: [
+      Row(
+          mainAxisAlignment:
+          MainAxisAlignment.start,
+          children: [
+            Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                mainAxisAlignment:
+                MainAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Koken",
+                    style: TextStyle(
+                        fontWeight:
+                        FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  recipe.cooking.steps.isEmpty ? Text("Geen kookschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                    border: TableBorder.all(),
+                    defaultColumnWidth:
+                    const IntrinsicColumnWidth(),
+                    children: [
+                      TableRow(
+                          children: [
+                            Padding(
+                                padding:
+                                const EdgeInsets.all(10),
+                                child: Text("Tijd", style: TextStyle(fontWeight: FontWeight.bold),)),
+                            Padding(
+                                padding: const EdgeInsets.all(
+                                    10),
+                                child: Text("Soort", style: TextStyle(fontWeight: FontWeight.bold))),
+                            Padding(
+                                padding:
+                                const EdgeInsets.all(10),
+                                child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold))),
+                            Padding(
+                                padding:
+                                const EdgeInsets.all(10),
+                                child: Text("α", style: TextStyle(fontWeight: FontWeight.bold)))
+                          ]),
+                    ...recipe.cooking.steps
+                        .expand(
+                          (cs) => cs
+                          .products
+                          .map((p) =>
+                          TableRow(
+                              children: [
+                                Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Text(cs.products.indexOf(p) == 0 ? "${cs.time} min" : "")),
+                                Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Text(p.getName())),
+                                Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Text("${p.amount} g")),
+                                Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Text(p is HopSpec ? "${p.alphaAcid}%" : ""))
+                              ])),
+                    )]
+                  ),
+                ])
+          ]),
+      SizedBox(height: 20),
+      Row(
+          mainAxisAlignment:
+          MainAxisAlignment.start,
+          children: [
+            Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                mainAxisAlignment:
+                MainAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Vergisten",
+                    style: TextStyle(
+                        fontWeight:
+                        FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  recipe.yeast.name == null && recipe.yeast.amount == null ? Text("Geen gist beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                      border: TableBorder.all(),
+                      defaultColumnWidth:
+                      const IntrinsicColumnWidth(),
+                      children: [
+                        TableRow(
+                            children: [
+                              Padding(
+                                  padding:
+                                  const EdgeInsets.all(10),
+                                  child: Text("Gist", style: TextStyle(fontWeight: FontWeight.bold),)),
+                              Padding(
+                                  padding: const EdgeInsets.all(
+                                      10),
+                                  child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold))),
+                              Padding(
+                                  padding:
+                                  const EdgeInsets.all(10),
+                                  child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold))),
+                            ]),
+                        TableRow(children: [
+                          Padding(
+                              padding:
+                              const EdgeInsets
+                                  .all(10),
+                              child: Text(
+                                  "${recipe.yeast.getName()}")),
+                          Padding(
+                              padding:
+                              const EdgeInsets
+                                  .all(10),
+                              child: Text(
+                                  "${recipe.yeast.getAmount()}")),
+                          Padding(
+                              padding:
+                              const EdgeInsets
+                                  .all(10),
+                              child: Text(
+                                  "${recipe.yeastTempMin} - ${recipe.yeastTempMax}ºC")),
+                        ]),
+                      ]),
+                ])
+          ]),
+      SizedBox(height: 20),
+      Row(
+          mainAxisAlignment:
+          MainAxisAlignment.start,
+          children: [
+            Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                mainAxisAlignment:
+                MainAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Opmerkingen",
+                    style: TextStyle(
+                        fontWeight:
+                        FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(width: 300, child: Text(recipe.remarks ?? "-")),
+                ])
+          ]),
+    ]));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    AppBar appBar = AppBar(
+      // Here we take the value from the MyHomePage object that was created by
+      // the App.build method, and use it to set our appbar title.
+      title: Text("Receptdetails"),
+      actions: [
+        Padding(
+            padding: EdgeInsets.only(right: 20.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => RecipeCreator(recipe: recipe)),
+                );
+              },
+              child: Icon(
+                Icons.edit,
+                size: 26.0,
+              ),
+            )),
+      ],
+    );
+
+    return WillPopScope(onWillPop: _onWillPop, child: Scaffold(
+        appBar: appBar,
+        body: Column(children: [
+          SizedBox(
+              height: MediaQuery.of(context).size.height -
+                  appBar.preferredSize.height -
+                  80,
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(
+                        child: SingleChildScrollView(
+                            child: Container(
+                                padding: EdgeInsets.all(10),
+                                // width: 400,
+                                child: MediaQuery.of(context).size.width >= 700 ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    leftColumn(),
+                                    SizedBox(width: 50),
+                                    rightColumn()
+                                  ],
+                                ) : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    leftColumn(),
+                                    SizedBox(height: 20),
+                                    rightColumn()
+                                  ],
+                                ))))
+                  ])),
+          Divider(),
+          SizedBox(height: 15),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (BuildContext context) =>
+                      BatchCreator(recipe: recipe),
+                ),
+              );
+            },
+            child: Text("Brouwplan maken"),
+          ),
+        ])));
+  }
+}
