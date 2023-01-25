@@ -39,29 +39,56 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Column(children: [
-                          Text(
-                            e.name,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          getRow("Stijl", Text(e.name)),
-                          if (e.bottleDate == null)
-                            getRow("Vergisting",
-                                Text("${daysSinceDate(e.brewDate)} dagen")),
-                          if (e.bottleDate != null)
-                            getRow("Gebotteld",
-                                Text("${daysSinceDate(e.bottleDate!)} dagen")),
-                          getRow("Start SG", Text(e.getStartSG().toString())),
-                          getRow(
-                              "Eind SG", Text(e.getEndSG()?.toString() ?? "-")),
+                            Text(
+                              e.name,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            getRow("Stijl", Text(e.name)),
+                            if (e.bottleDate == null)
+                              getRow("Vergisting",
+                                  Text("${daysSinceDate(e.brewDate)} dagen")),
+                            if (e.bottleDate != null)
+                              getRow(
+                                  "Gebotteld",
+                                  Text(
+                                      "${daysSinceDate(e.bottleDate!)} dagen")),
+                            getRow("Start SG", Text(e.getStartSG().toString())),
+                            getRow("Eind SG",
+                                Text(e.getEndSG()?.toString() ?? "-")),
                           ]),
                           // ElevatedButton(onPressed: () {}, child: Text("Bottelen")),
-                          ToggleButtons(constraints: BoxConstraints(maxHeight: 30), selectedBorderColor: Colors.blue,
+                          ToggleButtons(
+                              constraints: BoxConstraints(maxHeight: 30),
+                              selectedBorderColor: Colors.blue,
                               selectedColor: Colors.white,
-                              fillColor: Colors.blue, color: Colors.blue, borderColor: Colors.blue, borderRadius: const BorderRadius.all(Radius.circular(8)), onPressed: (int selected) {}, isSelected: [true, false], children: [e.isReadyToBottle()
-                              ? Text("Bottelen")
-                              : Container(color: Colors.blue, padding: EdgeInsets.only(left: 10, right: 10), child: Row(children: [Icon(Icons.add), Text("Meting")])), PopupMenuButton(icon: Icon(Icons.keyboard_arrow_down, size: 20), itemBuilder: (BuildContext context) => [
-                                PopupMenuItem(child: Text("Bottelen"))
-                          ]) ])
+                              fillColor: Colors.blue,
+                              color: Colors.blue,
+                              borderColor: Colors.blue,
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(8)),
+                              onPressed: (int selected) {},
+                              isSelected: [
+                                true,
+                                false
+                              ],
+                              children: [
+                                e.isReadyToBottle()
+                                    ? Text("Bottelen")
+                                    : Container(
+                                        color: Colors.blue,
+                                        padding: EdgeInsets.only(
+                                            left: 10, right: 10),
+                                        child: Row(children: [
+                                          Icon(Icons.add),
+                                          Text("Meting")
+                                        ])),
+                                PopupMenuButton(
+                                    icon: Icon(Icons.keyboard_arrow_down,
+                                        size: 20),
+                                    itemBuilder: (BuildContext context) => [
+                                          PopupMenuItem(child: Text("Bottelen"))
+                                        ])
+                              ])
 
                           // OutlinedButton(
                           //     onPressed: () {},

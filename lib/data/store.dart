@@ -71,7 +71,7 @@ class Store {
     "Zeus",
   ];
 
-  static List<Malt> maltProducs = [
+  static List<Malt> maltProducts = [
     Malt(
       "1",
         "Chateau Pilsen 2-Row",
@@ -87,12 +87,15 @@ class Store {
                 "https://brouwland.com/nl/mout/20089-castle-malting-pilsmout-3-35-ebc-1-kg.html"
           }
         },
+        1000,
         3.5,
         3.5),
-    Malt("2", "Carapils/Carafoam", "Carapils", "Weyermann", {}, 3.9, 3.9),
-    Malt("3", "Caramunich II", "Caramunich", "Weyermann", {}, 124, 124),
+    Malt("2", "Carapils/Carafoam", "Carapils", "Weyermann", {}, 0, 3.9, 3.9),
+    Malt("3", "Caramunich II", "Caramunich", "Weyermann", {}, 100, 124, 124),
   ];
-  static List<Hop> hopProducts = [];
+  static List<Hop> hopProducts = [
+    Hop("1", "Goldings", "", {}, 1000, 0, HopType.korrels)
+  ];
   static List<Hop> sugarProducts = [];
   static List<Hop> yeastProducts = [];
   static List<Hop> otherProducts = [];
@@ -355,9 +358,9 @@ class Recipe {
 class ProductSpec {
   String? name;
   double? amount;
-  ProductCategory category;
+  ProductSpecCategory category;
 
-  ProductSpec(this.name, this.amount, { this.category = ProductCategory.other });
+  ProductSpec(this.name, this.amount, { this.category = ProductSpecCategory.other });
 
   String getName() {
     return name ?? "";
@@ -379,7 +382,7 @@ class ProductSpec {
       case "cookingSugar": return CookingSugarSpec.create(data);
       case "bottleSugar": return BottleSugarSpec.create(data);
       case "yeast": return YeastSpec.create(data);
-      default: return ProductSpec(data["name"], data["amount"], category: ProductCategory.other);
+      default: return ProductSpec(data["name"], data["amount"], category: ProductSpecCategory.other);
     }
   }
 
@@ -407,7 +410,7 @@ class MaltSpec extends ProductSpec {
   double? ebcMin;
   double? ebcMax;
 
-  MaltSpec(super.name, this.ebcMin, this.ebcMax, super.amount, { category: ProductCategory.malt });
+  MaltSpec(super.name, this.ebcMin, this.ebcMax, super.amount, { category: ProductSpecCategory.malt });
 
   @override
   static MaltSpec create(Map data) {
@@ -439,7 +442,7 @@ class MaltSpec extends ProductSpec {
 class HopSpec extends ProductSpec {
   double alphaAcid;
 
-  HopSpec(super.name, this.alphaAcid, super.amount, { category: ProductCategory.hop });
+  HopSpec(super.name, this.alphaAcid, super.amount, { category: ProductSpecCategory.hop });
 
   @override
   static HopSpec create(Map data) {
@@ -462,11 +465,11 @@ class HopSpec extends ProductSpec {
 }
 
 class SugarSpec extends ProductSpec {
-  SugarSpec(super.name, super.amount, { category: ProductCategory.cookingSugar });
+  SugarSpec(super.name, super.amount, { category: ProductSpecCategory.cookingSugar });
 }
 
 class CookingSugarSpec extends SugarSpec {
-  CookingSugarSpec(super.name, super.amount, { category: ProductCategory.cookingSugar });
+  CookingSugarSpec(super.name, super.amount, { category: ProductSpecCategory.cookingSugar });
 
   @override
   static CookingSugarSpec create(Map data) {
@@ -483,7 +486,7 @@ class CookingSugarSpec extends SugarSpec {
 }
 
 class BottleSugarSpec extends SugarSpec {
-  BottleSugarSpec(super.name, super.amount, { category: ProductCategory.bottleSugar });
+  BottleSugarSpec(super.name, super.amount, { category: ProductSpecCategory.bottleSugar });
 
   @override
   String getProductString() {
@@ -497,7 +500,7 @@ class BottleSugarSpec extends SugarSpec {
 }
 
 class YeastSpec extends ProductSpec {
-  YeastSpec(super.name, super.amount, { category: ProductCategory.yeast });
+  YeastSpec(super.name, super.amount, { category: ProductSpecCategory.yeast });
 
   @override
   static YeastSpec create(Map data) {
@@ -510,8 +513,9 @@ class Product {
   String name;
   String brand;
   Map<String, Map<String, String>> stores; // Brouwstore => {1kg: www.bla.com}
+  double? amount;
 
-  Product(this.id, this.name, this.brand, this.stores);
+  Product(this.id, this.name, this.brand, this.stores, this.amount);
 
   String getStoreUrl() {
     Map<String, String> firstStore = stores[stores.keys.first]!;
@@ -529,7 +533,7 @@ class Malt extends Product {
   double ebcMin;
   double ebcMax;
 
-  Malt(super.id, super.name, this.type, super.brand, super.url, this.ebcMin, this.ebcMax);
+  Malt(super.id, super.name, this.type, super.brand, super.stores, super.amount, this.ebcMin, this.ebcMax);
 
   String ebcToString() {
     if (ebcMin == ebcMax) return "$ebcMin EBC";
@@ -539,16 +543,17 @@ class Malt extends Product {
 
 class Hop extends Product {
   double alphaAcid;
+  HopType type;
 
-  Hop(super.id, super.name, super.brand, super.url, this.alphaAcid);
+  Hop(super.id, super.name, super.brand, super.stores, super.amount, this.alphaAcid, this.type);
 }
 
 class Sugar extends Product {
-  Sugar(super.id, super.name, super.brand, super.url);
+  Sugar(super.id, super.name, super.brand, super.stores, super.amount);
 }
 
 class Yeast extends Product {
-  Yeast(super.id, super.name, super.brand, super.url);
+  Yeast(super.id, super.name, super.brand, super.stores, super.amount);
 }
 
 class Mashing {
@@ -613,11 +618,43 @@ class SpecToProduct {
   SpecToProduct(this.spec, this.product, this.amount, this.explanation);
 }
 
-enum ProductCategory {
+enum HopType {
+  korrels,
+  bellen
+}
+
+enum ProductSpecCategory {
   malt,
   hop,
   cookingSugar,
   bottleSugar,
+  yeast,
+  other
+}
+
+extension ProductSpecName on ProductSpecCategory {
+  String get name {
+    switch (this) {
+      case ProductSpecCategory.malt:
+        return "Mout";
+      case ProductSpecCategory.hop:
+        return "Hop";
+      case ProductSpecCategory.cookingSugar:
+        return "Kooksuiker";
+      case ProductSpecCategory.bottleSugar:
+        return "Bottelsuiker";
+      case ProductSpecCategory.yeast:
+        return "Gist";
+      default:
+        return "Overige";
+    }
+  }
+}
+
+enum ProductCategory {
+  malt,
+  hop,
+  sugar,
   yeast,
   other
 }
@@ -629,12 +666,10 @@ extension ProductName on ProductCategory {
         return "Mout";
       case ProductCategory.hop:
         return "Hop";
-      case ProductCategory.cookingSugar:
-        return "Kooksuiker";
-      case ProductCategory.bottleSugar:
-        return "Bottelsuiker";
       case ProductCategory.yeast:
         return "Gist";
+      case ProductCategory.sugar:
+        return "Suiker";
       default:
         return "Overige";
     }

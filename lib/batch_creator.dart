@@ -75,17 +75,17 @@ class _BatchCreatorState extends State<BatchCreator> {
     );
   }
 
-  Widget getCategory(ProductCategory category) {
+  Widget getCategory(ProductSpecCategory category) {
     Iterable filteredList = [];
-    if (category == ProductCategory.malt) {
+    if (category == ProductSpecCategory.malt) {
       filteredList = mappings.keys.whereType<MaltSpec>();
-    } else if (category == ProductCategory.hop) {
+    } else if (category == ProductSpecCategory.hop) {
       filteredList = mappings.keys.whereType<HopSpec>();
-    } else if (category == ProductCategory.cookingSugar) {
+    } else if (category == ProductSpecCategory.cookingSugar) {
       filteredList = mappings.keys.whereType<CookingSugarSpec>();
-    } else if (category == ProductCategory.bottleSugar) {
+    } else if (category == ProductSpecCategory.bottleSugar) {
       filteredList = mappings.keys.whereType<BottleSugarSpec>();
-    } else if (category == ProductCategory.yeast) {
+    } else if (category == ProductSpecCategory.yeast) {
       filteredList = mappings.keys.whereType<YeastSpec>();
     } else {
       filteredList = mappings.keys.where((spec) => !(spec is MaltSpec ||
@@ -126,19 +126,36 @@ class _BatchCreatorState extends State<BatchCreator> {
 
   @override
   Widget build(BuildContext context) {
+    AppBar appBar = AppBar(
+      title: const Text("Maak brouwplan"),
+    );
+
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("Maak brouwplan"),
-        ),
+        appBar: appBar,
         body: Padding(
             padding: const EdgeInsets.all(10),
-            child: Wrap(runSpacing: 15, spacing: 15, children: [
-              getCategory(ProductCategory.malt),
-              getCategory(ProductCategory.hop),
-              getCategory(ProductCategory.cookingSugar),
-              getCategory(ProductCategory.yeast),
-              getCategory(ProductCategory.bottleSugar),
-              getCategory(ProductCategory.other)
+            child: Column(children: [
+
+              SizedBox(
+                  height: MediaQuery.of(context).size.height -
+                      appBar.preferredSize.height -
+                      100,
+                  child: SingleChildScrollView(
+                      child: Wrap(runSpacing: 15, spacing: 15, children: [
+                        getCategory(ProductSpecCategory.malt),
+                        getCategory(ProductSpecCategory.hop),
+                        getCategory(ProductSpecCategory.cookingSugar),
+                        getCategory(ProductSpecCategory.yeast),
+                        getCategory(ProductSpecCategory.bottleSugar),
+                        getCategory(ProductSpecCategory.other)
+                      ]),)),
+              const Divider(),
+              const SizedBox(height: 15),
+              ElevatedButton(
+                onPressed: () {
+                },
+                child: Text("Opslaan"),
+              ),
             ])));
   }
 
@@ -240,12 +257,12 @@ class _BatchCreatorState extends State<BatchCreator> {
     /* TEMP DATA */
     List<Product> products = [];
     if (spec is MaltSpec) {
-      products = Store.maltProducs;
-      products += Store.maltProducs;
-      products += Store.maltProducs;
-      products += Store.maltProducs;
-      products += Store.maltProducs;
-      products += Store.maltProducs;
+      products = Store.maltProducts;
+      products += Store.maltProducts;
+      products += Store.maltProducts;
+      products += Store.maltProducts;
+      products += Store.maltProducts;
+      products += Store.maltProducts;
     } else if (spec is HopSpec) {
       products = Store.hopProducts;
     } else if (spec is SugarSpec) {

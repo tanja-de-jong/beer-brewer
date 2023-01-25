@@ -1,5 +1,6 @@
 import 'package:beer_brewer/batch_creator.dart';
 import 'package:beer_brewer/batches_overview.dart';
+import 'package:beer_brewer/products_overview.dart';
 import 'package:beer_brewer/recipe_creator.dart';
 import 'package:beer_brewer/recipes_overview.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -57,7 +58,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Widget> pages = [RecipesOverview(), BatchesOverview()];
+  List<Widget> pages = [RecipesOverview(), BatchesOverview(), ProductsOverview()];
   int selected = 0;
 
   @override
@@ -92,9 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
               )),
         ],
       ),
-      body:
-      // BatchCreator(recipe: Store.recipes[0]),
-      pages[selected],
+      body: pages[selected],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selected,
         onTap: (int value) {
