@@ -1,3 +1,4 @@
+import 'package:beer_brewer/batches_overview.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +8,9 @@ import 'data/store.dart';
 
 class BatchCreator extends StatefulWidget {
   final Recipe recipe;
+  final Batch? batch;
 
-  const BatchCreator({Key? key, required this.recipe}) : super(key: key);
+  const BatchCreator({Key? key, required this.recipe, this.batch}) : super(key: key);
 
   @override
   State<BatchCreator> createState() => _BatchCreatorState();
@@ -153,6 +155,12 @@ class _BatchCreatorState extends State<BatchCreator> {
               const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () {
+                  Store.saveBatch(widget.batch?.id, widget.recipe, mappings);
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const BatchesOverview()),
+                          (Route<dynamic> route) => false);
                 },
                 child: Text("Opslaan"),
               ),
@@ -258,11 +266,6 @@ class _BatchCreatorState extends State<BatchCreator> {
     List<Product> products = [];
     if (spec is MaltSpec) {
       products = Store.maltProducts;
-      products += Store.maltProducts;
-      products += Store.maltProducts;
-      products += Store.maltProducts;
-      products += Store.maltProducts;
-      products += Store.maltProducts;
     } else if (spec is HopSpec) {
       products = Store.hopProducts;
     } else if (spec is SugarSpec) {
@@ -363,10 +366,10 @@ class _BatchCreatorState extends State<BatchCreator> {
                                           .ebcToString())),
                                 _getRow(
                                     "Te koop",
-                                    Column(
+                                    selectedProduct!.stores == null ? Container() : Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
-                                        children: selectedProduct!.stores.keys
+                                        children: selectedProduct!.stores!.keys
                                             .map((String store) => RichText(
                                                 text: TextSpan(
                                                     text: store,
@@ -377,7 +380,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                                           ..onTap = () {
                                                             launchUrl(Uri.parse(
                                                                 selectedProduct!
-                                                                    .getStoreUrl()));
+                                                                    .getStoreUrl(store)));
                                                           })))
                                             .toList())),
                                 TextButton(

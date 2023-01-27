@@ -1,30 +1,12 @@
+import 'dart:convert';
+
 import 'package:beer_brewer/data/store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseController {
   static FirebaseFirestore db = FirebaseFirestore.instance;
 
-  static Map _getIngredientMap(SpecToProduct ingredient) {
-    ProductSpec spec = ingredient.spec;
-    Map specMap = {
-      "name": spec.name,
-      "amount": spec.amount,
-    };
-    if (spec is MaltSpec) {
-      specMap["ebcMin"] = spec.ebcMin;
-      specMap["ebcMax"] = spec.ebcMax;
-    } else if (spec is HopSpec) {
-      specMap["alphaAcid"] = spec.alphaAcid;
-    }
-
-    return {
-      "spec": specMap,
-      "product": ingredient.product.id,
-      "amount": ingredient.amount,
-      "explanation": ingredient.explanation
-    };
-  }
-  
   static Future<List<Recipe>> getRecipes() async {
     List<Recipe> result = [];
     List docs = (await db.collection("recipes").get()).docs;
@@ -63,9 +45,11 @@ class DatabaseController {
       double? yeastTempMin,
       double? yeastTempMax,
       String? remarks) async {
-
-    Cooking cooking = Cooking(hops.keys.map((time) => CookingStep(time, hops[time]!)).toList());
-    if (cookingSugarName != null) cooking.addStep(cookingSugarTime, [CookingSugarSpec(cookingSugarName, cookingSugarAmount)]);
+    Cooking cooking = Cooking(
+        hops.keys.map((time) => CookingStep(time, hops[time]!)).toList());
+    if (cookingSugarName != null)
+      cooking.addStep(cookingSugarTime,
+          [CookingSugarSpec(cookingSugarName, cookingSugarAmount)]);
     for (double? time in otherIngredients.keys) {
       cooking.addStep(time, otherIngredients[time]!);
     }
@@ -81,24 +65,28 @@ class DatabaseController {
       "color": color,
       "bitter": bitter,
       "mashing": {
-        "malts": malts.map((malt) => {
-          "name": malt.name,
-          "amount": malt.amount,
-          "ebcMin": malt.ebcMin,
-          "ebcMax": malt.ebcMax,
-        }).toList(),
-        "steps": mashSchedule.map((step) => {
-          "temp": step.temp,
-          "time": step.time
-        }).toList(),
+        "malts": malts
+            .map((malt) => {
+                  "name": malt.name,
+                  "amount": malt.amount,
+                  "ebcMin": malt.ebcMin,
+                  "ebcMax": malt.ebcMax,
+                })
+            .toList(),
+        "steps": mashSchedule
+            .map((step) => {"temp": step.temp, "time": step.time})
+            .toList(),
         "water": mashWater
       },
       "rinsingWater": rinsingWater,
       "cooking": {
-        "steps": cooking.steps.map((step) => {
-            "time": step.time,
-            "products": step.products.map((product) => product.toMap()).toList()
-          }).toList(),
+        "steps": cooking.steps
+            .map((step) => {
+                  "time": step.time,
+                  "products":
+                      step.products.map((product) => product.toMap()).toList()
+                })
+            .toList(),
       },
       "yeast": {
         "name": yeastName,
@@ -125,13 +113,83 @@ class DatabaseController {
     await db.collection("recipes").doc(recipe.id).delete();
   }
 
-  // Create empty batch
-  static void addBatch(
-      Recipe recipe, double amount, List<SpecToProduct> ingredients) {
-    db.collection("batches").add({
+  static Future<List<Batch>> getBatches() async {
+    List<Batch> result = [];
+    List docs = (await db.collection("batches").get()).docs;
+    for (QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
+      Map data = doc.data();
+      Batch batch = Batch.create(doc.id, data);
+      result.add(batch);
+    }
+    return result;
+  }
+
+  static Future<Batch> saveBatch(String? id,
+      Recipe recipe, Map<ProductSpec, List<SpecToProduct>> ingredients) async {
+    Map<String, dynamic> data = {
+      "name": recipe.name, // TODO
       "recipe": {"id": recipe.id, "name": recipe.name, "style": recipe.style},
-      "amount": amount,
-      "ingredients": ingredients.map((i) => _getIngredientMap(i))
+      "amount": recipe.amount, // TODO
+      "ingredients": ingredients.keys.map((ProductSpec spec) => {
+        "spec": spec.toMap(),
+        "products": ingredients[spec]!.map((mapping) => {
+          mapping.toMap()
+        })
+      }).toList()
+    };
+
+    if (id == null) {
+      id = (await db.collection("batches").add(data)).id;
+    } else {
+      await db.collection("batches").doc(id).set(data);
+    }
+    return Batch.create(id, data);
+  }
+
+  static Future<Batch> brewBatch(Batch batch, double startSG) async {
+    DateTime brewDate = DateTime.now();
+
+    await db.collection("batches").doc(batch.id).update({
+      "brewDate": brewDate,
+      "sgMeasurements": [{
+        "date": brewDate,
+        "SG": startSG
+      }]
     });
+
+    batch.brewDate = brewDate;
+    batch.sgMeasurements = {
+      brewDate: startSG
+    };
+    return batch;
+  }
+
+  static Future<List<Product>> getProducts() async {
+    List<Product> result = [];
+    List docs = (await db.collection("products").get()).docs;
+    for (QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
+      Map data = doc.data();
+      Product product = Product.create(doc.id, data);
+      result.add(product);
+    }
+    return result;
+  }
+
+  static Future<Product> saveProduct(String? id, ProductCategory category, String name, String? brand, Map<String, Map<String, dynamic>>? stores, double? amount, Map? extraProps) async {
+    Map<String, dynamic> data = {
+      "category": describeEnum(category),
+      "name": name,
+      "brand": brand,
+      "stores": stores,
+      "amount": amount,
+      ...?extraProps
+    };
+
+    if (id == null) {
+      id = (await db.collection("products").add(data)).id;
+    } else {
+      await db.collection("products").doc(id).set(data);
+    }
+    return Product.create(id, data);
   }
 }
