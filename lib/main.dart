@@ -40,7 +40,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title, this.selectedPage = 0})
+      : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -52,14 +53,25 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
 
   final String title;
+  final int selectedPage;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Widget> pages = [RecipesOverview(), BatchesOverview(), ProductsOverview()];
+  List<Widget> pages = [
+    BatchesOverview(),
+    RecipesOverview(),
+    ProductsOverview()
+  ];
   int selected = 0;
+
+  @override
+  void initState() {
+    selected = widget.selectedPage;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,24 +86,24 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
-        actions: [
-          Padding(
-              padding: EdgeInsets.only(right: 20.0),
-              child: GestureDetector(
-                onTap: () {
-                  if (selected == 0) {
-                    Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => const RecipeCreator()),
-                  );
-                  }
-                },
-                child: Icon(
-                  Icons.add,
-                  size: 26.0,
-                ),
-              )),
-        ],
+        actions: selected == 1
+            ? [
+                Padding(
+                    padding: EdgeInsets.only(right: 20.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => const RecipeCreator()),
+                        );
+                      },
+                      child: Icon(
+                        Icons.add,
+                        size: 26.0,
+                      ),
+                    )),
+              ]
+            : null,
       ),
       body: pages[selected],
       bottomNavigationBar: BottomNavigationBar(
@@ -102,9 +114,10 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Recepten"),
           BottomNavigationBarItem(icon: Icon(Icons.sync), label: "Batches"),
-          BottomNavigationBarItem(icon: Icon(Icons.local_grocery_store), label: "Voorraad")
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Recepten"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.local_grocery_store), label: "Voorraad")
         ],
       ),
     );

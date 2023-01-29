@@ -1,8 +1,13 @@
 import 'package:beer_brewer/data/database_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
+import '../util.dart';
+
 class Store {
+  static double? startSG; // TODO: necessary for FermentationStep => refactor
+
   static List<String> maltTypes = [
     "Pils",
     "Pale",
@@ -86,110 +91,29 @@ class Store {
     "Zeus",
   ];
 
-  static Map<ProductCategory, Type> productMappings = {
-    ProductCategory.malt: Malt,
-    ProductCategory.hop: Hop,
-    ProductCategory.yeast: Yeast,
-    ProductCategory.sugar: Sugar,
+  static Map<Type, List> products = {
+    Malt: maltProducts,
+    Hop: hopProducts,
+    Yeast: yeastProducts,
+    Sugar: sugarProducts,
+    Product: otherProducts,
   };
-
-  static Map<ProductCategory, List<Product>> products = {
-    ProductCategory.malt: maltProducts,
-    ProductCategory.hop: hopProducts,
-    ProductCategory.yeast: yeastProducts,
-    ProductCategory.sugar: sugarProducts,
-    ProductCategory.other: otherProducts,
-  };
-  static List<Malt> maltProducts = [
-    Malt(
-        "1",
-        "Chateau Pilsen 2-Row",
-        "Pilsmout",
-        "Castle Malting",
-        {
-          "Brouwland": {
-            "1kg":
-                "https://brouwland.com/nl/mout/20089-castle-malting-pilsmout-3-35-ebc-1-kg.html"
-          },
-          "Brouwstore": {
-            "1kg":
-                "https://brouwland.com/nl/mout/20089-castle-malting-pilsmout-3-35-ebc-1-kg.html"
-          }
-        },
-        1000,
-        3.5,
-        3.5),
-    Malt("2", "Carapils/Carafoam", "Carapils", "Weyermann", {}, 0, 3.9, 3.9),
-    Malt("3", "Caramunich II", "Caramunich", "Weyermann", {}, 100, 124, 124),
-  ];
-  static List<Hop> hopProducts = [
-    Hop("1", "Goldings", "", {}, 1000, 0, HopType.korrels)
-  ];
-  static List<Hop> sugarProducts = [];
+  static List<Malt> maltProducts = [];
+  static List<Hop> hopProducts = [];
+  static List<Sugar> sugarProducts = [];
   static List<Yeast> yeastProducts = [];
   static List<Sugar> otherProducts = [];
 
   static List<Recipe> recipes = [];
   static List<Batch> batches = [];
 
-  static Future<Recipe> saveRecipe(
-      String? id,
-      String name,
-      String style,
-      String? source,
-      double amount,
-      double? expStartSG,
-      double? expFinalSG,
-      double? efficiency,
-      double? color,
-      double? bitter,
-      double mashWater,
-      double rinsingWater,
-      List<MaltSpec> malts,
-      List<MashStep> mashSchedule,
-      Map<double?, List<HopSpec>> hops,
-      String? yeastName,
-      double? yeastAmount,
-      String? cookingSugarName,
-      double? cookingSugarAmount,
-      double? cookingSugarTime,
-      String? bottleSugarName,
-      double? bottleSugarAmount,
-      Map<double?, List<ProductSpec>> otherIngredients,
-      double? yeastTempMin,
-      double? yeastTempMax,
-      String? remarks) async {
-    Recipe recipe = await DatabaseController.saveRecipe(
-        id,
-        name,
-        style,
-        source,
-        amount,
-        expStartSG,
-        expFinalSG,
-        efficiency,
-        color,
-        bitter,
-        mashWater,
-        rinsingWater,
-        malts,
-        mashSchedule,
-        hops,
-        yeastName,
-        yeastAmount,
-        cookingSugarName,
-        cookingSugarAmount,
-        cookingSugarTime,
-        bottleSugarName,
-        bottleSugarAmount,
-        otherIngredients,
-        yeastTempMin,
-        yeastTempMax,
-        remarks);
-    if (id == null) {
+  static Future<Recipe> saveRecipe(Recipe recipe) async {
+    String id = await DatabaseController.saveRecipe(recipe);
+    if (recipe.id == null) {
+      recipe.id == id;
       Store.recipes.add(recipe);
     } else {
-      int idx = Store.recipes.indexWhere((r) => id == r.id);
+      int idx = Store.recipes.indexWhere((r) => recipe.id == r.id);
       Store.recipes[idx] = recipe;
     }
     return recipe;
@@ -204,15 +128,17 @@ class Store {
     recipes = await DatabaseController.getRecipes();
   }
 
-  static Future<Batch> saveBatch(String? id, Recipe recipe,
-      Map<ProductSpec, List<SpecToProduct>> ingredients) async {
-    Batch batch = await DatabaseController.saveBatch(id, recipe, ingredients);
-    if (id == null) {
+  // TODO
+  static Future<Batch> saveBatch(Batch batch) async {
+    String newId = await DatabaseController.saveBatch(batch);
+    if (batch.id == null) {
+      batch.id = newId;
       Store.batches.add(batch);
     } else {
-      int idx = Store.batches.indexWhere((b) => id == b.id);
+      int idx = Store.batches.indexWhere((b) => batch.id == b.id);
       Store.batches[idx] = batch;
     }
+
     return batch;
   }
 
@@ -229,77 +155,138 @@ class Store {
     batches = await DatabaseController.getBatches();
   }
 
-  static Future<Product> saveProduct(String? id, ProductCategory category, String name, String? brand, Map<String, Map<String, dynamic>>? stores, double? amount, Map? extraProps) async {
-    Product product = await DatabaseController.saveProduct(id, category, name, brand, stores, amount, extraProps);
+  static Future<Product> saveProduct(
+      String? id,
+      ProductCategory category,
+      String name,
+      String? brand,
+      Map<String, Map<String, dynamic>>? stores,
+      double? amount,
+      Map? extraProps) async {
+    Product product = await DatabaseController.saveProduct(
+        id, category, name, brand, stores, amount, extraProps);
 
     if (id == null) {
-      Store.products[category]!.add(product);
+      Store.products[category.productType]!.add(product);
     } else {
-      int idx = products[category]!.indexWhere((b) => id == b.id);
-      Store.products[category]![idx] = product;
+      int idx = products[category.productType]!.indexWhere((b) => id == b.id);
+      Store.products[category.productType]![idx] = product;
     }
-    print("In saveProduct: ${products[ProductCategory.hop]!.length}");
     return product;
   }
 
   static Future<void> loadProducts() async {
     List<Product> allProducts = await DatabaseController.getProducts();
-    products[ProductCategory.malt] = allProducts.whereType<Malt>().toList();
-    products[ProductCategory.hop] = allProducts.whereType<Hop>().toList();
-    products[ProductCategory.yeast] = allProducts.whereType<Yeast>().toList();
-    products[ProductCategory.sugar] = allProducts.whereType<Sugar>().toList();
-    products[ProductCategory.other] = allProducts.where((product) => !(product is Malt || product is Hop || product is Yeast || product is Sugar)).toList();
+    products[Malt] = allProducts.whereType<Malt>().toList();
+    products[Hop] = allProducts.whereType<Hop>().toList();
+    products[Yeast] = allProducts.whereType<Yeast>().toList();
+    products[Sugar] = allProducts.whereType<Sugar>().toList();
+    products[Product] = allProducts
+        .where((product) => !(product is Malt ||
+            product is Hop ||
+            product is Yeast ||
+            product is Sugar))
+        .toList();
+  }
+
+  static Future<Product> updateAmountForProduct(
+      Product product, double amount) async {
+    return DatabaseController.updateAmountForProduct(product, amount);
+  }
+
+  static Future<void> removeProduct(Product product) async {
+    await DatabaseController.removeProduct(product);
+    products[product.runtimeType]!.remove(product);
   }
 }
 
 class Batch {
-  String id;
+  String? id;
   String name;
-  Recipe recipe;
+  String recipeId;
   double amount;
-  Map<ProductSpec, List<SpecToProduct>> ingredients;
+  String? style;
+  double? expStartSG;
+  double? expFinalSG;
+  double? color;
+  double? bitter;
+  Mashing mashing;
+  double? rinsingWater;
+  Cooking cooking;
+  List<SpecToProducts> yeast;
+  double? fermTempMin;
+  double? fermTempMax;
+  List<SpecToProducts> bottleSugar;
+  String? remarks;
   DateTime? brewDate;
+  DateTime? lagerDate;
   DateTime? bottleDate;
   Map<DateTime, double> sgMeasurements;
 
-  Batch(this.id, this.name, this.recipe, this.amount, this.ingredients,
-      this.brewDate, this.bottleDate, this.sgMeasurements);
+  Batch(
+      this.id,
+      this.name,
+      this.recipeId,
+      this.amount,
+      this.style,
+      this.expStartSG,
+      this.expFinalSG,
+      this.color,
+      this.bitter,
+      this.mashing,
+      this.rinsingWater,
+      this.cooking,
+      this.yeast,
+      this.fermTempMin,
+      this.fermTempMax,
+      this.bottleSugar,
+      this.remarks,
+      this.brewDate,
+      this.lagerDate,
+      this.bottleDate,
+      this.sgMeasurements);
 
   static Batch create(String id, Map data) {
-    List ingredientsData = data["ingredients"]!;
-    Set<ProductSpec> specs = ingredientsData
-        .map((mapping) => ProductSpec.create(mapping["spec"]))
-        .toSet();
-    Map<ProductSpec, List<SpecToProduct>> ingredients = {};
-
-    for (ProductSpec spec in specs) {
-      Iterable relevantMappings = ingredientsData
-          .where((ingredient) => ingredient["spec"]!["name"] == spec.name);
-      List<SpecToProduct> relevantProducts = relevantMappings
-          .expand((mapping) => mapping["products"]!)
-          .map((data) => SpecToProduct.create(spec, data))
-          .toList();
-      ingredients.putIfAbsent(spec, () => relevantProducts);
-    }
-
     Map<DateTime, double> sgMeasurements = {};
     if (data.containsKey("sgMeasurements")) {
       List sgData = data["sgMeasurements"];
-      for (Map measurement in sgData) {
-        sgMeasurements.putIfAbsent(
-            (measurement["date"] as Timestamp).toDate(), () => measurement["SG"]);
+      for (var sg in sgData) {
+        sgMeasurements.putIfAbsent(sg["date"].toDate(), () => sg["SG"]);
       }
     }
+
+    List<SpecToProducts> yeast = data["yeast"]
+            ?.map((y) => SpecToProducts.create(y))
+            .toList()
+            .cast<SpecToProducts>() ??
+        [];
+    List<SpecToProducts> bottleSugar = data["bottleSugar"]
+            ?.map((b) => SpecToProducts.create(b))
+            .toList()
+            .cast<SpecToProducts>() ??
+        [];
 
     return Batch(
         id,
         data["name"],
-        Store.recipes
-            .firstWhere((recipe) => recipe.id == data["recipe"]!["id"]!),
+        data["recipeId"],
         data["amount"],
-        ingredients,
+        data["style"],
+        data["expStartSG"],
+        data["expFinalSG"],
+        data["color"],
+        data["bitter"],
+        Mashing.create(data["mashing"]),
+        data["rinsingWater"],
+        Cooking.create(data["cooking"]),
+        yeast,
+        data["yeastTempMin"],
+        data["yeastTempMax"],
+        bottleSugar,
+        data["remarks"],
         data["brewDate"]?.toDate(),
-        data["bottleData"]?.toDate(),
+        data["lagerDate"]?.toDate(),
+        data["bottleDate"]?.toDate(),
         sgMeasurements);
   }
 
@@ -336,26 +323,143 @@ class Batch {
     double diff = (sgMeasurements[prevDate]! - lastValue).abs();
     return diff < 1;
   }
+
+  // For Brewing in a Bag
+  String getBiabWater() {
+    return Util.prettify(amount * 1.5) ?? "-";
+  }
+
+  Widget getMashingSchedule() {
+    return mashing.steps.isEmpty
+        ? Text("Geen moutschema beschikbaar.",
+            style: TextStyle(fontStyle: FontStyle.italic))
+        : Table(
+            border: TableBorder.all(),
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            children: [
+                TableRow(children: [
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        "Temperatuur",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text("Tijd",
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                ]),
+                ...mashing.steps.map(
+                  (s) => TableRow(children: [
+                    Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text("${s.temp}ºC")),
+                    Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text("${s.time} min"))
+                  ]),
+                )
+              ]);
+  }
+
+  Widget getCookingSchedule() {
+    return cooking.steps.isEmpty
+        ? Text("Geen kookschema beschikbaar.",
+            style: TextStyle(fontStyle: FontStyle.italic))
+        : Table(
+            border: TableBorder.all(),
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            children: [
+                TableRow(children: [
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        "Tijd",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text("Soort",
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text("Gewicht",
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                  Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text("α",
+                          style: TextStyle(fontWeight: FontWeight.bold)))
+                ]),
+                ...cooking.steps.expand((cs) => cs.products.expand(
+                      (stp) => stp.products!.map((pi) {
+                        Product p = pi.product;
+                        return TableRow(children: [
+                          Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Text("${cs.time} min")),
+                          Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Text(p.name)),
+                          Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Text("${p.amount}g")),
+                          Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Text(p is Hop ? "${p.alphaAcid}%" : ""))
+                        ]);
+                      }),
+                    ))
+              ]);
+  }
+
+  String getFermentationTemperature() {
+    return "${fermTempMin ?? "?"} - ${fermTempMax ?? "?"}°C";
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "name": name,
+      "recipeId": recipeId,
+      "amount": amount,
+      "style": style,
+      "expStartSG": expStartSG,
+      "expFinalSG": expFinalSG,
+      "color": color,
+      "bitter": bitter,
+      "mashing": mashing.toMap(),
+      "rinsingWater": rinsingWater,
+      "cooking": cooking.toMap(),
+      "yeast": yeast.map((e) => e.toMap()).toList(),
+      "yeastTempMin": fermTempMin,
+      "yeastTempMax": fermTempMax,
+      "bottleSugar": bottleSugar.map((e) => e.toMap()).toList(),
+      "remarks": remarks,
+      "brewDate": brewDate,
+      "lagerDate": lagerDate,
+      "bottleDate": bottleDate,
+      "sgMeasurements": sgMeasurements
+    };
+  }
 }
 
 class Recipe {
-  String id;
+  String? id;
   String name;
-  String style;
+  String? style;
   String? source;
-  double amount;
+  double? amount;
   double? expStartSG;
   double? expFinalSG;
   double? efficiency;
   double? color;
   double? bitter;
-  Mashing mashing;
-  double rinsingWater;
-  Cooking cooking;
-  YeastSpec yeast;
-  double? yeastTempMin;
-  double? yeastTempMax;
-  SugarSpec bottleSugar;
+  late Mashing mashing;
+  double? rinsingWater;
+  late Cooking cooking;
+  YeastSpec? yeast;
+  double? fermTempMin;
+  double? fermTempMax;
+  BottleSugarSpec? bottleSugar;
   String? remarks;
 
   Recipe(
@@ -369,35 +473,63 @@ class Recipe {
       this.efficiency,
       this.color,
       this.bitter,
-      this.mashing,
+      mashing,
       this.rinsingWater,
-      this.cooking,
+      cooking,
       this.yeast,
-      this.yeastTempMin,
-      this.yeastTempMax,
+      this.fermTempMin,
+      this.fermTempMax,
       this.bottleSugar,
-      this.remarks);
+      this.remarks) {
+    this.mashing = mashing ?? Mashing([], [], 0);
+    this.cooking = cooking ?? Cooking([]);
+  }
 
   static Recipe create(String id, Map data) {
     return Recipe(
-        id,
-        data["name"],
-        data["style"],
-        data["source"],
-        data["amount"],
-        data["expStartSG"],
-        data["expFinalSG"],
-        data["efficiency"],
-        data["color"],
-        data["bitter"],
-        Mashing.create(data["mashing"]),
-        data["rinsingWater"],
-        Cooking.create(data["cooking"]),
-        YeastSpec.create(data["yeast"]),
-        data["yeastTempMin"],
-        data["yeastTempMax"],
-        BottleSugarSpec.create(data["bottleSugar"]),
-        data["remarks"]);
+      id,
+      data["name"],
+      data["style"],
+      data["source"],
+      data["amount"],
+      data["expStartSG"],
+      data["expFinalSG"],
+      data["efficiency"],
+      data["color"],
+      data["bitter"],
+      Mashing.create(data["mashing"]),
+      data["rinsingWater"],
+      Cooking.create(data["cooking"]),
+      data["yeast"] == null ? null : YeastSpec.create(data["yeast"]),
+      data["yeastTempMin"],
+      data["yeastTempMax"],
+      data["bottleSugar"] == null
+          ? null
+          : BottleSugarSpec.create(data["bottleSugar"]),
+      data["remarks"],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "name": name,
+      "style": style,
+      "source": source,
+      "amount": amount,
+      "expStartSG": expStartSG,
+      "expFinalSG": expFinalSG,
+      "efficiency": efficiency,
+      "color": color,
+      "bitter": bitter,
+      "mashing": mashing.toMap(),
+      "rinsingWater": rinsingWater,
+      "cooking": cooking.toMap(),
+      "yeast": yeast?.toMap(),
+      "yeastTempMin": fermTempMin,
+      "yeastTempMax": fermTempMax,
+      "bottleSugar": bottleSugar?.toMap(),
+      "remarks": remarks
+    };
   }
 }
 
@@ -414,11 +546,11 @@ class ProductSpec {
   }
 
   String getAmount() {
-    return amount == null ? "-" : ("${amount}g");
+    return amount == null ? "-" : ("${Util.prettify(amount)}g");
   }
 
   String getProductString() {
-    return "${amount ?? "- "}g ${name ?? "-"}";
+    return "${getAmount()} ${name ?? "-"}";
   }
 
   static ProductSpec create(Map data) {
@@ -440,18 +572,7 @@ class ProductSpec {
     }
   }
 
-  // ProductCategory mapStringToEnum(String cat) {
-  //   switch (cat) {
-  //     case "malt": return ProductCategory.malt;
-  //     case "hop": return ProductCategory.hop;
-  //     case "cookingSugar": return ProductCategory.cookingSugar;
-  //     case "bottleSugar": return ProductCategory.bottleSugar;
-  //     case "yeast": return ProductCategory.yeast;
-  //     default: return ProductCategory.other;
-  //   }
-  // }
-
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {"name": name, "amount": amount, "category": describeEnum(category)};
   }
 }
@@ -460,8 +581,9 @@ class MaltSpec extends ProductSpec {
   double? ebcMin;
   double? ebcMax;
 
-  MaltSpec(super.name, this.ebcMin, this.ebcMax, super.amount,
-      {category: ProductSpecCategory.malt});
+  MaltSpec(name, this.ebcMin, this.ebcMax, amount) : super(name, amount) {
+    category = ProductSpecCategory.malt;
+  }
 
   @override
   static MaltSpec create(Map data) {
@@ -469,20 +591,29 @@ class MaltSpec extends ProductSpec {
         data["name"], data["ebcMin"], data["ebcMax"], data["amount"]);
   }
 
-  String ebcToString() {
-    if (ebcMin == null && ebcMax == null) return "-";
-    if (ebcMin == ebcMax || ebcMin == null) return "$ebcMin EBC";
-    if (ebcMax == null) return "$ebcMax EBC";
-    return "${ebcMin} - ${ebcMax} EBC";
+  String ebcToString({double? min, double? max}) {
+    double? minEbc = min ?? ebcMin;
+    double? maxEbc = max ?? ebcMax;
+    if (minEbc == null && ebcMax == null) return "-";
+    if (minEbc == maxEbc || minEbc == null) return "$maxEbc EBC";
+    if (maxEbc == null) return "$minEbc EBC";
+    return "$minEbc - $maxEbc EBC";
+  }
+
+  static String getEbcToString(double? min, double? max) {
+    if (min == null && max == null) return "-";
+    if (min == max || min == null) return "$max EBC";
+    if (max == null) return "$min EBC";
+    return "$min - $max EBC";
   }
 
   @override
   String getProductString() {
-    return "${amount}g ${name} (${ebcToString()})";
+    return "${getAmount()} ${name} (${ebcToString()})";
   }
 
   @override
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {
       ...super.toMap(),
       "ebcMin": ebcMin,
@@ -493,10 +624,11 @@ class MaltSpec extends ProductSpec {
 }
 
 class HopSpec extends ProductSpec {
-  double alphaAcid;
+  double? alphaAcid;
 
-  HopSpec(super.name, this.alphaAcid, super.amount,
-      {category: ProductSpecCategory.hop});
+  HopSpec(name, this.alphaAcid, amount) : super(name, amount) {
+    category = ProductSpecCategory.hop;
+  }
 
   @override
   static HopSpec create(Map data) {
@@ -505,23 +637,23 @@ class HopSpec extends ProductSpec {
 
   @override
   String getProductString() {
-    return "${amount}g ${name} (${alphaAcid}%)";
+    return "${getAmount()} ${name} (${alphaAcid}%)";
   }
 
   @override
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {...super.toMap(), "alphaAcid": alphaAcid, "category": "hop"};
   }
 }
 
 class SugarSpec extends ProductSpec {
-  SugarSpec(super.name, super.amount,
-      {category: ProductSpecCategory.cookingSugar});
+  SugarSpec(super.name, super.amount);
 }
 
 class CookingSugarSpec extends SugarSpec {
-  CookingSugarSpec(super.name, super.amount,
-      {category: ProductSpecCategory.cookingSugar});
+  CookingSugarSpec(name, amount) : super(name, amount) {
+    category = ProductSpecCategory.cookingSugar;
+  }
 
   @override
   static CookingSugarSpec create(Map data) {
@@ -529,18 +661,19 @@ class CookingSugarSpec extends SugarSpec {
   }
 
   @override
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {...super.toMap(), "category": "cookingSugar"};
   }
 }
 
 class BottleSugarSpec extends SugarSpec {
-  BottleSugarSpec(super.name, super.amount,
-      {category: ProductSpecCategory.bottleSugar});
+  BottleSugarSpec(name, amount) : super(name, amount) {
+    category = ProductSpecCategory.bottleSugar;
+  }
 
   @override
   String getProductString() {
-    return "${amount == null ? "- " : amount.toString()}g/L ${name == null ? "-" : name!}";
+    return "${amount == null ? "- " : getAmount()}/L ${name == null ? "-" : name!}";
   }
 
   @override
@@ -549,13 +682,15 @@ class BottleSugarSpec extends SugarSpec {
   }
 
   @override
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {...super.toMap(), "category": "bottleSugar"};
   }
 }
 
 class YeastSpec extends ProductSpec {
-  YeastSpec(super.name, super.amount, {category: ProductSpecCategory.yeast});
+  YeastSpec(name, amount) : super(name, amount) {
+    category = ProductSpecCategory.yeast;
+  }
 
   @override
   static YeastSpec create(Map data) {
@@ -563,7 +698,7 @@ class YeastSpec extends ProductSpec {
   }
 
   @override
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {...super.toMap(), "category": "yeast"};
   }
 }
@@ -586,6 +721,14 @@ class Product {
     return stores?.keys.join(", ") ?? "-";
   }
 
+  String amountToString() {
+    return amount == null
+        ? "-"
+        : amount! >= 1000
+            ? "${(amount! / 1000).toString().replaceAll(RegExp(r'\.'), ",")} kg"
+            : "${amount} g";
+  }
+
   static Product create(String id, Map data) {
     String cat = data["category"];
     switch (cat) {
@@ -598,13 +741,14 @@ class Product {
       case "yeast":
         return Yeast.create(id, data);
       default:
-        return Product(id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
+        return Product(id, data["name"], data["brand"] ?? "-", data["stores"],
+            data["amount"]);
     }
   }
 }
 
 class Malt extends Product {
-  String type;
+  String? type;
   double? ebcMin;
   double? ebcMax;
 
@@ -613,7 +757,8 @@ class Malt extends Product {
 
   @override
   static Malt create(String id, Map data) {
-    return Malt(id, data["name"], data["type"], data["brand"] ?? "-", data["stores"], data["amount"], data["ebcMin"], data["ebcMax"]);
+    return Malt(id, data["name"], data["type"], data["brand"] ?? "-",
+        data["stores"], data["amount"], data["ebcMin"], data["ebcMax"]);
   }
 
   String ebcToString() {
@@ -621,6 +766,10 @@ class Malt extends Product {
     if (ebcMin == ebcMax || ebcMin == null) return "$ebcMin EBC";
     if (ebcMax == null) return "$ebcMax EBC";
     return "${ebcMin} - ${ebcMax} EBC";
+  }
+
+  String typeToString() {
+    return type ?? "-";
   }
 }
 
@@ -632,7 +781,14 @@ class Hop extends Product {
       this.alphaAcid, this.type);
 
   static Hop create(String id, Map data) {
-    return Hop(id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"], data["alphaAcid"], data["type"] == "korrels" ? HopType.korrels : HopType.bellen);
+    return Hop(
+        id,
+        data["name"],
+        data["brand"] ?? "-",
+        data["stores"],
+        data["amount"],
+        data["alphaAcid"],
+        data["type"] == "korrels" ? HopType.korrels : HopType.bellen);
   }
 }
 
@@ -640,7 +796,8 @@ class Sugar extends Product {
   Sugar(super.id, super.name, super.brand, super.stores, super.amount);
 
   static Sugar create(String id, Map data) {
-    return Sugar(id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
+    return Sugar(
+        id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
   }
 }
 
@@ -648,25 +805,33 @@ class Yeast extends Product {
   Yeast(super.id, super.name, super.brand, super.stores, super.amount);
 
   static Yeast create(String id, Map data) {
-    return Yeast(id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
+    return Yeast(
+        id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
   }
 }
 
 class Mashing {
-  List<MaltSpec> malts;
+  List<SpecToProducts> malts;
   List<MashStep> steps;
-  double water;
+  double? water;
 
   Mashing(this.malts, this.steps, this.water);
 
-  static Mashing create(Map data) {
-    List<MaltSpec> maltsData = (data["malts"] as List)
-        .map((m) => MaltSpec(m["name"], m["ebcMin"], m["ebcMax"], m["amount"]))
-        .toList();
+  static Mashing create(Map<String, dynamic> data) {
+    List<SpecToProducts> maltsData =
+        (data["malts"] as List).map((m) => SpecToProducts.create(m)).toList();
     List<MashStep> mashSchedule = (data["steps"] as List)
         .map((s) => MashStep(s["temp"], s["time"]))
         .toList();
     return Mashing(maltsData, mashSchedule, data["water"]);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "malts": malts.map((e) => e.toMap()),
+      "steps": steps.map((e) => e.toMap()),
+      "water": water
+    };
   }
 }
 
@@ -675,10 +840,14 @@ class MashStep {
   int time;
 
   MashStep(this.temp, this.time);
+
+  Map<String, dynamic> toMap() {
+    return {"temp": temp, "time": time};
+  }
 }
 
 class Cooking {
-  List<CookingStep> steps;
+  List<CookingScheduleStep> steps;
 
   Cooking(this.steps);
 
@@ -686,54 +855,87 @@ class Cooking {
     return steps.expand((step) => step.products).toSet();
   }
 
-  void addStep(double? time, List<ProductSpec> products) {
-    Iterable<CookingStep> matchingSteps =
+  void addStep(double? time, List<SpecToProducts> products) {
+    Iterable<CookingScheduleStep> matchingSteps =
         steps.where((step) => step.time == time);
     if (matchingSteps.isEmpty) {
-      steps.add(CookingStep(time, products));
+      steps.add(CookingScheduleStep(time, products));
     } else {
       matchingSteps.first.products.addAll(products);
     }
   }
 
-  static Cooking create(Map data) {
-    return Cooking((data["steps"] as List)
-        .map((step) => CookingStep(
+  static Cooking create(List data) {
+    return Cooking(data
+        .map((step) => CookingScheduleStep(
             step["time"],
             (step["products"] as List)
-                .map((p) => ProductSpec.create(p))
+                .map((e) => SpecToProducts.create(e))
                 .toList()))
         .toList());
   }
+
+  List<Map<String, dynamic>> toMap() {
+    return steps.map((e) => e.toMap()).toList();
+  }
 }
 
-class CookingStep {
-  List<ProductSpec> products = [];
+class CookingScheduleStep {
+  List<SpecToProducts> products = [];
   double? time;
 
-  CookingStep(this.time, products) {
+  CookingScheduleStep(this.time, List<SpecToProducts> products) {
     this.products.addAll(products);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {"time": time, "products": products.map((e) => e.toMap()).toList()};
   }
 }
 
-class SpecToProduct {
+class SpecToProducts {
   ProductSpec spec;
-  Product product;
-  double amount;
+  List<ProductInstance>? products;
   String? explanation;
 
-  SpecToProduct(this.spec, this.product, this.amount, this.explanation);
+  SpecToProducts(this.spec, this.products, this.explanation);
 
-  static SpecToProduct create(ProductSpec spec, Map data) {
-    return SpecToProduct(
-        spec, data["product"], data["amount"], data["explanation"]);
+  static SpecToProducts create(Map data) {
+    ProductSpec spec = ProductSpec.create(data["spec"]);
+    List productsData = data["products"];
+    var result = SpecToProducts(
+        spec,
+        productsData.map((data) => ProductInstance.create(spec.category, data)).toList(),
+        data["explanation"]);
+    return result;
   }
 
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     return {
-      "product": product.id,
-      "amount": amount,
+      "spec": spec.toMap(),
+      "products": products?.map((ProductInstance p) => p.toMap()).toList(),
       "explanation": explanation
+    };
+  }
+}
+
+class ProductInstance {
+  Product product;
+  double amount;
+
+  ProductInstance(this.product, this.amount);
+
+  static ProductInstance create(ProductSpecCategory category, Map data) {
+    Product product = Store.products[category.product]!.firstWhere((p) => p.id == data["productId"]);
+    return ProductInstance(
+        product,
+        data["amount"]);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "productId": product.id,
+      "amount": amount
     };
   }
 }
@@ -761,6 +963,25 @@ extension ProductSpecName on ProductSpecCategory {
   }
 }
 
+extension ProductSpecCategoryToProduct on ProductSpecCategory {
+  Type get product {
+    switch (this) {
+      case ProductSpecCategory.malt:
+        return Malt;
+      case ProductSpecCategory.hop:
+        return Hop;
+      case ProductSpecCategory.cookingSugar:
+        return Sugar;
+      case ProductSpecCategory.bottleSugar:
+        return Sugar;
+      case ProductSpecCategory.yeast:
+        return Yeast;
+      default:
+        return Product;
+    }
+  }
+}
+
 enum ProductCategory { malt, hop, sugar, yeast, other }
 
 extension ProductName on ProductCategory {
@@ -776,6 +997,23 @@ extension ProductName on ProductCategory {
         return "Suiker";
       default:
         return "Overige";
+    }
+  }
+}
+
+extension ProductCategoryToProduct on ProductCategory {
+  Type get productType {
+    switch (this) {
+      case ProductCategory.malt:
+        return Malt;
+      case ProductCategory.hop:
+        return Hop;
+      case ProductCategory.sugar:
+        return Sugar;
+      case ProductCategory.yeast:
+        return Yeast;
+      default:
+        return Product;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:beer_brewer/main.dart';
 import 'package:beer_brewer/recipe_creator.dart';
 import 'package:beer_brewer/recipes_overview.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'batch_creator.dart';
 import 'data/store.dart';
 
@@ -33,7 +34,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute<void>(
       builder: (BuildContext context) =>
-          MyHomePage(title: 'Bier Brouwen'),
+          MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
     ), (route) => false);
     return true;
   }
@@ -45,7 +46,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   }
 
   Widget leftColumn() {
-    return SizedBox(width: 300, child: Column(
+    return SizedBox(width: 350, child: Column(
       mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -58,7 +59,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
           ),
           SizedBox(height: 10),
           _getRow("Naam", Text(recipe.name)),
-          _getRow("Stijl", Text(recipe.style)),
+          _getRow("Stijl", Text(recipe.style ?? "-")),
           _getRow("Bron",
               Text(recipe.source ?? "-")),
           _getRow("Hoeveelheid",
@@ -108,7 +109,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
           _getRow(
               "Bottelsuiker",
               Text(
-                  recipe.bottleSugar.getProductString())),
+                  recipe.bottleSugar?.getProductString() ?? "-")),
           SizedBox(height: 20),
           Row(
               mainAxisAlignment:
@@ -157,15 +158,15 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                 Padding(
                                     padding:
                                     const EdgeInsets.all(10),
-                                    child: Text(m.getName())),
+                                    child: Text(m.spec.getName())),
                                 Padding(
                                     padding: const EdgeInsets.all(
                                         10),
-                                    child: Text(m.ebcToString())),
+                                    child: Text((m.spec as MaltSpec).ebcToString())),
                                 Padding(
                                     padding:
                                     const EdgeInsets.all(10),
-                                    child: Text("${m.amount} g"))
+                                    child: Text("${m.spec.amount} g"))
                               ]),
                         )],
                       ),
@@ -263,13 +264,13 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                     child: Text(cs.products.indexOf(p) == 0 ? "${cs.time} min" : "")),
                                 Padding(
                                     padding: const EdgeInsets.all(10),
-                                    child: Text(p.getName())),
+                                    child: Text(p.spec.getName())),
                                 Padding(
                                     padding: const EdgeInsets.all(10),
-                                    child: Text("${p.amount} g")),
+                                    child: Text("${p.spec.amount} g")),
                                 Padding(
                                     padding: const EdgeInsets.all(10),
-                                    child: Text(p is HopSpec ? "${p.alphaAcid}%" : ""))
+                                    child: Text(p.spec is HopSpec ? "${(p.spec as HopSpec).alphaAcid}%" : ""))
                               ])),
                     )]
                   ),
@@ -293,7 +294,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         FontWeight.bold),
                   ),
                   SizedBox(height: 10),
-                  recipe.yeast.name == null && recipe.yeast.amount == null ? Text("Geen gist beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                  recipe.yeast?.name == null && recipe.yeast?.amount == null ? Text("Geen gist beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
                       border: TableBorder.all(),
                       defaultColumnWidth:
                       const IntrinsicColumnWidth(),
@@ -313,25 +314,25 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                   const EdgeInsets.all(10),
                                   child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold))),
                             ]),
-                        TableRow(children: [
+                        if (recipe.yeast != null) TableRow(children: [
                           Padding(
                               padding:
                               const EdgeInsets
                                   .all(10),
                               child: Text(
-                                  "${recipe.yeast.getName()}")),
+                                  recipe.yeast!.getName())),
                           Padding(
                               padding:
                               const EdgeInsets
                                   .all(10),
                               child: Text(
-                                  "${recipe.yeast.getAmount()}")),
+                                  recipe.yeast!.getAmount())),
                           Padding(
                               padding:
                               const EdgeInsets
                                   .all(10),
                               child: Text(
-                                  "${recipe.yeastTempMin} - ${recipe.yeastTempMax}ºC")),
+                                  "${recipe.fermTempMin} - ${recipe.fermTempMax}ºC")),
                         ]),
                       ]),
                 ])
@@ -357,6 +358,45 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   SizedBox(width: 300, child: Text(recipe.remarks ?? "-")),
                 ])
           ]),
+      SizedBox(height: 20),
+      Row(
+            mainAxisAlignment:
+            MainAxisAlignment.start,
+            children: [Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text(
+          "Batches",
+          style: TextStyle(
+              fontWeight:
+              FontWeight.bold)),
+        SizedBox(height: 10),
+        Table(border:
+        TableBorder.all(),
+          defaultColumnWidth:
+          const IntrinsicColumnWidth(),
+          children: [
+            TableRow(
+                children: [
+                  Padding(
+                      padding:
+                      const EdgeInsets.all(10),
+                      child: Text("Datum", style: TextStyle(fontWeight: FontWeight.bold),)),
+                  Padding(
+                      padding: const EdgeInsets.all(
+                          10),
+                      child: Text("Status", style: TextStyle(fontWeight: FontWeight.bold))),
+                ]),
+          ...(Store.batches.where((b) => b.recipeId == recipe.id).toList()..sort((a, b) => a.brewDate == null ? 0 : b.brewDate == null ? 1 : a.brewDate!.isBefore(b.brewDate!) ? 0 : 1)).map((b) => TableRow(
+              children: [
+                Padding(
+                    padding:
+                    const EdgeInsets.all(10),
+                    child: Text(b.brewDate == null ? "-" : DateFormat("dd-MM-yyyy").format(b.brewDate!))),
+                Padding(
+                    padding: const EdgeInsets.all(
+                        10),
+                    child: Text(b.brewDate == null ? "Concept" : b.bottleDate == null ? "Vergisten" : DateTime.now().difference(b.bottleDate!).inDays > 21 ? "Klaar" : "Gebotteld (${DateTime.now().difference(b.bottleDate!).inDays} dagen)")),
+              ]),)],)
+      ],)])
     ]));
   }
 
@@ -422,6 +462,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
           SizedBox(height: 15),
           ElevatedButton(
             onPressed: () {
+              if (recipe.amount != null && recipe.amount! > 0) {
               Navigator.push(
                 context,
                 MaterialPageRoute<void>(
@@ -429,6 +470,12 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       BatchCreator(recipe: recipe),
                 ),
               );
+              } else {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(const SnackBar(
+                    content:
+                    Text("Recept heeft nog geen hoeveelheid.")));
+              }
             },
             child: Text("Brouwplan maken"),
           ),

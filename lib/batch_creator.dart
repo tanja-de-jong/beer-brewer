@@ -1,4 +1,6 @@
-import 'package:beer_brewer/batches_overview.dart';
+import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
+import 'package:beer_brewer/main.dart';
+import 'package:beer_brewer/util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,50 +9,75 @@ import 'package:url_launcher/url_launcher.dart';
 import 'data/store.dart';
 
 class BatchCreator extends StatefulWidget {
-  final Recipe recipe;
+  final Recipe? recipe;
   final Batch? batch;
 
-  const BatchCreator({Key? key, required this.recipe, this.batch}) : super(key: key);
+  const BatchCreator({Key? key, this.recipe, this.batch}) : super(key: key);
 
   @override
   State<BatchCreator> createState() => _BatchCreatorState();
 }
 
 class _BatchCreatorState extends State<BatchCreator> {
-  Map<ProductSpec, List<SpecToProduct>> mappings = {};
+  bool loading = true;
+  List<SpecToProducts> maltMappings = [];
+  List<SpecToProducts> hopMappings = [];
+  List<SpecToProducts> cookingSugarMappings = [];
+  List<SpecToProducts> bottleSugarMappings = [];
+  List<SpecToProducts> yeastMappings = [];
+  List<SpecToProducts> otherMappings = [];
+  Map<ProductSpecCategory, List<SpecToProducts>> allMappings = {};
+
+  Map<Product, double> amountsUsed = {};
+  late double batchAmount;
+
+  Future<void> updateProductAmounts() async {
+    for (var p in amountsUsed.keys) {
+      Store.updateAmountForProduct(p, (p.amount ?? 0) - (amountsUsed[p] ?? 0));
+    }
+  }
 
   void addProductForSpec(
-      ProductSpec spec, Product product, double amount, String? explanation) {
+      SpecToProducts stp, Product product, double amount) {
     setState(() {
-      mappings[spec]!.add(SpecToProduct(spec, product, amount, explanation));
+      stp.products ??= [];
+      stp.products!.add(ProductInstance(product, amount));
+      amountsUsed[product] = (amountsUsed[product] ?? 0) + amount;
     });
   }
 
-  Widget getProductsForSpec(ProductSpec spec) {
-    List<SpecToProduct> selectedProducts = mappings[spec]!;
+  Widget getProductsForSpec(SpecToProducts stp) {
+    // List<SpecToProducts> selectedProducts = allMappings[stp.spec.category]!
+    //     .where((stp) => stp.spec == spec && stp.product != null)
+    //     .toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.start, children: [
         Text(
-          spec.getProductString(),
+          stp.spec.getProductString(),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         TextButton(
             onPressed: () {
-              selectProductDialog(spec, addProductForSpec);
+              selectProductDialog(stp, addProductForSpec);
             },
             child: const Text("Voeg toe")
             // icon: Icon(Icons.arrow_forward),
             // splashRadius: 18,
             )
       ]),
-      ...selectedProducts.map((sel) => Row(
+      ...stp.products!.map((sel) => Row(
             children: [
-              Expanded(child: Text("${sel.amount}g ${sel.product.name} (${sel.product.brand})", overflow: TextOverflow.ellipsis)),
+              Expanded(
+                  child: Text(
+                      "${sel.amount}g ${sel.product.name} (${sel.product.brand})",
+                      overflow: TextOverflow.ellipsis)),
               IconButton(
                 onPressed: () {
                   setState(() {
-                    mappings[spec]!.remove(sel);
+                    stp.products!.remove(sel);
+                    amountsUsed[sel.product] =
+                        (amountsUsed[sel.product] ?? 0) - sel.amount;
                   });
                 },
                 icon: const Icon(Icons.delete),
@@ -78,23 +105,7 @@ class _BatchCreatorState extends State<BatchCreator> {
   }
 
   Widget getCategory(ProductSpecCategory category) {
-    Iterable filteredList = [];
-    if (category == ProductSpecCategory.malt) {
-      filteredList = mappings.keys.whereType<MaltSpec>();
-    } else if (category == ProductSpecCategory.hop) {
-      filteredList = mappings.keys.whereType<HopSpec>();
-    } else if (category == ProductSpecCategory.cookingSugar) {
-      filteredList = mappings.keys.whereType<CookingSugarSpec>();
-    } else if (category == ProductSpecCategory.bottleSugar) {
-      filteredList = mappings.keys.whereType<BottleSugarSpec>();
-    } else if (category == ProductSpecCategory.yeast) {
-      filteredList = mappings.keys.whereType<YeastSpec>();
-    } else {
-      filteredList = mappings.keys.where((spec) => !(spec is MaltSpec ||
-          spec is HopSpec ||
-          spec is SugarSpec ||
-          spec is YeastSpec));
-    }
+    List<SpecToProducts> filteredList = allMappings[category]!;
 
     return filteredList.isEmpty
         ? Container()
@@ -108,21 +119,91 @@ class _BatchCreatorState extends State<BatchCreator> {
                   category.name,
                   style: const TextStyle(fontSize: 18),
                 ),
-                ...filteredList.map((spec) => getProductsForSpec(spec)).toList()
+                ...filteredList
+                    .map((SpecToProducts stp) => getProductsForSpec(stp))
+                    .toList()
               ],
             ));
   }
 
+  void updateBatchAmount(double amount) {
+    if (amount != batchAmount) {
+      double ingredientRatio = amount / batchAmount;
+      setState(() {
+        for (SpecToProducts stp in allMappings.values.expand((e) => e)) {
+          ProductSpec spec = stp.spec;
+          if (spec.amount != null) {
+            spec.amount = double.parse(
+                Util.prettify(spec.amount! * ingredientRatio) ?? "");
+          }
+        }
+        batchAmount = amount;
+      });
+    }
+  }
+
   @override
   void initState() {
-    for (MaltSpec spec in widget.recipe.mashing.malts) {
-      mappings.putIfAbsent(spec, () => []);
+    batchAmount = widget.batch?.amount ?? widget.recipe!.amount!;
+    Store.loadProducts().then((value) => setState(() {
+          loading = false;
+        }));
+
+    if (widget.batch != null) {
+      Batch batch = widget.batch!;
+      maltMappings = batch.mashing.malts;
+      hopMappings = batch.cooking.steps
+          .expand((step) => step.products
+              .where((p) => p.spec.category == ProductSpecCategory.hop))
+          .toList();
+      yeastMappings = batch.yeast;
+      cookingSugarMappings = batch.cooking.steps
+          .expand((step) => step.products.where(
+              (p) => p.spec.category == ProductSpecCategory.cookingSugar))
+          .toList();
+      bottleSugarMappings = batch.bottleSugar;
+      otherMappings = batch.cooking.steps
+          .expand((step) => step.products
+              .where((p) => p.spec.category == ProductSpecCategory.other))
+          .toList();
+    } else {
+      Recipe recipe = widget.recipe!;
+      maltMappings = recipe.mashing.malts;
+      hopMappings = recipe.cooking.steps
+          .expand((step) => step.products
+              .where((p) => p.spec.category == ProductSpecCategory.hop))
+          .toList();
+      yeastMappings = recipe.yeast == null
+          ? []
+          : [SpecToProducts(recipe.yeast!, [], null)];
+      cookingSugarMappings = recipe.cooking.steps
+          .expand((step) => step.products.where(
+              (p) => p.spec.category == ProductSpecCategory.cookingSugar))
+          .toList();
+      bottleSugarMappings = recipe.bottleSugar == null
+          ? []
+          : [SpecToProducts(recipe.bottleSugar!, [], null)];
+      otherMappings = recipe.cooking.steps
+          .expand((step) => step.products
+              .where((p) => p.spec.category == ProductSpecCategory.other))
+          .toList();
     }
-    for (ProductSpec spec in widget.recipe.cooking.getCookingIngredients()) {
-      mappings.putIfAbsent(spec, () => []);
-    }
-    mappings.putIfAbsent(widget.recipe.yeast, () => []);
-    mappings.putIfAbsent(widget.recipe.bottleSugar, () => []);
+
+    allMappings[ProductSpecCategory.malt] = maltMappings;
+    allMappings[ProductSpecCategory.hop] = hopMappings;
+    allMappings[ProductSpecCategory.cookingSugar] = cookingSugarMappings;
+    allMappings[ProductSpecCategory.bottleSugar] = bottleSugarMappings;
+    allMappings[ProductSpecCategory.yeast] = yeastMappings;
+    allMappings[ProductSpecCategory.other] = otherMappings;
+    //
+    // if (widget.recipe != null && batchAmount != widget.recipe!.amount!) {
+    //   double ingredientRatio = batchAmount / widget.recipe!.amount!;
+    //
+    //   for (SpecToProduct stp in allMappings.values.expand((e) => e)) {
+    //     ProductSpec spec = stp.spec;
+    //     if (spec.amount != null) spec.amount = spec.amount! * ingredientRatio;
+    //   }
+    // }
     super.initState();
   }
 
@@ -137,37 +218,98 @@ class _BatchCreatorState extends State<BatchCreator> {
         body: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(children: [
-
               SizedBox(
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
                       100,
-                  child: SingleChildScrollView(
-                      child: Wrap(runSpacing: 15, spacing: 15, children: [
-                        getCategory(ProductSpecCategory.malt),
-                        getCategory(ProductSpecCategory.hop),
-                        getCategory(ProductSpecCategory.cookingSugar),
-                        getCategory(ProductSpecCategory.yeast),
-                        getCategory(ProductSpecCategory.bottleSugar),
-                        getCategory(ProductSpecCategory.other)
-                      ]),)),
+                  child: loading
+                      ? Center(child: CircularProgressIndicator())
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                              DoubleTextFieldRow(
+                                label: "Hoeveelheid (L)",
+                                initialValue: widget.batch?.amount ??
+                                    widget.recipe!.amount!,
+                                props: {"isEditable": false},
+                                onChanged: (value) {
+                                  if (value != null) updateBatchAmount(value);
+                                },
+                              ),
+                              SizedBox(height: 10),
+                              SingleChildScrollView(
+                                child: Wrap(
+                                    runSpacing: 15,
+                                    spacing: 15,
+                                    children: [
+                                      getCategory(ProductSpecCategory.malt),
+                                      getCategory(ProductSpecCategory.hop),
+                                      getCategory(
+                                          ProductSpecCategory.cookingSugar),
+                                      getCategory(ProductSpecCategory.yeast),
+                                      getCategory(
+                                          ProductSpecCategory.bottleSugar),
+                                      getCategory(ProductSpecCategory.other)
+                                    ]),
+                              )
+                            ])),
               const Divider(),
               const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () {
-                  Store.saveBatch(widget.batch?.id, widget.recipe, mappings);
+                  Batch? batch = widget.batch;
+                  Recipe? recipe = widget.recipe;
+                  Mashing mashing = batch?.mashing ?? recipe!.mashing;
+                  mashing.malts = maltMappings;
+                  Cooking cooking = batch?.cooking ?? recipe!.cooking;
+                  for (CookingScheduleStep step in cooking.steps) {
+                    for (SpecToProducts stp in step.products) {
+                      Iterable<SpecToProducts> allStps =
+                          allMappings.values.expand((element) => element);
+                      Iterable<SpecToProducts> stpsForSpec =
+                          allStps.where((element) => element.spec == stp.spec);
+                      step.products.remove(stp);
+                      step.products.addAll(stpsForSpec);
+                    }
+                  }
+                  Batch newBatch = Batch(
+                      widget.batch?.id,
+                      widget.batch?.name ?? widget.recipe!.name,
+                      widget.batch?.recipeId ?? widget.recipe!.id!,
+                      batchAmount,
+                      widget.batch?.style ?? widget.recipe!.style,
+                      widget.batch?.expStartSG ?? widget.recipe!.expStartSG,
+                      widget.batch?.expFinalSG ?? widget.recipe!.expFinalSG,
+                      widget.batch?.color ?? widget.recipe!.color,
+                      widget.batch?.bitter ?? widget.recipe!.bitter,
+                      mashing,
+                      widget.batch?.rinsingWater ?? widget.recipe!.rinsingWater,
+                      cooking,
+                      yeastMappings,
+                      widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
+                      widget.batch?.fermTempMax ?? widget.recipe!.fermTempMax,
+                      bottleSugarMappings,
+                      "",
+                      null,
+                      null,
+                      null, {});
+                  print("Before save");
+                  Store.saveBatch(newBatch);
+                  print("After save");
+                  updateProductAmounts();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
                           builder: (context) =>
-                              const BatchesOverview()),
-                          (Route<dynamic> route) => false);
+                              const MyHomePage(title: "Bier Brouwen")),
+                      (Route<dynamic> route) => false);
                 },
                 child: Text("Opslaan"),
               ),
             ])));
   }
 
-  selectProductDialog(ProductSpec spec, Function addProduct) {
+  selectProductDialog(SpecToProducts stp, Function addProduct) {
+    ProductSpec spec = stp.spec;
     // Maltfilter
     // String nameFilter = "";
     // String typeFilter = spec.name;
@@ -263,21 +405,22 @@ class _BatchCreatorState extends State<BatchCreator> {
     // }
 
     /* TEMP DATA */
-    List<Product> products = [];
-    if (spec is MaltSpec) {
-      products = Store.maltProducts;
-    } else if (spec is HopSpec) {
-      products = Store.hopProducts;
-    } else if (spec is SugarSpec) {
-      products = Store.sugarProducts;
-    } else if (spec is YeastSpec) {
-      products = Store.yeastProducts;
-    } else {
-      products = Store.otherProducts;
-    }
+    List products = Store.products[spec.category.product]!;
+    // print(Store.maltProducts.length);
+    // if (spec is MaltSpec) {
+    //   products = Store.products[spec.category.product];
+    // } else if (spec is HopSpec) {
+    //   products = Store.hopProducts;
+    // } else if (spec is SugarSpec) {
+    //   products = Store.sugarProducts;
+    // } else if (spec is YeastSpec) {
+    //   products = Store.yeastProducts;
+    // } else {
+    //   products = Store.otherProducts;
+    // }
 
     Product? selectedProduct;
-    double? amount;
+    double? amount = spec.amount;
     String? explanation;
 
     showDialog(
@@ -291,8 +434,8 @@ class _BatchCreatorState extends State<BatchCreator> {
                 columns: [
                   const DataColumn(label: Text("Naam")),
                   if (spec is MaltSpec) const DataColumn(label: Text("Type")),
-                  const DataColumn(label: Text("Merk")),
                   if (spec is MaltSpec) const DataColumn(label: Text("EBC")),
+                  const DataColumn(label: Text("Voorraad")),
                   const DataColumn(label: Text("Te koop")),
                 ],
                 rows: [
@@ -313,11 +456,14 @@ class _BatchCreatorState extends State<BatchCreator> {
                               },
                               cells: [
                                 DataCell(Text(product!.name)),
-                                if (product is Malt)
-                                  DataCell(Text(product.type)),
-                                DataCell(Text(product.brand)),
-                                if (product is Malt)
-                                  DataCell(Text(product.ebcToString())),
+                                if (spec is MaltSpec)
+                                  DataCell(
+                                      Text((product as Malt).typeToString())),
+                                if (spec is MaltSpec)
+                                  DataCell(
+                                      Text((product as Malt).ebcToString())),
+                                DataCell(Text(Util.amountToString(
+                                    amountsUsed[product] ?? 0))),
                                 DataCell(Text(product.storesToString()))
                               ]))
                       .toList()
@@ -356,8 +502,10 @@ class _BatchCreatorState extends State<BatchCreator> {
                               children: [
                                 _getRow("Naam", Text(selectedProduct!.name)),
                                 if (selectedProduct is Malt)
-                                  _getRow("Soort",
-                                      Text((selectedProduct as Malt).type)),
+                                  _getRow(
+                                      "Soort",
+                                      Text((selectedProduct as Malt)
+                                          .typeToString())),
                                 _getRow("Merk", Text(selectedProduct!.brand)),
                                 if (selectedProduct is Malt)
                                   _getRow(
@@ -366,23 +514,27 @@ class _BatchCreatorState extends State<BatchCreator> {
                                           .ebcToString())),
                                 _getRow(
                                     "Te koop",
-                                    selectedProduct!.stores == null ? Container() : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: selectedProduct!.stores!.keys
-                                            .map((String store) => RichText(
-                                                text: TextSpan(
-                                                    text: store,
-                                                    style: new TextStyle(
-                                                        color: Colors.blue),
-                                                    recognizer:
-                                                        new TapGestureRecognizer()
-                                                          ..onTap = () {
-                                                            launchUrl(Uri.parse(
-                                                                selectedProduct!
-                                                                    .getStoreUrl(store)));
-                                                          })))
-                                            .toList())),
+                                    selectedProduct!.stores == null
+                                        ? Container()
+                                        : Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: selectedProduct!
+                                                .stores!.keys
+                                                .map((String store) => RichText(
+                                                    text: TextSpan(
+                                                        text: store,
+                                                        style: new TextStyle(
+                                                            color: Colors.blue),
+                                                        recognizer:
+                                                            new TapGestureRecognizer()
+                                                              ..onTap = () {
+                                                                launchUrl(Uri.parse(
+                                                                    selectedProduct!
+                                                                        .getStoreUrl(
+                                                                            store)));
+                                                              })))
+                                                .toList())),
                                 TextButton(
                                     onPressed: () {
                                       setState(() {
@@ -397,7 +549,8 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 SizedBox(
                                     height: 30,
                                     width: 80,
-                                    child: TextField(
+                                    child: TextFormField(
+                                      initialValue: amount.toString(),
                                       onChanged: (value) {
                                         setState(() {
                                           amount = double.tryParse(value);
@@ -478,8 +631,8 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 onPressed: amount == null
                                     ? null
                                     : () {
-                                        addProduct(spec, selectedProduct,
-                                            amount, explanation);
+                                        addProduct(stp, selectedProduct,
+                                            amount);
                                         Navigator.pop(context);
                                       },
                                 child: const Text("Voeg toe"))

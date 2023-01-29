@@ -12,101 +12,21 @@ class DatabaseController {
     List docs = (await db.collection("recipes").get()).docs;
     for (QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
       Map data = doc.data();
+      List ingredientDocs = (await db.collection("recipes").doc(doc.id).collection("ingredients").get()).docs;
+      for (QueryDocumentSnapshot<Map<String, dynamic>> ingredientDoc in ingredientDocs) {
+      }
       Recipe recipe = Recipe.create(doc.id, data);
       result.add(recipe);
     }
     return result;
   }
 
-  static Future<Recipe> saveRecipe(
-      String? id,
-      String name,
-      String style,
-      String? source,
-      double amount,
-      double? expStartSG,
-      double? expFinalSG,
-      double? efficiency,
-      double? color,
-      double? bitter,
-      double mashWater,
-      double rinsingWater,
-      List<MaltSpec> malts,
-      List<MashStep> mashSchedule,
-      Map<double?, List<HopSpec>> hops,
-      String? yeastName,
-      double? yeastAmount,
-      String? cookingSugarName,
-      double? cookingSugarAmount,
-      double? cookingSugarTime,
-      String? bottleSugarName,
-      double? bottleSugarAmount,
-      Map<double?, List<ProductSpec>> otherIngredients,
-      double? yeastTempMin,
-      double? yeastTempMax,
-      String? remarks) async {
-    Cooking cooking = Cooking(
-        hops.keys.map((time) => CookingStep(time, hops[time]!)).toList());
-    if (cookingSugarName != null)
-      cooking.addStep(cookingSugarTime,
-          [CookingSugarSpec(cookingSugarName, cookingSugarAmount)]);
-    for (double? time in otherIngredients.keys) {
-      cooking.addStep(time, otherIngredients[time]!);
-    }
+  static String saveRecipe(Recipe recipe) {
+    String newId = recipe.id == null ? (db.collection("recipes").doc()).id : recipe.id!;
 
-    Map<String, dynamic> data = {
-      "name": name,
-      "style": style,
-      "source": source,
-      "amount": amount,
-      "expStartSG": expStartSG,
-      "expFinalSG": expFinalSG,
-      "efficiency": efficiency,
-      "color": color,
-      "bitter": bitter,
-      "mashing": {
-        "malts": malts
-            .map((malt) => {
-                  "name": malt.name,
-                  "amount": malt.amount,
-                  "ebcMin": malt.ebcMin,
-                  "ebcMax": malt.ebcMax,
-                })
-            .toList(),
-        "steps": mashSchedule
-            .map((step) => {"temp": step.temp, "time": step.time})
-            .toList(),
-        "water": mashWater
-      },
-      "rinsingWater": rinsingWater,
-      "cooking": {
-        "steps": cooking.steps
-            .map((step) => {
-                  "time": step.time,
-                  "products":
-                      step.products.map((product) => product.toMap()).toList()
-                })
-            .toList(),
-      },
-      "yeast": {
-        "name": yeastName,
-        "amount": yeastAmount,
-      },
-      "yeastTempMin": yeastTempMin,
-      "yeastTempMax": yeastTempMax,
-      "bottleSugar": {
-        "name": bottleSugarName,
-        "amount": bottleSugarAmount,
-      },
-      "remarks": remarks
-    };
+    db.collection("recipes").doc(newId).set(recipe.toMap());
 
-    if (id == null) {
-      id = (await db.collection("recipes").add(data)).id;
-    } else {
-      await db.collection("recipes").doc(id).set(data);
-    }
-    return Recipe.create(id, data);
+    return newId;
   }
 
   static Future<void> removeRecipe(Recipe recipe) async {
@@ -124,26 +44,12 @@ class DatabaseController {
     return result;
   }
 
-  static Future<Batch> saveBatch(String? id,
-      Recipe recipe, Map<ProductSpec, List<SpecToProduct>> ingredients) async {
-    Map<String, dynamic> data = {
-      "name": recipe.name, // TODO
-      "recipe": {"id": recipe.id, "name": recipe.name, "style": recipe.style},
-      "amount": recipe.amount, // TODO
-      "ingredients": ingredients.keys.map((ProductSpec spec) => {
-        "spec": spec.toMap(),
-        "products": ingredients[spec]!.map((mapping) => {
-          mapping.toMap()
-        })
-      }).toList()
-    };
+  static Future<String> saveBatch(Batch batch) async {
+    String newId = batch.id == null ? (db.collection("batched").doc()).id : batch.id!;
 
-    if (id == null) {
-      id = (await db.collection("batches").add(data)).id;
-    } else {
-      await db.collection("batches").doc(id).set(data);
-    }
-    return Batch.create(id, data);
+    await db.collection("batches").doc(newId).set(batch.toMap());
+
+    return newId;
   }
 
   static Future<Batch> brewBatch(Batch batch, double startSG) async {
@@ -190,6 +96,18 @@ class DatabaseController {
     } else {
       await db.collection("products").doc(id).set(data);
     }
-    return Product.create(id, data);
+    Product p = Product.create(id, data);
+
+    return p;
+  }
+
+  static Future<Product> updateAmountForProduct(Product product, double amount) async {
+    await db.collection("products").doc(product.id).update({ "amount": amount });
+    product.amount = amount;
+    return product;
+  }
+
+  static Future<void> removeProduct(Product product) async {
+    await db.collection("products").doc(product.id).delete();
   }
 }

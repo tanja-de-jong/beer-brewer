@@ -28,7 +28,7 @@ class _RecipesOverviewState extends State<RecipesOverview> {
     return Center(child: loading ? CircularProgressIndicator() : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Padding(
       padding: const EdgeInsets.all(10.0),
       child: DataTable(showCheckboxColumn: false, rows: Store.recipes.map((r) =>
-        DataRow(cells: [DataCell(Text(r.name)), DataCell(Text(r.style))], onSelectChanged: (bool? selected) async {
+        DataRow(cells: [DataCell(Text(r.name)), DataCell(Text(r.style ?? "-")), DataCell(Text(Store.batches.where((b) => b.recipeId == r.id).length.toString()))], onSelectChanged: (bool? selected) async {
           await Navigator.push(
             context,
             MaterialPageRoute<void>(
@@ -40,6 +40,7 @@ class _RecipesOverviewState extends State<RecipesOverview> {
       ).toList(), columns: const [
         DataColumn(label: Text("Naam")),
         DataColumn(label: Text("Stijl")),
+        DataColumn(label: Text("Batches")),
       ],),
     )]));
   }

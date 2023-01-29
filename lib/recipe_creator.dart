@@ -2,6 +2,7 @@ import 'dart:core';
 
 import 'package:beer_brewer/data/database_controller.dart';
 import 'package:beer_brewer/recipe_details.dart';
+import 'package:beer_brewer/util.dart';
 import 'package:flutter/material.dart';
 import 'data/store.dart';
 import 'form/DoubleTextFieldRow.dart';
@@ -27,7 +28,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   String? source;
   double? amount;
   double? startSG;
-  double? endSG;
+  double? finalSG;
   double? efficiency;
   double? color;
   double? bitter;
@@ -50,15 +51,12 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   double? hopTime;
   bool showAddHop = false;
 
-  String? yeastName;
-  double? yeastAmount;
+  YeastSpec yeast = YeastSpec(null, null);
 
-  String? cookingSugarName;
-  double? cookingSugarAmount;
+  CookingSugarSpec cookingSugar = CookingSugarSpec(null, null);
   double? cookingSugarTime;
 
-  String? bottleSugarName;
-  double? bottleSugarAmount;
+  BottleSugarSpec bottleSugar = BottleSugarSpec(null, null);
 
   Map<double?, List<ProductSpec>> others = {};
   String? otherName;
@@ -233,48 +231,48 @@ class _RecipeCreatorState extends State<RecipeCreator> {
         source = recipe?.source;
         amount = recipe?.amount;
         startSG = recipe?.expStartSG;
-        endSG = recipe?.expFinalSG;
+        finalSG = recipe?.expFinalSG;
         efficiency =
             recipe?.efficiency == null ? null : (recipe?.efficiency)! * 100;
         color = recipe?.color;
         bitter = recipe?.bitter;
         mashWater = recipe?.mashing.water;
         rinsingWater = recipe?.rinsingWater;
-
-        malts = recipe?.mashing.malts ?? [];
+        malts =
+            recipe?.mashing.malts.map((stp) => stp.spec as MaltSpec).toList() ??
+                [];
         mashSteps = recipe?.mashing.steps ?? [];
-        for (CookingStep step in recipe!.cooking.steps) {
-          List<HopSpec> hopsForTime =
-              step.products.whereType<HopSpec>().toList();
-          if (hopsForTime.isNotEmpty) hops[step.time] = hopsForTime;
-        }
-        for (CookingStep step in recipe!.cooking.steps) {
-          List<ProductSpec> othersForTime = step.products
-              .where((p) => !(p is HopSpec || p is CookingSugarSpec))
-              .toList();
-          if (othersForTime.isNotEmpty) others[step.time] = othersForTime;
-        }
-
-        yeastName = recipe?.yeast.name;
-        yeastAmount = recipe?.yeast.amount;
-
-        Iterable<CookingStep> steps = recipe!.cooking.steps.where((step) =>
-            step.products.any((product) => product is CookingSugarSpec));
-
-        if (steps.isNotEmpty) {
-          CookingStep step = steps.first;
-          CookingSugarSpec css =
-              step.products.whereType<CookingSugarSpec>().first;
-          cookingSugarName = css.name;
-          cookingSugarAmount = css.amount;
-          cookingSugarTime = step.time;
+        for (CookingScheduleStep step in recipe!.cooking.steps) {
+          double? time = step.time;
+          List<HopSpec> hopSpecs = [];
+          List<ProductSpec> otherSpecs = [];
+          for (SpecToProducts stp in step.products) {
+            ProductSpec? spec = stp.spec;
+            if (spec != null) {
+              switch (spec.category) {
+                case ProductSpecCategory.hop:
+                  hopSpecs.add(spec as HopSpec);
+                  break;
+                case ProductSpecCategory.cookingSugar:
+                  cookingSugar = spec as CookingSugarSpec;
+                  cookingSugarTime = time;
+                  break;
+                default:
+                  otherSpecs.add(spec);
+                  break;
+              }
+            }
+          }
+          if (hopSpecs.isNotEmpty) hops[time] = hopSpecs;
+          if (otherSpecs.isNotEmpty) others[time] = otherSpecs;
         }
 
-        bottleSugarName = recipe!.bottleSugar.name;
-        bottleSugarAmount = recipe!.bottleSugar.amount;
+        yeast = recipe!.yeast ?? yeast;
 
-        minTemp = recipe!.yeastTempMin;
-        maxTemp = recipe!.yeastTempMax;
+        bottleSugar = recipe!.bottleSugar ?? bottleSugar;
+
+        minTemp = recipe!.fermTempMin;
+        maxTemp = recipe!.fermTempMax;
 
         remarks = recipe!.remarks;
       }
@@ -300,7 +298,17 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               padding: EdgeInsets.only(right: 20.0),
               child: GestureDetector(
                 onTap: () {
-                  showDeleteDialog();
+                  Util.showDeleteDialog(context, "recept", () async {
+                    await Store.removeRecipe(recipe!);
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext context) => MyHomePage(
+                            title: 'Bier Brouwen',
+                            selectedPage: 1,
+                          ),
+                        ),
+                        (route) => false);
+                  });
                 },
                 child: Icon(
                   Icons.delete,
@@ -436,14 +444,15 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   }),
                               DoubleTextFieldRow(
                                   label: "Eind SG",
-                                  initialValue: endSG,
+                                  initialValue: finalSG,
                                   onChanged: (value) {
                                     setState(() {
-                                      endSG = value;
+                                      finalSG = value;
                                     });
                                   }),
                               DoubleTextFieldRow(
                                   label: "Rendement (%)",
+                                  isPercentage: true,
                                   initialValue: efficiency,
                                   onChanged: (value) {
                                     setState(() {
@@ -533,7 +542,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         ]),
                                     ...malts.map((malt) => Row(children: [
                                           Text(
-                                              "${malt.amount}g ${malt.name} (${malt.ebcToString()})"),
+                                              "${malt.amount}g ${malt.name} (${MaltSpec.getEbcToString(malt.ebcMin, malt.ebcMax)})"),
                                           IconButton(
                                             icon: const Icon(Icons.close),
                                             splashRadius: 12,
@@ -568,12 +577,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                               ? null
                                               : () {
                                                   setState(() {
-                                                    MaltSpec malt = MaltSpec(
-                                                        maltType!,
+                                                    malts.add(MaltSpec(
+                                                        maltType,
                                                         maltMinEBC,
                                                         maltMaxEBC,
-                                                        maltAmount!);
-                                                    malts.add(malt);
+                                                        maltAmount));
 
                                                     maltType = null;
                                                     maltMinEBC = null;
@@ -721,9 +729,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                               : () {
                                                   setState(() {
                                                     HopSpec hop = HopSpec(
-                                                        hopType!,
-                                                        hopAlphaAcid ?? 0,
-                                                        hopAmount!);
+                                                        hopType,
+                                                        hopAlphaAcid,
+                                                        hopAmount);
+
                                                     if (hops
                                                         .containsKey(hopTime)) {
                                                       hops[hopTime]!.add(hop);
@@ -752,18 +761,18 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   Wrap(spacing: 70, children: [
                                     TextFieldRow(
                                         label: "Naam",
-                                        initialValue: yeastName,
+                                        initialValue: yeast.name,
                                         onChanged: (value) {
                                           setState(() {
-                                            yeastName = value;
+                                            yeast.name = value;
                                           });
                                         }),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
-                                        initialValue: yeastAmount,
+                                        initialValue: yeast.amount,
                                         onChanged: (value) {
                                           setState(() {
-                                            yeastAmount = value;
+                                            yeast.amount = value;
                                           });
                                         }),
                                   ]),
@@ -780,18 +789,18 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   Wrap(spacing: 70, children: [
                                     TextFieldRow(
                                         label: "Naam",
-                                        initialValue: cookingSugarName,
+                                        initialValue: cookingSugar.name,
                                         onChanged: (value) {
                                           setState(() {
-                                            cookingSugarName = value;
+                                            cookingSugar.name = value;
                                           });
                                         }),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
-                                        initialValue: cookingSugarAmount,
+                                        initialValue: cookingSugar.amount,
                                         onChanged: (value) {
                                           setState(() {
-                                            cookingSugarAmount = value;
+                                            cookingSugar.amount = value;
                                           });
                                         }),
                                     DoubleTextFieldRow(
@@ -816,18 +825,18 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   Wrap(spacing: 70, children: [
                                     TextFieldRow(
                                         label: "Naam",
-                                        initialValue: bottleSugarName,
+                                        initialValue: bottleSugar.name,
                                         onChanged: (value) {
                                           setState(() {
-                                            bottleSugarName = value;
+                                            bottleSugar.name = value;
                                           });
                                         }),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g/L)",
-                                        initialValue: bottleSugarAmount,
+                                        initialValue: bottleSugar.amount,
                                         onChanged: (value) {
                                           setState(() {
-                                            bottleSugarAmount = value;
+                                            bottleSugar.amount = value;
                                           });
                                         }),
                                   ])
@@ -967,8 +976,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                               : () {
                                                   setState(() {
                                                     ProductSpec other =
-                                                        ProductSpec(otherName!,
-                                                            otherAmount!);
+                                                        ProductSpec(
+                                                            otherName,
+                                                            otherAmount);
+
                                                     if (others.containsKey(
                                                         otherTime)) {
                                                       others[otherTime]!
@@ -1033,32 +1044,21 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   ),
                                 ]),
                             SizedBox(height: 10),
-                            ...mashSteps.map((step) =>
-                                Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .start,
+                            ...mashSteps.map((step) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Text("${step.temp}°C: ${step.time} minuten"),
+                                      Text(
+                                          "${step.temp}°C: ${step.time} minuten"),
                                       IconButton(
-                                        icon: const Icon(
-                                            Icons
-                                                .close),
-                                        splashRadius:
-                                        12,
-                                        iconSize:
-                                        15,
-                                        padding:
-                                        EdgeInsets
-                                            .zero,
-                                        constraints:
-                                        BoxConstraints(),
-                                        onPressed:
-                                            () {
-                                          setState(
-                                                  () {
-                                                mashSteps.remove(step);
-                                              });
+                                        icon: const Icon(Icons.close),
+                                        splashRadius: 12,
+                                        iconSize: 15,
+                                        padding: EdgeInsets.zero,
+                                        constraints: BoxConstraints(),
+                                        onPressed: () {
+                                          setState(() {
+                                            mashSteps.remove(step);
+                                          });
                                         },
                                       )
                                     ])),
@@ -1099,8 +1099,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                           children: [
                             Text(
                               "Opmerkingen",
-                              style:
-                              TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 5),
                             SizedBox(
@@ -1108,7 +1107,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                 child: TextFormField(
                                   initialValue: remarks,
                                   minLines:
-                                  6, // any number you need (It works as the rows for the textarea)
+                                      6, // any number you need (It works as the rows for the textarea)
                                   keyboardType: TextInputType.multiline,
                                   maxLines: null,
                                   decoration: InputDecoration(
@@ -1136,45 +1135,62 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               const Divider(),
               const SizedBox(height: 15),
               ElevatedButton(
-                onPressed: name == null ||
-                        style == null ||
-                        amount == null ||
-                        mashWater == null ||
-                        rinsingWater == null
+                onPressed: name == null
                     ? null
                     : () async {
-                        Recipe finalRecipe = await Store.saveRecipe(
-                          widget.recipe?.id,
-                          name!,
-                          style!,
-                          source,
-                          amount!,
-                          startSG,
-                          endSG,
-                          efficiency == null ? null : efficiency! / 100,
-                          color,
-                          bitter,
-                          mashWater!,
-                          rinsingWater!,
-                          malts,
-                          mashSteps,
-                          hops,
-                          yeastName,
-                          yeastAmount,
-                          cookingSugarName,
-                          cookingSugarAmount,
-                          cookingSugarTime,
-                          bottleSugarName,
-                          bottleSugarAmount,
-                          others,
-                          minTemp,
-                          maxTemp,
-                          remarks
-                        );
+                        Cooking cooking = Cooking(hops.keys
+                            .map((time) => CookingScheduleStep(
+                                time,
+                                hops[time]
+                                        ?.map((hs) =>
+                                            SpecToProducts(hs, [], null))
+                                        .toList() ??
+                                    []))
+                            .toList());
+                        if (cookingSugar.amount != null || cookingSugar.name != null) {
+                          cooking.addStep(cookingSugarTime,
+                            [SpecToProducts(cookingSugar, [], null)]);
+                        }
+                        for (double? time in others.keys) {
+                          cooking.addStep(
+                              time,
+                              others[time]!
+                                  .map((ps) =>
+                                      SpecToProducts(ps, [], null))
+                                  .toList());
+                        }
+
+                        Recipe newRecipe = Recipe(
+                            widget.recipe?.id,
+                            name!,
+                            style,
+                            source,
+                            amount,
+                            startSG,
+                            finalSG,
+                            efficiency == null ? null : efficiency! / 100,
+                            color,
+                            bitter,
+                            Mashing(
+                                malts
+                                    .map((m) =>
+                                        SpecToProducts(m, [], null))
+                                    .toList(),
+                                mashSteps,
+                                mashWater),
+                            rinsingWater,
+                            cooking,
+                            yeast.amount != null || yeast.name != null ? yeast : null,
+                            minTemp,
+                            maxTemp,
+                            bottleSugar.amount != null || bottleSugar.name != null ? bottleSugar : null,
+                            remarks);
+                        await Store.saveRecipe(newRecipe);
+
                         Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    RecipeDetails(recipe: finalRecipe)),
+                                    RecipeDetails(recipe: newRecipe)),
                             (Route<dynamic> route) => route.isFirst);
                       },
                 child: Text("Opslaan"),
@@ -1182,40 +1198,40 @@ class _RecipeCreatorState extends State<RecipeCreator> {
             ])));
   }
 
-  showDeleteDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-              title: const SelectableText('Recept verwijderen'),
-              children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Container(
-                      padding: const EdgeInsets.only(left: 25, right: 25),
-                      child: const SelectableText(
-                          'Weet je zeker dat je dit recept wil verwijderen?')),
-                  const SizedBox(height: 20),
-                  Center(
-                      child: Wrap(spacing: 10, children: [
-                    OutlinedButton(
-                        onPressed: () async {
-                          await Store.removeRecipe(recipe!);
-                          Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute<void>(
-                                builder: (BuildContext context) =>
-                                    MyHomePage(title: 'Bier Brouwen'),
-                              ),
-                              (route) => false);
-                        },
-                        child: const Text('Ja')),
-                    ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Nee')),
-                  ]))
-                ])
-              ]);
-        });
-  }
+  // showDeleteDialog() {
+  //   showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return SimpleDialog(
+  //             title: const SelectableText('Recept verwijderen'),
+  //             children: [
+  //               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  //                 Container(
+  //                     padding: const EdgeInsets.only(left: 25, right: 25),
+  //                     child: const SelectableText(
+  //                         'Weet je zeker dat je dit recept wil verwijderen?')),
+  //                 const SizedBox(height: 20),
+  //                 Center(
+  //                     child: Wrap(spacing: 10, children: [
+  //                   OutlinedButton(
+  //                       onPressed: () async {
+  //                         await Store.removeRecipe(recipe!);
+  //                         Navigator.of(context).pushAndRemoveUntil(
+  //                             MaterialPageRoute<void>(
+  //                               builder: (BuildContext context) =>
+  //                                   MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
+  //                             ),
+  //                             (route) => false);
+  //                       },
+  //                       child: const Text('Ja')),
+  //                   ElevatedButton(
+  //                       onPressed: () {
+  //                         Navigator.pop(context);
+  //                       },
+  //                       child: const Text('Nee')),
+  //                 ]))
+  //               ])
+  //             ]);
+  //       });
+  // }
 }

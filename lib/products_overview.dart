@@ -1,6 +1,7 @@
 import 'package:beer_brewer/form/DropDownRow.dart';
 import 'package:beer_brewer/recipe_details.dart';
 import 'package:beer_brewer/data/store.dart';
+import 'package:beer_brewer/util.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,7 @@ import 'data/store.dart';
 import 'data/store.dart';
 import 'form/DoubleTextFieldRow.dart';
 import 'form/TextFieldRow.dart';
+import 'main.dart';
 
 class ProductsOverview extends StatefulWidget {
   const ProductsOverview({Key? key}) : super(key: key);
@@ -21,8 +23,9 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   bool loading = true;
   int selected = 0;
   List<Product> products = [];
-  bool filterInStock = false;
+  bool filterInStock = true;
   String searchFilter = "";
+  Set<String> brands = {};
 
   Widget getProductGroup() {
     ProductCategory cat = ProductCategory.values[selected];
@@ -32,16 +35,22 @@ class _ProductsOverviewState extends State<ProductsOverview> {
         rows: products
             .map(
               (product) => DataRow(
+                onSelectChanged: (selected) => selected == null || !selected
+                    ? null
+                    : showAddDialog(product, (Product newProduct) {
+                        setState(() {
+                          brands.add(Util.capitalize(newProduct.brand));
+                        });
+                        Navigator.pop(context);
+                      }, onDelete: () {
+                        setState(() {});
+                      }),
                 cells: [
                   DataCell(Text(product.name)),
-                  if (product is Malt) DataCell(Text(product.type)),
+                  if (product is Malt) DataCell(Text(product.typeToString())),
                   if (product is Hop) DataCell(Text(product.type.name)),
                   DataCell(Text(product.brand)),
-                  DataCell(Text(product.amount == null
-                      ? "-"
-                      : product.amount! >= 1000
-                          ? "${product.amount! / 1000} kg"
-                          : "${product.amount} g")),
+                  DataCell(Text(product.amountToString())),
                   if (product is Malt) DataCell(Text(product.ebcToString())),
                   if (product is Hop)
                     DataCell(Text(product.alphaAcid == null
@@ -49,15 +58,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                         : "${product.alphaAcid}%")),
                   DataCell(Text(product.storesToString())),
                 ],
-                // onSelectChanged: (bool? selected) async {
-                //   await Navigator.push(
-                //     context,
-                //     MaterialPageRoute<void>(
-                //       builder: (BuildContext context) =>
-                //           RecipeDetails(recipe: r),
-                //     ),
-                //   );
-                // }
               ),
             )
             .toList(),
@@ -75,12 +75,11 @@ class _ProductsOverviewState extends State<ProductsOverview> {
     ]);
   }
 
-  List<Product> getFilteredList() {
+  void filterProducts() {
     ProductCategory cat = ProductCategory.values[selected];
 
     setState(() {
-      products = Store.products[cat]!;
-      print("In getFilteredList(): ${products.length}");
+      products = Store.products[cat.productType]! as List<Product>;
 
       if (filterInStock) {
         products = products
@@ -94,23 +93,23 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                 product.name.toLowerCase().contains(filter) ||
                 product.brand.toLowerCase().contains(filter) ||
                 (product is Malt &&
-                    product.type.toLowerCase().contains(filter)) ||
+                    product.typeToString().toLowerCase().contains(filter)) ||
                 (product is Hop &&
                     product.type.name.toLowerCase().contains(filter)))
             .toList();
       }
     });
-
-    return products;
   }
 
   void loadData() async {
     await Store.loadProducts();
     setState(() {
-      products = Store.products[ProductCategory.values[selected]]!;
+      products = Store.products[ProductCategory.values[selected].productType]!
+          as List<Product>;
+      brands = products.map((p) => p.brand).toSet();
+      filterProducts();
       loading = false;
     });
-    print("$products");
   }
 
   @override
@@ -148,7 +147,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                   setState(() {
                                     selected =
                                         ProductCategory.values.indexOf(cat);
-                                    products = getFilteredList();
+                                    filterProducts();
                                   });
                                 },
                               ),
@@ -205,7 +204,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                         onChanged: (value) {
                                           setState(() {
                                             searchFilter = value;
-                                            getFilteredList();
+                                            filterProducts();
                                           });
                                         },
                                       )),
@@ -230,17 +229,19 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                         onPressed: (value) {
                                           setState(() {
                                             filterInStock = value == 0;
-                                            getFilteredList();
+                                            filterProducts();
                                           });
                                         },
                                       ))
                                 ]),
                                 OutlinedButton.icon(
-                                    onPressed: () => showAddDialog(null, (Product newProduct) {
+                                    onPressed: () => showAddDialog(null,
+                                            (Product newProduct) {
                                           setState(() {
+                                            brands.add(Util.capitalize(newProduct.brand));
                                           });
                                           Navigator.pop(context);
-                                    }),
+                                        }),
                                     label: Text("Voeg toe"),
                                     icon: Icon(Icons.add))
                               ])),
@@ -249,20 +250,28 @@ class _ProductsOverviewState extends State<ProductsOverview> {
               ]));
   }
 
-  showAddDialog(Product? product, void Function(Product) onChange) {
+  showAddDialog(Product? product, void Function(Product) onChange,
+      {void Function()? onDelete}) {
     ProductCategory category = ProductCategory.values[selected];
     showDialog(
         context: context,
         builder: (BuildContext context) {
-          String? name;
-          String? type;
-          String? brand;
-          Map<String, Map<String, dynamic>>? stores;
-          double? amount;
-          double? ebcMin;
-          double? ebcMax;
-          double? alphaAcid;
-          String? hopType = HopType.korrels.name;
+          String? name = product?.name;
+          String? type = product == null
+              ? null
+              : product is Malt
+                  ? product.type
+                  : Product is Hop
+                      ? (product as Hop).type.name
+                      : null;
+          String? brand = product?.brand;
+          Map<String, Map<String, dynamic>>? stores = product?.stores;
+          double? amount = product?.amount;
+          double? ebcMin = product is Malt ? product.ebcMin : null;
+          double? ebcMax = product is Malt ? product.ebcMax : null;
+          double? alphaAcid = product is Hop ? product.alphaAcid : null;
+          String? hopType =
+              product is Hop ? product.type.name : HopType.korrels.name;
 
           return StatefulBuilder(builder: (context, setState) {
             return SimpleDialog(
@@ -277,6 +286,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                         children: [
                           TextFieldRow(
                             label: 'Naam',
+                            initialValue: name,
                             onChanged: (value) {
                               setState(() {
                                 name = value;
@@ -286,6 +296,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             DropDownRow(
                               label: "Soort",
+                              initialValue: type,
                               items: Store.maltTypes,
                               onChanged: (value) {
                                 setState(() {
@@ -293,16 +304,20 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                 });
                               },
                             ),
-                          TextFieldRow(
-                              label: 'Merk',
-                              onChanged: (value) {
-                                setState(() {
-                                  brand = value;
-                                });
-                              }),
+                          DropDownRow(
+                            label: 'Merk',
+                            initialValue: brand,
+                            onChanged: (value) {
+                              setState(() {
+                                brand = value;
+                              });
+                            },
+                            items: brands.toList(),
+                          ),
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Min EBC",
+                                initialValue: ebcMin,
                                 onChanged: (value) {
                                   setState(() {
                                     ebcMin = double.parse(value);
@@ -311,6 +326,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Max EBC",
+                                initialValue: ebcMax,
                                 onChanged: (value) {
                                   setState(() {
                                     ebcMax = double.parse(value);
@@ -319,7 +335,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DropDownRow(
                               label: "Type",
-                              initialValue: HopType.korrels.name,
+                              initialValue: hopType,
                               onChanged: (value) {
                                 setState(() {
                                   hopType = value;
@@ -328,8 +344,9 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                               items: HopType.values.map((t) => t.name).toList(),
                             ),
                           if (category == ProductCategory.hop)
-                            TextFieldRow(
+                            DoubleTextFieldRow(
                                 label: "Alfazuur (%)",
+                                initialValue: alphaAcid,
                                 onChanged: (value) {
                                   setState(() {
                                     alphaAcid = value;
@@ -338,40 +355,64 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           TextFieldRow(label: 'Te koop'),
                           DoubleTextFieldRow(
                             label: 'Op voorraad (g)',
+                            initialValue: amount,
                             onChanged: (value) {
                               setState(() {
-                                amount = double.parse(value);
+                                amount = value;
                               });
                             },
                           ),
                           SizedBox(height: 20),
-                          Center(
-                              child: ElevatedButton(
-                                  onPressed: name != null
-                                      ? () {
-                                          Map extraProps = {};
-                                          if (category ==
-                                              ProductCategory.malt) {
-                                            extraProps["type"] = type;
-                                            extraProps["ebcMin"] = ebcMin;
-                                            extraProps["ebcMax"] = ebcMax;
-                                          } else if (category ==
-                                              ProductCategory.hop) {
-                                            extraProps["alphaAcid"] = alphaAcid;
-                                            extraProps["type"] = hopType;
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (product != null)
+                                  OutlinedButton(
+                                      onPressed: () {
+                                        Util.showDeleteDialog(
+                                            context, "product", () async {
+                                          await Store.removeProduct(product)
+                                              .then((value) => onDelete!());
+                                          Navigator.pop(context);
+                                          Navigator.pop(context);
+                                        });
+                                      },
+                                      child: const Text(
+                                        "Verwijderen",
+                                        style: TextStyle(color: Colors.red),
+                                      )),
+                                if (product != null) SizedBox(width: 10),
+                                ElevatedButton(
+                                    onPressed: name != null
+                                        ? () {
+                                            Map extraProps = {};
+                                            if (category ==
+                                                ProductCategory.malt) {
+                                              extraProps["type"] = type;
+                                              extraProps["ebcMin"] = ebcMin;
+                                              extraProps["ebcMax"] = ebcMax;
+                                            } else if (category ==
+                                                ProductCategory.hop) {
+                                              extraProps["alphaAcid"] =
+                                                  alphaAcid;
+                                              extraProps["type"] = hopType;
+                                            }
+                                            Store.saveProduct(
+                                                    product?.id,
+                                                    category,
+                                                    name!,
+                                                    brand,
+                                                    stores,
+                                                    amount,
+                                                    extraProps)
+                                                .then((newProduct) {
+                                                  filterProducts();
+                                              onChange(newProduct);
+                                            });
                                           }
-                                          print(extraProps.toString());
-                                          Store.saveProduct(
-                                                  product?.id,
-                                                  category,
-                                                  name!,
-                                                  brand,
-                                                  stores,
-                                                  amount,
-                                                  extraProps).then((newProduct) => onChange(newProduct));
-                                        }
-                                      : null,
-                                  child: const Text("Voeg toe")))
+                                        : null,
+                                    child: const Text("Opslaan"))
+                              ])
                         ]),
                   ),
                 ]);
