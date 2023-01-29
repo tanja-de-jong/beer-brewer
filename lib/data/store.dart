@@ -437,7 +437,9 @@ class Batch {
       "brewDate": brewDate,
       "lagerDate": lagerDate,
       "bottleDate": bottleDate,
-      "sgMeasurements": sgMeasurements
+      "sgMeasurements": sgMeasurements.keys
+          .map((e) => {"date": e, "SG": sgMeasurements[e]})
+          .toList()
     };
   }
 }
@@ -905,7 +907,9 @@ class SpecToProducts {
     List productsData = data["products"];
     var result = SpecToProducts(
         spec,
-        productsData.map((data) => ProductInstance.create(spec.category, data)).toList(),
+        productsData
+            .map((data) => ProductInstance.create(spec.category, data))
+            .toList(),
         data["explanation"]);
     return result;
   }
@@ -926,17 +930,13 @@ class ProductInstance {
   ProductInstance(this.product, this.amount);
 
   static ProductInstance create(ProductSpecCategory category, Map data) {
-    Product product = Store.products[category.product]!.firstWhere((p) => p.id == data["productId"]);
-    return ProductInstance(
-        product,
-        data["amount"]);
+    Product product = Store.products[category.product]!
+        .firstWhere((p) => p.id == data["productId"]);
+    return ProductInstance(product, data["amount"]);
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      "productId": product.id,
-      "amount": amount
-    };
+    return {"productId": product.id, "amount": amount};
   }
 }
 
