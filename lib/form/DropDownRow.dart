@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class DropDownRow extends StatefulWidget {
   final MainAxisAlignment alignment;
   final String label;
-  final List<String> items;
+  final List<String>? items;
   final String? initialValue;
   final Function(String)? onChanged;
   final TextEditingController? controller;
@@ -112,7 +112,7 @@ class _DropDownRowState extends State<DropDownRow> {
 
   @override
   void initState() {
-    items.addAll(widget.items);
+    if (widget.items != null) items.addAll(widget.items!);
 
     if (widget.initialValue != null) {
       String initialValue = widget.initialValue!;
@@ -141,7 +141,7 @@ class _DropDownRowState extends State<DropDownRow> {
         style: const TextStyle(fontStyle: FontStyle.italic),
       ),
       Column(children: [
-      SizedBox(height: 30, width: 200, child: getDropDown(widget.label, items)),
+      SizedBox(height: 30, width: 200, child: widget.items == null ? TextFormField(initialValue: widget.initialValue, onChanged: widget.onChanged,) : getDropDown(widget.label, items)),
         const SizedBox(height: 5),
     ])
     ],));

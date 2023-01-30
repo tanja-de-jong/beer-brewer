@@ -11,6 +11,7 @@ import '../main.dart';
 import '../models/SpecToProducts.dart';
 import '../models/cooking.dart';
 import '../models/mashing.dart';
+import '../models/product.dart';
 import '../models/product_spec.dart';
 import '../models/recipe.dart';
 
@@ -84,7 +85,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
 
   List<Widget> getOtherFields() {
     return [
-      TextFieldRow(
+      DropDownRow(
           focusNode: addOtherFocusNode,
           label: "Soort",
           initialValue: otherName,
@@ -92,7 +93,8 @@ class _RecipeCreatorState extends State<RecipeCreator> {
             setState(() {
               otherName = value;
             });
-          }),
+          },
+      items: Store.products[Product]?.map((e) => e.name).toList().cast<String>()),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
           initialValue: otherAmount,
@@ -227,7 +229,8 @@ class _RecipeCreatorState extends State<RecipeCreator> {
     ];
   }
 
-  void initData() {
+  Future<void> initData() async {
+    await Store.loadProducts();
     setState(() {
       if (recipe != null) {
         name = recipe?.name;
@@ -575,7 +578,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   child: Column(
                                     children: [
                                       ...getMaltFields(),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 10),
                                       OutlinedButton(
                                           onPressed: maltType == null ||
                                                   maltAmount == null
@@ -728,7 +731,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   child: Column(
                                     children: [
                                       ...getHopFields(),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 10),
                                       OutlinedButton(
                                           onPressed: hopType == null ||
                                                   hopAmount == null ||
@@ -767,14 +770,14 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   Wrap(spacing: 70, children: [
-                                    TextFieldRow(
+                                    DropDownRow(
                                         label: "Naam",
                                         initialValue: yeast.name,
                                         onChanged: (value) {
                                           setState(() {
                                             yeast.name = value;
                                           });
-                                        }),
+                                        }, items: Store.products[Yeast]?.map((e) => e.name).toList().cast<String>()),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
                                         initialValue: yeast.amount,
@@ -795,14 +798,14 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   Wrap(spacing: 70, children: [
-                                    TextFieldRow(
+                                    DropDownRow(
                                         label: "Naam",
                                         initialValue: cookingSugar.name,
                                         onChanged: (value) {
                                           setState(() {
                                             cookingSugar.name = value;
                                           });
-                                        }),
+                                        }, items: Store.products[Sugar]?.map((e) => e.name).toList().cast<String>(),),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
                                         initialValue: cookingSugar.amount,
@@ -831,14 +834,14 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   Wrap(spacing: 70, children: [
-                                    TextFieldRow(
+                                    DropDownRow(
                                         label: "Naam",
                                         initialValue: bottleSugar.name,
                                         onChanged: (value) {
                                           setState(() {
                                             bottleSugar.name = value;
                                           });
-                                        }),
+                                        }, items: Store.products[Sugar]?.map((e) => e.name).toList().cast<String>()),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g/L)",
                                         initialValue: bottleSugar.amount,
@@ -978,7 +981,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   child: Column(
                                     children: [
                                       ...getOtherFields(),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 10),
                                       OutlinedButton(
                                           onPressed: otherName == null ||
                                                   otherAmount == null ||
@@ -1084,7 +1087,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   child: Column(
                                     children: [
                                       ...getMashStepFields(),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 10),
                                       OutlinedButton(
                                           onPressed: mashTime == null &&
                                                   mashTemp == null

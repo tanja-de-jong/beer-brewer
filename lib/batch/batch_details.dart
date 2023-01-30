@@ -119,8 +119,8 @@ class _BatchDetailsState extends State<BatchDetails> {
                   "SG-metingen",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                TextButton(
-                    onPressed: () {
+                if (batch.brewDate != null) TextButton(
+                    onPressed:() {
                       addSGMeasurement((DateTime date, double value) async {
                         Batch updatedBatch =
                             await Store.addSGToBatch(batch, date, value);
@@ -272,6 +272,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                       batch.getMashingSchedule()
                     ])
               ]),
+              const SizedBox(height: 20),
               Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                 Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

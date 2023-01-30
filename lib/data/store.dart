@@ -91,17 +91,12 @@ class Store {
   ];
 
   static Map<Type, List> products = {
-    Malt: maltProducts,
-    Hop: hopProducts,
-    Yeast: yeastProducts,
-    Sugar: sugarProducts,
-    Product: otherProducts,
+    Malt: [],
+    Hop: [],
+    Yeast: [],
+    Sugar: [],
+    Product: [],
   };
-  static List<Malt> maltProducts = [];
-  static List<Hop> hopProducts = [];
-  static List<Sugar> sugarProducts = [];
-  static List<Yeast> yeastProducts = [];
-  static List<Sugar> otherProducts = [];
 
   static List<Recipe> recipes = [];
   static List<Batch> batches = [];
