@@ -11,7 +11,7 @@ class Util {
         ? "-"
         : amount >= 1000
             ? "${(amount / 1000).toString().replaceAll(RegExp(r'\.'), ",")} kg"
-            : "${amount} g";
+            : "$amount g";
   }
 
   static String? prettify(double? d) {

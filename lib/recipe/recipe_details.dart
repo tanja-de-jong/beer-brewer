@@ -1,15 +1,16 @@
 import 'package:beer_brewer/main.dart';
-import 'package:beer_brewer/recipe_creator.dart';
-import 'package:beer_brewer/recipes_overview.dart';
+import 'package:beer_brewer/recipe/recipe_creator.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'batch_creator.dart';
-import 'data/store.dart';
+import '../batch/batch_creator.dart';
+import '../data/store.dart';
+import '../models/product_spec.dart';
+import '../models/recipe.dart';
 
 class RecipeDetails extends StatefulWidget {
-  final Recipe? recipe;
+  final Recipe recipe;
 
-  const RecipeDetails({Key? key, this.recipe}) : super(key: key);
+  const RecipeDetails({Key? key, required this.recipe}) : super(key: key);
 
   @override
   State<RecipeDetails> createState() => _RecipeDetailsState();
@@ -24,7 +25,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
       children: [
         Text(
           "$label:",
-          style: TextStyle(fontStyle: FontStyle.italic),
+          style: const TextStyle(fontStyle: FontStyle.italic),
         ),
         value
       ],
@@ -34,14 +35,14 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute<void>(
       builder: (BuildContext context) =>
-          MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
+          const MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
     ), (route) => false);
     return true;
   }
 
   @override
   void initState() {
-    recipe = widget.recipe!;
+    recipe = widget.recipe;
     super.initState();
   }
 
@@ -57,14 +58,14 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                 FontWeight
                     .bold),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _getRow("Naam", Text(recipe.name)),
           _getRow("Stijl", Text(recipe.style ?? "-")),
           _getRow("Bron",
               Text(recipe.source ?? "-")),
           _getRow("Hoeveelheid",
               Text("${recipe.amount} liter")),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _getRow(
               "Start",
               Text(recipe.expStartSG == null
@@ -86,7 +87,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               Text((recipe.efficiency == null
                   ? "-"
                   : "${recipe.efficiency! * 100}%"))),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _getRow(
               "Kleur",
               Text(recipe.color == null
@@ -97,7 +98,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               Text(recipe.bitter == null
                   ? "-"
                   : "${recipe.bitter} EBU")),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _getRow(
               "Maischwater",
               Text(
@@ -110,7 +111,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               "Bottelsuiker",
               Text(
                   recipe.bottleSugar?.getProductString() ?? "-")),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
               mainAxisAlignment:
               MainAxisAlignment.start,
@@ -129,26 +130,26 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                             FontWeight
                                 .bold),
                       ),
-                      SizedBox(height: 10),
-                      recipe.mashing.malts.isEmpty ? Text("Geen mouten beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                      const SizedBox(height: 10),
+                      recipe.mashing.malts.isEmpty ? const Text("Geen mouten beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
                         border:
                         TableBorder.all(),
                         defaultColumnWidth:
                         const IntrinsicColumnWidth(),
                         children: [
-                          TableRow(
+                          const TableRow(
                               children: [
                                 Padding(
                                     padding:
-                                    const EdgeInsets.all(10),
+                                    EdgeInsets.all(10),
                                     child: Text("Type", style: TextStyle(fontWeight: FontWeight.bold),)),
                                 Padding(
-                                    padding: const EdgeInsets.all(
+                                    padding: EdgeInsets.all(
                                         10),
                                     child: Text("EBC", style: TextStyle(fontWeight: FontWeight.bold))),
                                 Padding(
                                     padding:
-                                    const EdgeInsets.all(10),
+                                    EdgeInsets.all(10),
                                     child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold)))
                               ]),
                         ...recipe.mashing.malts
@@ -172,20 +173,20 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       ),
                       const SizedBox(
                           height: 10),
-                      recipe.mashing.steps.isEmpty ? Text("Geen moutschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                      recipe.mashing.steps.isEmpty ? const Text("Geen moutschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
                         border:
                         TableBorder.all(),
                         defaultColumnWidth:
                         const IntrinsicColumnWidth(),
                         children: [
-                          TableRow(
+                          const TableRow(
                               children: [
                                 Padding(
                                     padding:
-                                    const EdgeInsets.all(10),
+                                    EdgeInsets.all(10),
                                     child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold),)),
                                 Padding(
-                                    padding: const EdgeInsets.all(
+                                    padding: EdgeInsets.all(
                                         10),
                                     child: Text("Tijd", style: TextStyle(fontWeight: FontWeight.bold))),
                               ]),
@@ -227,29 +228,29 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         fontWeight:
                         FontWeight.bold),
                   ),
-                  SizedBox(height: 10),
-                  recipe.cooking.steps.isEmpty ? Text("Geen kookschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                  const SizedBox(height: 10),
+                  recipe.cooking.steps.isEmpty ? const Text("Geen kookschema beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
                     border: TableBorder.all(),
                     defaultColumnWidth:
                     const IntrinsicColumnWidth(),
                     children: [
-                      TableRow(
+                      const TableRow(
                           children: [
                             Padding(
                                 padding:
-                                const EdgeInsets.all(10),
+                                EdgeInsets.all(10),
                                 child: Text("Tijd", style: TextStyle(fontWeight: FontWeight.bold),)),
                             Padding(
-                                padding: const EdgeInsets.all(
+                                padding: EdgeInsets.all(
                                     10),
                                 child: Text("Soort", style: TextStyle(fontWeight: FontWeight.bold))),
                             Padding(
                                 padding:
-                                const EdgeInsets.all(10),
+                                EdgeInsets.all(10),
                                 child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold))),
                             Padding(
                                 padding:
-                                const EdgeInsets.all(10),
+                                EdgeInsets.all(10),
                                 child: Text("α", style: TextStyle(fontWeight: FontWeight.bold)))
                           ]),
                     ...recipe.cooking.steps
@@ -276,7 +277,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   ),
                 ])
           ]),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       Row(
           mainAxisAlignment:
           MainAxisAlignment.start,
@@ -293,25 +294,25 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         fontWeight:
                         FontWeight.bold),
                   ),
-                  SizedBox(height: 10),
-                  recipe.yeast?.name == null && recipe.yeast?.amount == null ? Text("Geen gist beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
+                  const SizedBox(height: 10),
+                  recipe.yeast?.name == null && recipe.yeast?.amount == null ? const Text("Geen gist beschikbaar.", style: TextStyle(fontStyle: FontStyle.italic)) : Table(
                       border: TableBorder.all(),
                       defaultColumnWidth:
                       const IntrinsicColumnWidth(),
                       children: [
-                        TableRow(
+                        const TableRow(
                             children: [
                               Padding(
                                   padding:
-                                  const EdgeInsets.all(10),
+                                  EdgeInsets.all(10),
                                   child: Text("Gist", style: TextStyle(fontWeight: FontWeight.bold),)),
                               Padding(
-                                  padding: const EdgeInsets.all(
+                                  padding: EdgeInsets.all(
                                       10),
                                   child: Text("Gewicht", style: TextStyle(fontWeight: FontWeight.bold))),
                               Padding(
                                   padding:
-                                  const EdgeInsets.all(10),
+                                  EdgeInsets.all(10),
                                   child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold))),
                             ]),
                         if (recipe.yeast != null) TableRow(children: [
@@ -337,7 +338,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       ]),
                 ])
           ]),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       Row(
           mainAxisAlignment:
           MainAxisAlignment.start,
@@ -354,11 +355,11 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         fontWeight:
                         FontWeight.bold),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   SizedBox(width: 300, child: Text(recipe.remarks ?? "-")),
                 ])
           ]),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       Row(
             mainAxisAlignment:
             MainAxisAlignment.start,
@@ -368,20 +369,20 @@ class _RecipeDetailsState extends State<RecipeDetails> {
           style: TextStyle(
               fontWeight:
               FontWeight.bold)),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Table(border:
         TableBorder.all(),
           defaultColumnWidth:
           const IntrinsicColumnWidth(),
           children: [
-            TableRow(
+            const TableRow(
                 children: [
                   Padding(
                       padding:
-                      const EdgeInsets.all(10),
+                      EdgeInsets.all(10),
                       child: Text("Datum", style: TextStyle(fontWeight: FontWeight.bold),)),
                   Padding(
-                      padding: const EdgeInsets.all(
+                      padding: EdgeInsets.all(
                           10),
                       child: Text("Status", style: TextStyle(fontWeight: FontWeight.bold))),
                 ]),
@@ -405,10 +406,10 @@ class _RecipeDetailsState extends State<RecipeDetails> {
     AppBar appBar = AppBar(
       // Here we take the value from the MyHomePage object that was created by
       // the App.build method, and use it to set our appbar title.
-      title: Text("Receptdetails"),
+      title: const Text("Recept"),
       actions: [
         Padding(
-            padding: EdgeInsets.only(right: 20.0),
+            padding: const EdgeInsets.only(right: 20.0),
             child: GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
@@ -416,7 +417,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       builder: (context) => RecipeCreator(recipe: recipe)),
                 );
               },
-              child: Icon(
+              child: const Icon(
                 Icons.edit,
                 size: 26.0,
               ),
@@ -438,14 +439,14 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     Flexible(
                         child: SingleChildScrollView(
                             child: Container(
-                                padding: EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(10),
                                 // width: 400,
                                 child: MediaQuery.of(context).size.width >= 700 ? Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     leftColumn(),
-                                    SizedBox(width: 50),
+                                    const SizedBox(width: 50),
                                     rightColumn()
                                   ],
                                 ) : Column(
@@ -453,13 +454,13 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     leftColumn(),
-                                    SizedBox(height: 20),
+                                    const SizedBox(height: 20),
                                     rightColumn()
                                   ],
                                 ))))
                   ])),
-          Divider(),
-          SizedBox(height: 15),
+          const Divider(),
+          const SizedBox(height: 15),
           ElevatedButton(
             onPressed: () {
               if (recipe.amount != null && recipe.amount! > 0) {
@@ -477,7 +478,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     Text("Recept heeft nog geen hoeveelheid.")));
               }
             },
-            child: Text("Brouwplan maken"),
+            child: const Text("Brouwplan maken"),
           ),
         ])));
   }

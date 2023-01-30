@@ -1,14 +1,18 @@
 import 'dart:core';
 
-import 'package:beer_brewer/data/database_controller.dart';
-import 'package:beer_brewer/recipe_details.dart';
+import 'package:beer_brewer/recipe/recipe_details.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/material.dart';
-import 'data/store.dart';
-import 'form/DoubleTextFieldRow.dart';
-import 'form/DropDownRow.dart';
-import 'form/TextFieldRow.dart';
-import 'main.dart';
+import '../data/store.dart';
+import '../form/DoubleTextFieldRow.dart';
+import '../form/DropDownRow.dart';
+import '../form/TextFieldRow.dart';
+import '../main.dart';
+import '../models/SpecToProducts.dart';
+import '../models/cooking.dart';
+import '../models/mashing.dart';
+import '../models/product_spec.dart';
+import '../models/recipe.dart';
 
 class RecipeCreator extends StatefulWidget {
   final Recipe? recipe;
@@ -160,7 +164,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               maltType = value;
             });
           },
-          items: [
+          items: const [
             "Pils",
             "Pale",
             "Vienna",
@@ -248,19 +252,17 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           List<ProductSpec> otherSpecs = [];
           for (SpecToProducts stp in step.products) {
             ProductSpec? spec = stp.spec;
-            if (spec != null) {
-              switch (spec.category) {
-                case ProductSpecCategory.hop:
-                  hopSpecs.add(spec as HopSpec);
-                  break;
-                case ProductSpecCategory.cookingSugar:
-                  cookingSugar = spec as CookingSugarSpec;
-                  cookingSugarTime = time;
-                  break;
-                default:
-                  otherSpecs.add(spec);
-                  break;
-              }
+            switch (spec.category) {
+              case ProductSpecCategory.hop:
+                hopSpecs.add(spec as HopSpec);
+                break;
+              case ProductSpecCategory.cookingSugar:
+                cookingSugar = spec as CookingSugarSpec;
+                cookingSugarTime = time;
+                break;
+              default:
+                otherSpecs.add(spec);
+                break;
             }
           }
           if (hopSpecs.isNotEmpty) hops[time] = hopSpecs;
@@ -291,26 +293,28 @@ class _RecipeCreatorState extends State<RecipeCreator> {
     AppBar appBar = AppBar(
       // Here we take the value from the MyHomePage object that was created by
       // the App.build method, and use it to set our appbar title.
-      title: Text("Maak recept"),
+      title: const Text("Maak recept"),
       actions: [
         if (widget.recipe != null)
           Padding(
-              padding: EdgeInsets.only(right: 20.0),
+              padding: const EdgeInsets.only(right: 20.0),
               child: GestureDetector(
                 onTap: () {
                   Util.showDeleteDialog(context, "recept", () async {
                     await Store.removeRecipe(recipe!);
-                    Navigator.of(context).pushAndRemoveUntil(
+                    if (mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute<void>(
-                          builder: (BuildContext context) => MyHomePage(
+                          builder: (BuildContext context) => const MyHomePage(
                             title: 'Bier Brouwen',
                             selectedPage: 1,
                           ),
                         ),
                         (route) => false);
+                    }
                   });
                 },
-                child: Icon(
+                child: const Icon(
                   Icons.delete,
                   size: 26.0,
                 ),
@@ -335,7 +339,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "Algemeen",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
@@ -355,7 +359,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                       style = value;
                                     });
                                   },
-                                  items: [
+                                  items: const [
                                     "Dubbel",
                                     "Tripel",
                                     "IPA",
@@ -390,7 +394,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "Overige",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
@@ -430,7 +434,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "Alcohol",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
@@ -463,7 +467,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "Vergisting",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
@@ -485,7 +489,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   }),
                             ]),
                       ]),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -494,7 +498,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Row(mainAxisSize: MainAxisSize.min, children: [
                               Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,12 +507,12 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          Text(
+                                          const Text(
                                             "Mout",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ),
-                                          SizedBox(width: 5),
+                                          const SizedBox(width: 5),
                                           InkWell(
                                             child: Container(
                                               height: 15,
@@ -535,8 +539,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                   showAddMashStep = false;
                                                 }
                                               });
-                                              if (showAddMalt)
+                                              if (showAddMalt) {
                                                 addMaltFocusNode.requestFocus();
+                                              }
                                             },
                                           ),
                                         ]),
@@ -548,7 +553,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                             splashRadius: 12,
                                             iconSize: 15,
                                             padding: EdgeInsets.zero,
-                                            constraints: BoxConstraints(),
+                                            constraints: const BoxConstraints(),
                                             onPressed: () {
                                               setState(() {
                                                 malts.remove(malt);
@@ -558,19 +563,19 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         ])),
                                   ])
                             ]),
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
                             if (showAddMalt)
                               Container(
                                   decoration:
                                       BoxDecoration(border: Border.all()),
-                                  padding: EdgeInsets.all(5),
-                                  margin: EdgeInsets.all(5),
+                                  padding: const EdgeInsets.all(5),
+                                  margin: const EdgeInsets.all(5),
                                   child: Column(
                                     children: [
                                       ...getMaltFields(),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton(
                                           onPressed: maltType == null ||
                                                   maltAmount == null
@@ -589,11 +594,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     maltAmount = null;
                                                   });
                                                 },
-                                          child: Text("Voeg toe")),
-                                      SizedBox(height: 5),
+                                          child: const Text("Voeg toe")),
+                                      const SizedBox(height: 5),
                                     ],
                                   )),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Row(mainAxisSize: MainAxisSize.min, children: [
                               Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,12 +607,12 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          Text(
+                                          const Text(
                                             "Hop",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ),
-                                          SizedBox(width: 5),
+                                          const SizedBox(width: 5),
                                           InkWell(
                                             child: Container(
                                               height: 15,
@@ -634,8 +639,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                   showAddMashStep = false;
                                                 }
                                               });
-                                              if (showAddHop)
+                                              if (showAddHop) {
                                                 addHopFocusNode.requestFocus();
+                                              }
                                             },
                                           ),
                                         ]),
@@ -648,8 +654,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         spacing: 15,
                                         children:
                                             (hops.keys.toList()
-                                                  ..sort((a, b) =>
-                                                      b!.compareTo(a!)))
+                                                  // ..sort((a, b) =>
+                                                  //     b!.compareTo(a!))
+                                            )
                                                 .map((time) => SizedBox(
                                                     width: 250,
                                                     child: Column(
@@ -664,7 +671,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                             time == null
                                                                 ? "-"
                                                                 : "$time minuten",
-                                                            style: TextStyle(
+                                                            style: const TextStyle(
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
@@ -686,11 +693,12 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                                           hops[time]!
                                                                               .remove(hop);
                                                                           if (hops[time]!
-                                                                              .isEmpty)
+                                                                              .isEmpty) {
                                                                             hops.remove(time);
+                                                                          }
                                                                         });
                                                                       },
-                                                                      icon: Icon(
+                                                                      icon: const Icon(
                                                                           Icons
                                                                               .close),
                                                                       splashRadius:
@@ -701,26 +709,26 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                                           EdgeInsets
                                                                               .zero,
                                                                       constraints:
-                                                                          BoxConstraints(),
+                                                                          const BoxConstraints(),
                                                                     )
                                                                   ]))
                                                         ])))
                                                 .toList()),
                                   ])
                             ]),
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
                             if (showAddHop)
                               Container(
                                   decoration:
                                       BoxDecoration(border: Border.all()),
-                                  padding: EdgeInsets.all(5),
-                                  margin: EdgeInsets.all(5),
+                                  padding: const EdgeInsets.all(5),
+                                  margin: const EdgeInsets.all(5),
                                   child: Column(
                                     children: [
                                       ...getHopFields(),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton(
                                           onPressed: hopType == null ||
                                                   hopAmount == null ||
@@ -745,15 +753,15 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     hopAmount = null;
                                                   });
                                                 },
-                                          child: Text("Voeg toe")),
-                                      SizedBox(height: 5),
+                                          child: const Text("Voeg toe")),
+                                      const SizedBox(height: 5),
                                     ],
                                   )),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     "Gist",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
@@ -777,11 +785,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         }),
                                   ]),
                                 ]),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     "Kooksuiker",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
@@ -813,11 +821,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         }),
                                   ]),
                                 ]),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     "Bottelsuiker",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
@@ -841,17 +849,17 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         }),
                                   ])
                                 ]),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Column(children: [
                               Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
+                                    const Text(
                                       "Overige",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
-                                    SizedBox(width: 5),
+                                    const SizedBox(width: 5),
                                     InkWell(
                                       child: Container(
                                         height: 15,
@@ -878,8 +886,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                             showAddMashStep = false;
                                           }
                                         });
-                                        if (showAddOther)
+                                        if (showAddOther) {
                                           addOtherFocusNode.requestFocus();
+                                        }
                                       },
                                     ),
                                   ]),
@@ -895,8 +904,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         spacing: 15,
                                         children:
                                             (others.keys.toList()
-                                                  ..sort((a, b) =>
-                                                      b!.compareTo(a!)))
+                                                  // ..sort((a, b) =>
+                                                  //     b!.compareTo(a!))
+                                                )
                                                 .map((time) => SizedBox(
                                                     width: 250,
                                                     child: Column(
@@ -911,7 +921,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                             time == null
                                                                 ? "-"
                                                                 : "$time minuten",
-                                                            style: TextStyle(
+                                                            style: const TextStyle(
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
@@ -937,7 +947,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                                           EdgeInsets
                                                                               .zero,
                                                                       constraints:
-                                                                          BoxConstraints(),
+                                                                          const BoxConstraints(),
                                                                       onPressed:
                                                                           () {
                                                                         setState(
@@ -945,8 +955,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                                           others[time]!
                                                                               .remove(other);
                                                                           if (others[time]!
-                                                                              .isEmpty)
+                                                                              .isEmpty) {
                                                                             others.remove(time);
+                                                                          }
                                                                         });
                                                                       },
                                                                     )
@@ -955,19 +966,19 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                 .toList())
                                   ]),
                             ]),
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
                             if (showAddOther)
                               Container(
                                   decoration:
                                       BoxDecoration(border: Border.all()),
-                                  padding: EdgeInsets.all(5),
-                                  margin: EdgeInsets.all(5),
+                                  padding: const EdgeInsets.all(5),
+                                  margin: const EdgeInsets.all(5),
                                   child: Column(
                                     children: [
                                       ...getOtherFields(),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton(
                                           onPressed: otherName == null ||
                                                   otherAmount == null ||
@@ -995,8 +1006,8 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     otherAmount = null;
                                                   });
                                                 },
-                                          child: Text("Voeg toe")),
-                                      SizedBox(height: 5),
+                                          child: const Text("Voeg toe")),
+                                      const SizedBox(height: 5),
                                     ],
                                   )),
                           ]),
@@ -1006,12 +1017,12 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                             Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Text(
+                                  const Text(
                                     "Maischschema",
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                  SizedBox(width: 5),
+                                  const SizedBox(width: 5),
                                   InkWell(
                                     child: Container(
                                       height: 15,
@@ -1038,12 +1049,13 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                           showAddMalt = false;
                                         }
                                       });
-                                      if (showAddMalt)
+                                      if (showAddMalt) {
                                         addMaltFocusNode.requestFocus();
+                                      }
                                     },
                                   ),
                                 ]),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             ...mashSteps.map((step) => Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
@@ -1054,7 +1066,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         splashRadius: 12,
                                         iconSize: 15,
                                         padding: EdgeInsets.zero,
-                                        constraints: BoxConstraints(),
+                                        constraints: const BoxConstraints(),
                                         onPressed: () {
                                           setState(() {
                                             mashSteps.remove(step);
@@ -1062,17 +1074,17 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         },
                                       )
                                     ])),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             if (showAddMashStep)
                               Container(
                                   decoration:
                                       BoxDecoration(border: Border.all()),
-                                  padding: EdgeInsets.all(5),
-                                  margin: EdgeInsets.all(5),
+                                  padding: const EdgeInsets.all(5),
+                                  margin: const EdgeInsets.all(5),
                                   child: Column(
                                     children: [
                                       ...getMashStepFields(),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton(
                                           onPressed: mashTime == null &&
                                                   mashTemp == null
@@ -1088,20 +1100,20 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     mashTime = null;
                                                   });
                                                 },
-                                          child: Text("Voeg toe")),
-                                      SizedBox(height: 5),
+                                          child: const Text("Voeg toe")),
+                                      const SizedBox(height: 5),
                                     ],
                                   )),
                           ]),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               "Opmerkingen",
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 5),
+                            const SizedBox(height: 5),
                             SizedBox(
                                 height: 100,
                                 child: TextFormField(
@@ -1187,13 +1199,15 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                             remarks);
                         await Store.saveRecipe(newRecipe);
 
-                        Navigator.of(context).pushAndRemoveUntil(
+                        if (mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
                                 builder: (context) =>
                                     RecipeDetails(recipe: newRecipe)),
                             (Route<dynamic> route) => route.isFirst);
+                        }
                       },
-                child: Text("Opslaan"),
+                child: const Text("Opslaan"),
               ),
             ])));
   }

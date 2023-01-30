@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Label extends StatelessWidget {
@@ -11,16 +10,16 @@ class Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: EdgeInsets.all(5),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.all(5),
+        decoration: const BoxDecoration(
             color: Colors.blue,
             borderRadius: BorderRadius.all(Radius.circular(10))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text(text),
-          SizedBox(width: 5),
+          const SizedBox(width: 5),
           GestureDetector(
             onTap: onClose,
-            child: Icon(
+            child: const Icon(
               Icons.close,
               size: 15.0,
             ),

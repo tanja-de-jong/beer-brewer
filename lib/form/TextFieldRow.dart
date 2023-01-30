@@ -122,8 +122,9 @@ class _TextFieldRowState extends State<TextFieldRow> {
                                 doubleValue = double.parse(text);
                               }
                               if (widget.isPercentage &&
-                                  (doubleValue > 100 || doubleValue < 0))
+                                  (doubleValue > 100 || doubleValue < 0)) {
                                 return oldValue;
+                              }
                               return newValue;
                             } catch (e) {}
                             return oldValue;

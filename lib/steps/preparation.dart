@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../data/store.dart';
+import '../models/SpecToProducts.dart';
+import '../models/batch.dart';
+import '../models/product.dart';
 import '../util.dart';
 
 class PreparationStep extends StatefulWidget {
@@ -35,7 +36,9 @@ class _PreparationStepState extends State<PreparationStep> {
   @override
   void initState() {
     Batch batch = widget.batch;
-    List<SpecToProducts> stps = [...batch.mashing.malts, ...batch.cooking.steps.expand((step) => step.products), ...batch.bottleSugar, ...batch.yeast];
+    List<SpecToProducts> stps = [...batch.mashing.malts, ...batch.cooking.steps.expand((step) => step.products)];
+    if (batch.bottleSugar != null) stps.add(batch.bottleSugar!);
+    if (batch.yeast != null) stps.add(batch.yeast!);
     for (SpecToProducts stp in stps) {
       if (stp.products != null) {
         for (ProductInstance pi in stp.products!) {
@@ -69,7 +72,7 @@ class _PreparationStepState extends State<PreparationStep> {
           const Text("Ingrediënten", style: TextStyle(fontWeight: FontWeight.bold)),
           Wrap(spacing: 20, runSpacing: 10, children: [
           ...ProductCategory.values.map((cat) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (ingredients.keys.where((p) => p.runtimeType == cat.productType).isNotEmpty) Text(cat.name, style: TextStyle(
+            if (ingredients.keys.where((p) => p.runtimeType == cat.productType).isNotEmpty) Text(cat.name, style: const TextStyle(
               decoration:
               TextDecoration
                   .underline,
@@ -83,10 +86,10 @@ class _PreparationStepState extends State<PreparationStep> {
             ]),
       ],
     ),]),
-      SizedBox(height: 20),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-        const Text("- Maak het materiaal goed schoon.")
+      const SizedBox(height: 20),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+        Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
+        Text("- Maak het materiaal goed schoon.")
       ])
     ]);
   }

@@ -1,8 +1,9 @@
-import 'dart:convert';
-
-import 'package:beer_brewer/data/store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+
+import '../models/batch.dart';
+import '../models/product.dart';
+import '../models/recipe.dart';
 
 class DatabaseController {
   static FirebaseFirestore db = FirebaseFirestore.instance;
@@ -11,11 +12,7 @@ class DatabaseController {
     List<Recipe> result = [];
     List docs = (await db.collection("recipes").get()).docs;
     for (QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
-      Map data = doc.data();
-      List ingredientDocs = (await db.collection("recipes").doc(doc.id).collection("ingredients").get()).docs;
-      for (QueryDocumentSnapshot<Map<String, dynamic>> ingredientDoc in ingredientDocs) {
-      }
-      Recipe recipe = Recipe.create(doc.id, data);
+      Recipe recipe = Recipe.create(doc.id, doc.data());
       result.add(recipe);
     }
     return result;

@@ -1,8 +1,7 @@
-import 'package:beer_brewer/batch_creator.dart';
-import 'package:beer_brewer/batches_overview.dart';
+import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:beer_brewer/products_overview.dart';
-import 'package:beer_brewer/recipe_creator.dart';
-import 'package:beer_brewer/recipes_overview.dart';
+import 'package:beer_brewer/recipe/recipe_creator.dart';
+import 'package:beer_brewer/recipe/recipes_overview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -61,9 +60,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<Widget> pages = [
-    BatchesOverview(),
-    RecipesOverview(),
-    ProductsOverview()
+    const BatchesOverview(),
+    const RecipesOverview(),
+    const ProductsOverview()
   ];
   int selected = 0;
 
@@ -89,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: selected == 1
             ? [
                 Padding(
-                    padding: EdgeInsets.only(right: 20.0),
+                    padding: const EdgeInsets.only(right: 20.0),
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(
@@ -97,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               builder: (context) => const RecipeCreator()),
                         );
                       },
-                      child: Icon(
+                      child: const Icon(
                         Icons.add,
                         size: 26.0,
                       ),

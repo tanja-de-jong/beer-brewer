@@ -1,8 +1,8 @@
 import 'package:beer_brewer/main.dart';
 import 'package:flutter/material.dart';
 
-import 'batches_overview.dart';
 import 'data/store.dart';
+import 'models/batch.dart';
 
 class BrewStep extends StatefulWidget {
   final Batch batch;
@@ -55,7 +55,7 @@ class _BrewStepState extends State<BrewStep> {
                         builder: (context) => BrewStep(batch: widget.batch, contentList: widget.contentList, step: widget.step+1,)),
                   );
                 },
-                child: Text("Volgende"),
+                child: const Text("Volgende"),
               ) : ElevatedButton(onPressed: () {
                 Store.brewBatch(widget.batch, Store.startSG ?? 0);
                 Store.startSG = null;

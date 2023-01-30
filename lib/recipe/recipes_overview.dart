@@ -1,9 +1,8 @@
-import 'package:beer_brewer/recipe_details.dart';
 import 'package:beer_brewer/data/store.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:beer_brewer/recipe/recipe_details.dart';
 import 'package:flutter/material.dart';
 
-import 'data/store.dart';
+import '../data/store.dart';
 
 class RecipesOverview extends StatefulWidget {
   const RecipesOverview({Key? key}) : super(key: key);
@@ -25,7 +24,7 @@ class _RecipesOverviewState extends State<RecipesOverview> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: loading ? CircularProgressIndicator() : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Padding(
+    return Center(child: loading ? const CircularProgressIndicator() : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Padding(
       padding: const EdgeInsets.all(10.0),
       child: DataTable(showCheckboxColumn: false, rows: Store.recipes.map((r) =>
         DataRow(cells: [DataCell(Text(r.name)), DataCell(Text(r.style ?? "-")), DataCell(Text(Store.batches.where((b) => b.recipeId == r.id).length.toString()))], onSelectChanged: (bool? selected) async {

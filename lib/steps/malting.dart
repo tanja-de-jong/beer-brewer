@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../data/store.dart';
+import '../models/batch.dart';
+import '../models/product.dart';
 import '../util.dart';
 
 class MaltingStep extends StatefulWidget {
@@ -40,29 +40,29 @@ class _MaltingStepState extends State<MaltingStep> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         ...steps.keys.map((step) => Row(children: [Checkbox(value: steps[step], onChanged: (value){
           setState(() {
             steps[step] = !(steps[step] ?? true);
           });
         }), Text(step)])),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         const Text("Maischschema", style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Table(
             border:
             TableBorder.all(),
             defaultColumnWidth:
             const IntrinsicColumnWidth(),
             children: [
-              TableRow(
+              const TableRow(
                   children: [
                     Padding(
                         padding:
-                        const EdgeInsets.all(10),
+                        EdgeInsets.all(10),
                         child: Text("Temperatuur", style: TextStyle(fontWeight: FontWeight.bold),)),
                     Padding(
-                        padding: const EdgeInsets.all(
+                        padding: EdgeInsets.all(
                             10),
                         child: Text("Tijd", style: TextStyle(fontWeight: FontWeight.bold))),
                   ]),
@@ -81,11 +81,11 @@ class _MaltingStepState extends State<MaltingStep> {
                     ]),
               )]
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         const Text("Mouten", style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         ...batch.mashing.malts.expand((stp) => stp.products ?? []).map((pi) => Text("${Util.amountToString(pi.amount)} ${pi.product.name} van ${pi.product.brand} (${(pi.product as Malt).ebcToString()})")),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
     ]);
   }
 }

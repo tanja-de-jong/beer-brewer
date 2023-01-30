@@ -1,16 +1,12 @@
 import 'package:beer_brewer/form/DropDownRow.dart';
-import 'package:beer_brewer/recipe_details.dart';
 import 'package:beer_brewer/data/store.dart';
 import 'package:beer_brewer/util.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'data/store.dart';
-import 'data/store.dart';
-import 'data/store.dart';
 import 'form/DoubleTextFieldRow.dart';
 import 'form/TextFieldRow.dart';
-import 'main.dart';
+import 'models/product.dart';
 
 class ProductsOverview extends StatefulWidget {
   const ProductsOverview({Key? key}) : super(key: key);
@@ -62,14 +58,14 @@ class _ProductsOverviewState extends State<ProductsOverview> {
             )
             .toList(),
         columns: [
-          DataColumn(label: Text("Naam")),
+          const DataColumn(label: Text("Naam")),
           if (cat == ProductCategory.malt || cat == ProductCategory.hop)
-            DataColumn(label: Text("Type")),
-          DataColumn(label: Text("Merk")),
-          DataColumn(label: Text("Voorraad")),
-          if (cat == ProductCategory.malt) DataColumn(label: Text("EBC")),
-          if (cat == ProductCategory.hop) DataColumn(label: Text("Alfazuur")),
-          DataColumn(label: Text("Te koop")),
+            const DataColumn(label: Text("Type")),
+          const DataColumn(label: Text("Merk")),
+          const DataColumn(label: Text("Voorraad")),
+          if (cat == ProductCategory.malt) const DataColumn(label: Text("EBC")),
+          if (cat == ProductCategory.hop) const DataColumn(label: Text("Alfazuur")),
+          const DataColumn(label: Text("Te koop")),
         ],
       )
     ]);
@@ -122,7 +118,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   Widget build(BuildContext context) {
     return Center(
         child: loading
-            ? CircularProgressIndicator()
+            ? const CircularProgressIndicator()
             : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
                 Container(
                     // Tabs
@@ -153,7 +149,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                               ),
                             )
                             .toList())),
-                Container(
+                SizedBox(
                     height: 5,
                     child: Row(children: [
                       Container(
@@ -176,7 +172,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                     padding: const EdgeInsets.all(10.0),
                     child: Column(children: [
                       Padding(
-                          padding: EdgeInsets.only(left: 25, right: 25),
+                          padding: const EdgeInsets.only(left: 25, right: 25),
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -208,20 +204,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                           });
                                         },
                                       )),
-                                  SizedBox(width: 20),
+                                  const SizedBox(width: 20),
                                   SizedBox(
                                       height: 30,
                                       child: ToggleButtons(
-                                        children: [
-                                          Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: Text("Op voorraad")),
-                                          Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: Text("Alles"))
-                                        ],
                                         isSelected: [
                                           filterInStock,
                                           !filterInStock
@@ -232,6 +218,16 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                             filterProducts();
                                           });
                                         },
+                                        children: const [
+                                          Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 10, right: 10),
+                                              child: Text("Op voorraad")),
+                                          Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 10, right: 10),
+                                              child: Text("Alles"))
+                                        ],
                                       ))
                                 ]),
                                 OutlinedButton.icon(
@@ -242,8 +238,8 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                           });
                                           Navigator.pop(context);
                                         }),
-                                    label: Text("Voeg toe"),
-                                    icon: Icon(Icons.add))
+                                    label: const Text("Voeg toe"),
+                                    icon: const Icon(Icons.add))
                               ])),
                       getProductGroup()
                     ]))
@@ -279,7 +275,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                     child: Text("Voeg ${category.name.toLowerCase()} toe")),
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +348,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                     alphaAcid = value;
                                   });
                                 }),
-                          TextFieldRow(label: 'Te koop'),
+                          const TextFieldRow(label: 'Te koop'),
                           DoubleTextFieldRow(
                             label: 'Op voorraad (g)',
                             initialValue: amount,
@@ -362,7 +358,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                               });
                             },
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -373,15 +369,17 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                             context, "product", () async {
                                           await Store.removeProduct(product)
                                               .then((value) => onDelete!());
-                                          Navigator.pop(context);
-                                          Navigator.pop(context);
+                                          if (mounted) {
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          }
                                         });
                                       },
                                       child: const Text(
                                         "Verwijderen",
                                         style: TextStyle(color: Colors.red),
                                       )),
-                                if (product != null) SizedBox(width: 10),
+                                if (product != null) const SizedBox(width: 10),
                                 ElevatedButton(
                                     onPressed: name != null
                                         ? () {

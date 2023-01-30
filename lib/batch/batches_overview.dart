@@ -1,4 +1,4 @@
-import 'package:beer_brewer/batch_creator.dart';
+import 'package:beer_brewer/batch/batch_details.dart';
 import 'package:beer_brewer/data/store.dart';
 import 'package:beer_brewer/steps/cooling.dart';
 import 'package:beer_brewer/steps/fermentation.dart';
@@ -8,7 +8,8 @@ import 'package:beer_brewer/steps/preparation.dart';
 import 'package:beer_brewer/steps/cooking.dart';
 import 'package:flutter/material.dart';
 
-import 'brew_step.dart';
+import '../brew_step.dart';
+import '../models/batch.dart';
 
 class BatchesOverview extends StatefulWidget {
   const BatchesOverview({Key? key}) : super(key: key);
@@ -58,7 +59,7 @@ class _BatchesOverviewState extends State<BatchesOverview> {
   @override
   Widget build(BuildContext context) {
     return loading
-        ? Center(child: CircularProgressIndicator())
+        ? const Center(child: CircularProgressIndicator())
         : Wrap(
             alignment: WrapAlignment.center,
             runAlignment: WrapAlignment.center,
@@ -74,13 +75,13 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                         context,
                         MaterialPageRoute<void>(
                           builder: (BuildContext context) =>
-                              BatchCreator(batch: batch),
+                              BatchDetails(batch: batch),
                         ),
                       );
                   }, child: Card(
-                      margin: EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(10),
                       child: Container(
-                          padding: EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -88,7 +89,7 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                                 Text(
                                   batch.name,
                                   style:
-                                  TextStyle(fontWeight: FontWeight.bold),
+                                  const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 getRow("Stijl", Text(batch.style ?? "-")),
                                 if (batch.bottleDate == null)
@@ -114,10 +115,10 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                                                       batch))),
                                     );
                                   },
-                                  child: Text("Start"))
+                                  child: const Text("Start"))
                                   : ToggleButtons(
                                   constraints:
-                                  BoxConstraints(maxHeight: 30),
+                                  const BoxConstraints(maxHeight: 30),
                                   selectedBorderColor: Colors.blue,
                                   selectedColor: Colors.white,
                                   fillColor: Colors.blue,
@@ -126,29 +127,29 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                                   borderRadius: const BorderRadius.all(
                                       Radius.circular(8)),
                                   onPressed: (int selected) {},
-                                  isSelected: [
+                                  isSelected: const [
                                     true,
                                     false
                                   ],
                                   children: [
                                     batch.isReadyToBottle()
-                                        ? Text("Bottelen")
+                                        ? const Text("Bottelen")
                                         : Container(
                                         color: Colors.blue,
-                                        padding: EdgeInsets.only(
+                                        padding: const EdgeInsets.only(
                                             left: 10, right: 10),
-                                        child: Row(children: [
+                                        child: Row(children: const [
                                           Icon(Icons.add),
                                           Text("Meting")
                                         ])),
                                     PopupMenuButton(
-                                        icon: Icon(
+                                        icon: const Icon(
                                             Icons.keyboard_arrow_down,
                                             size: 20),
                                         itemBuilder:
                                             (BuildContext context) =>
                                         [
-                                          PopupMenuItem(
+                                          const PopupMenuItem(
                                               child: Text(
                                                   "Bottelen"))
                                         ])

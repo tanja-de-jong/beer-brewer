@@ -1,12 +1,19 @@
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
-import 'package:beer_brewer/main.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'data/store.dart';
+import '../data/store.dart';
+import '../models/SpecToProducts.dart';
+import '../models/batch.dart';
+import '../models/cooking.dart';
+import '../models/mashing.dart';
+import '../models/product.dart';
+import '../models/product_spec.dart';
+import '../models/recipe.dart';
+import 'batch_details.dart';
 
 class BatchCreator extends StatefulWidget {
   final Recipe? recipe;
@@ -98,7 +105,7 @@ class _BatchCreatorState extends State<BatchCreator> {
           "$label:",
           style: const TextStyle(fontStyle: FontStyle.italic),
         ),
-        SizedBox(width: 5),
+        const SizedBox(width: 5),
         value
       ],
     );
@@ -156,12 +163,12 @@ class _BatchCreatorState extends State<BatchCreator> {
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.hop))
           .toList();
-      yeastMappings = batch.yeast;
+      yeastMappings = batch.yeast == null ? [] : [batch.yeast!];
       cookingSugarMappings = batch.cooking.steps
           .expand((step) => step.products.where(
               (p) => p.spec.category == ProductSpecCategory.cookingSugar))
           .toList();
-      bottleSugarMappings = batch.bottleSugar;
+      bottleSugarMappings = batch.bottleSugar == null ? [] : [batch.bottleSugar!];
       otherMappings = batch.cooking.steps
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.other))
@@ -223,7 +230,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                       appBar.preferredSize.height -
                       100,
                   child: loading
-                      ? Center(child: CircularProgressIndicator())
+                      ? const Center(child: CircularProgressIndicator())
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -231,12 +238,12 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 label: "Hoeveelheid (L)",
                                 initialValue: widget.batch?.amount ??
                                     widget.recipe!.amount!,
-                                props: {"isEditable": false},
+                                props: const {"isEditable": false},
                                 onChanged: (value) {
                                   if (value != null) updateBatchAmount(value);
                                 },
                               ),
-                              SizedBox(height: 10),
+                              const SizedBox(height: 10),
                               SingleChildScrollView(
                                 child: Wrap(
                                     runSpacing: 15,
@@ -285,25 +292,25 @@ class _BatchCreatorState extends State<BatchCreator> {
                       mashing,
                       widget.batch?.rinsingWater ?? widget.recipe!.rinsingWater,
                       cooking,
-                      yeastMappings,
+                      yeastMappings.isNotEmpty ? yeastMappings[0] : null,
                       widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
                       widget.batch?.fermTempMax ?? widget.recipe!.fermTempMax,
-                      bottleSugarMappings,
+                      bottleSugarMappings.isEmpty ? null : bottleSugarMappings[0],
                       "",
                       null,
                       null,
                       null, {});
-                  print("Before save");
                   Store.saveBatch(newBatch);
-                  print("After save");
                   updateProductAmounts();
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              const MyHomePage(title: "Bier Brouwen")),
-                      (Route<dynamic> route) => false);
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                BatchDetails(batch: newBatch)),
+                            (Route<dynamic> route) => route.isFirst);
+                  }
                 },
-                child: Text("Opslaan"),
+                child: const Text("Opslaan"),
               ),
             ])));
   }
@@ -475,7 +482,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                 title: const Center(child: Text("Kies product")),
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: selectedProduct == null
                         ? Column(children: [
                             Row(
@@ -524,10 +531,10 @@ class _BatchCreatorState extends State<BatchCreator> {
                                                 .map((String store) => RichText(
                                                     text: TextSpan(
                                                         text: store,
-                                                        style: new TextStyle(
+                                                        style: const TextStyle(
                                                             color: Colors.blue),
                                                         recognizer:
-                                                            new TapGestureRecognizer()
+                                                            TapGestureRecognizer()
                                                               ..onTap = () {
                                                                 launchUrl(Uri.parse(
                                                                     selectedProduct!
@@ -577,29 +584,30 @@ class _BatchCreatorState extends State<BatchCreator> {
                                               decimal: true, signed: false),
                                       inputFormatters: [
                                         FilteringTextInputFormatter.allow(
-                                            RegExp(r"[0-9.,]")),
+                                            RegExp(r"[\d.,]")),
                                         TextInputFormatter.withFunction(
                                             (oldValue, newValue) {
                                           try {
                                             final text = newValue.text
                                                 .replaceAll(RegExp(r','), ".");
-                                            if (text.isNotEmpty)
+                                            if (text.isNotEmpty) {
                                               double.parse(text);
+                                            }
                                             return newValue;
                                           } catch (e) {}
                                           return oldValue;
                                         }),
                                       ],
                                     ))),
-                            SizedBox(height: 5),
+                            const SizedBox(height: 5),
                             Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  const Text("Toelichting",
+                                children: const [
+                                  Text("Toelichting",
                                       style: TextStyle(
                                           fontStyle: FontStyle.italic)),
                                 ]),
-                            SizedBox(height: 5),
+                            const SizedBox(height: 5),
                             SizedBox(
                                 height: 100,
                                 child: TextFormField(
@@ -626,7 +634,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                     explanation = value;
                                   },
                                 )),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             ElevatedButton(
                                 onPressed: amount == null
                                     ? null

@@ -1,6 +1,5 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class DropDownRow extends StatefulWidget {
   final MainAxisAlignment alignment;
@@ -57,7 +56,7 @@ class _DropDownRowState extends State<DropDownRow> {
           //Add isDense true and zero Padding.
           //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
           isDense: true,
-          contentPadding: EdgeInsets.only(left: 15, right: 15),
+          contentPadding: const EdgeInsets.only(left: 15, right: 15),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -113,7 +112,7 @@ class _DropDownRowState extends State<DropDownRow> {
 
   @override
   void initState() {
-    items = widget.items;
+    items.addAll(widget.items);
 
     if (widget.initialValue != null) {
       String initialValue = widget.initialValue!;
@@ -121,6 +120,7 @@ class _DropDownRowState extends State<DropDownRow> {
         items.add(initialValue);
       }
       items.sort();
+
       selectedItem = items.indexOf(initialValue);
     } else {
       items.sort();
@@ -142,7 +142,7 @@ class _DropDownRowState extends State<DropDownRow> {
       ),
       Column(children: [
       SizedBox(height: 30, width: 200, child: getDropDown(widget.label, items)),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
     ])
     ],));
   }
