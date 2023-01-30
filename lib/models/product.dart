@@ -17,7 +17,7 @@ class Product {
   }
 
   String getProductString() {
-    return "$amountToString ${name}";
+    return "${amountToString()} $name";
   }
 
   String amountToString() {
