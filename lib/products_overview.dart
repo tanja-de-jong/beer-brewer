@@ -25,50 +25,49 @@ class _ProductsOverviewState extends State<ProductsOverview> {
 
   Widget getProductGroup() {
     ProductCategory cat = ProductCategory.values[selected];
-    return Column(children: [
-      DataTable(
-        showCheckboxColumn: false,
-        rows: products
-            .map(
-              (product) => DataRow(
-                onSelectChanged: (selected) => selected == null || !selected
-                    ? null
-                    : showAddDialog(product, (Product newProduct) {
-                        setState(() {
-                          brands.add(Util.capitalize(newProduct.brand));
-                        });
-                        Navigator.pop(context);
-                      }, onDelete: () {
-                        setState(() {});
-                      }),
-                cells: [
-                  DataCell(Text(product.name)),
-                  if (product is Malt) DataCell(Text(product.typeToString())),
-                  if (product is Hop) DataCell(Text(product.type.name)),
-                  DataCell(Text(product.brand)),
-                  DataCell(Text(product.amountToString())),
-                  if (product is Malt) DataCell(Text(product.ebcToString())),
-                  if (product is Hop)
-                    DataCell(Text(product.alphaAcid == null
-                        ? "-"
-                        : "${product.alphaAcid}%")),
-                  DataCell(Text(product.storesToString())),
-                ],
-              ),
-            )
-            .toList(),
-        columns: [
-          const DataColumn(label: Text("Naam")),
-          if (cat == ProductCategory.malt || cat == ProductCategory.hop)
-            const DataColumn(label: Text("Type")),
-          const DataColumn(label: Text("Merk")),
-          const DataColumn(label: Text("Voorraad")),
-          if (cat == ProductCategory.malt) const DataColumn(label: Text("EBC")),
-          if (cat == ProductCategory.hop) const DataColumn(label: Text("Alfazuur")),
-          const DataColumn(label: Text("Te koop")),
-        ],
-      )
-    ]);
+    return DataTable(
+      showCheckboxColumn: false,
+      rows: products
+          .map(
+            (product) => DataRow(
+              onSelectChanged: (selected) => selected == null || !selected
+                  ? null
+                  : showAddDialog(product, (Product newProduct) {
+                      setState(() {
+                        brands.add(Util.capitalize(newProduct.brand));
+                      });
+                      Navigator.pop(context);
+                    }, onDelete: () {
+                      setState(() {});
+                    }),
+              cells: [
+                DataCell(Text(product.name)),
+                if (product is Malt) DataCell(Text(product.typeToString())),
+                if (product is Hop) DataCell(Text(product.type.name)),
+                DataCell(Text(product.brand)),
+                DataCell(Text(product.amountToString())),
+                if (product is Malt) DataCell(Text(product.ebcToString())),
+                if (product is Hop)
+                  DataCell(Text(product.alphaAcid == null
+                      ? "-"
+                      : "${product.alphaAcid}%")),
+                DataCell(Text(product.storesToString())),
+              ],
+            ),
+          )
+          .toList(),
+      columns: [
+        const DataColumn(label: Text("Naam")),
+        if (cat == ProductCategory.malt || cat == ProductCategory.hop)
+          const DataColumn(label: Text("Type")),
+        const DataColumn(label: Text("Merk")),
+        const DataColumn(label: Text("Voorraad")),
+        if (cat == ProductCategory.malt) const DataColumn(label: Text("EBC")),
+        if (cat == ProductCategory.hop)
+          const DataColumn(label: Text("Alfazuur")),
+        const DataColumn(label: Text("Te koop")),
+      ],
+    );
   }
 
   void filterProducts() {
@@ -108,6 +107,111 @@ class _ProductsOverviewState extends State<ProductsOverview> {
     });
   }
 
+  Widget getSearchWidget() {
+    return SizedBox(
+        width: 200,
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: "Zoek product...",
+            //Add isDense true and zero Padding.
+            //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
+            isDense: true,
+            contentPadding:
+            const EdgeInsets.only(
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 10),
+            border: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(8),
+            ),
+            //Add more decoration as you want here
+            //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
+          ),
+          onChanged: (value) {
+            setState(() {
+              searchFilter = value;
+              filterProducts();
+            });
+          },
+        ));
+  }
+
+  Widget getStockFilterWidget() {
+    return SizedBox(
+        height: 30,
+        child: ToggleButtons(
+          isSelected: [
+            filterInStock,
+            !filterInStock
+          ],
+          onPressed: (value) {
+            setState(() {
+              filterInStock = value == 0;
+              filterProducts();
+            });
+          },
+          children: const [
+            Padding(
+                padding: EdgeInsets.only(
+                    left: 10, right: 10),
+                child: Text("Op voorraad")),
+            Padding(
+                padding: EdgeInsets.only(
+                    left: 10, right: 10),
+                child: Text("Alles"))
+          ],
+        ));
+  }
+
+  Widget getAddWidget() {
+    return OutlinedButton.icon(
+        onPressed: () => showAddDialog(null,
+                (Product newProduct) {
+              setState(() {
+                brands.add(Util.capitalize(
+                    newProduct.brand));
+              });
+              Navigator.pop(context);
+            }),
+        label: const Text("Voeg toe"),
+        icon: const Icon(Icons.add));
+  }
+
+  Widget getFilterWidgets() {
+    double width = MediaQuery.of(context).size.width;
+    if (width >= 440) {
+      return Row(children: [
+        getSearchWidget(),
+        const SizedBox(width: 20),
+        getStockFilterWidget()
+      ]);
+    } else {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        getSearchWidget(),
+        const SizedBox(height: 10),
+        getStockFilterWidget()
+      ]);
+    }
+  }
+
+  Widget getButtonBar() {
+    double width = MediaQuery.of(context).size.width;
+    if (width >= 580) {
+      return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        getFilterWidgets(),
+        const SizedBox(width: 20),
+        getAddWidget()
+      ]);
+    } else {
+      return Row(mainAxisAlignment: MainAxisAlignment.start, children: [Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        getFilterWidgets(),
+        const SizedBox(height: 10),
+        getAddWidget()
+      ])]);
+    }
+  }
   @override
   void initState() {
     loadData();
@@ -168,81 +272,21 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           width: MediaQuery.of(context).size.width / 5,
                           color: selected == 4 ? Colors.white : Colors.blue)
                     ])),
-                Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(children: [
-                      Padding(
-                          padding: const EdgeInsets.only(left: 25, right: 25),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(children: [
-                                  SizedBox(
-                                      width: 200,
-                                      child: TextField(
-                                        decoration: InputDecoration(
-                                          hintText: "Zoek product...",
-                                          //Add isDense true and zero Padding.
-                                          //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
-                                          isDense: true,
-                                          contentPadding: const EdgeInsets.only(
-                                              left: 10,
-                                              right: 10,
-                                              top: 10,
-                                              bottom: 10),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          //Add more decoration as you want here
-                                          //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
-                                        ),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            searchFilter = value;
-                                            filterProducts();
-                                          });
-                                        },
-                                      )),
-                                  const SizedBox(width: 20),
-                                  SizedBox(
-                                      height: 30,
-                                      child: ToggleButtons(
-                                        isSelected: [
-                                          filterInStock,
-                                          !filterInStock
-                                        ],
-                                        onPressed: (value) {
-                                          setState(() {
-                                            filterInStock = value == 0;
-                                            filterProducts();
-                                          });
-                                        },
-                                        children: const [
-                                          Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: Text("Op voorraad")),
-                                          Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: Text("Alles"))
-                                        ],
-                                      ))
-                                ]),
-                                OutlinedButton.icon(
-                                    onPressed: () => showAddDialog(null,
-                                            (Product newProduct) {
-                                          setState(() {
-                                            brands.add(Util.capitalize(newProduct.brand));
-                                          });
-                                          Navigator.pop(context);
-                                        }),
-                                    label: const Text("Voeg toe"),
-                                    icon: const Icon(Icons.add))
-                              ])),
-                      getProductGroup()
-                    ]))
+          Padding(
+              padding:
+              const EdgeInsets.only(left: 35, right: 35, top: 10),
+              child: getButtonBar()),
+                Expanded(
+                    child: ListView(children: [
+                  SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child:
+                              Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                            getProductGroup()
+                          ])))
+                ]))
               ]));
   }
 
@@ -404,7 +448,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                                     amount,
                                                     extraProps)
                                                 .then((newProduct) {
-                                                  filterProducts();
+                                              filterProducts();
                                               onChange(newProduct);
                                             });
                                           }
