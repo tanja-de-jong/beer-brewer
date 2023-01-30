@@ -67,6 +67,17 @@ class DatabaseController {
     return batch;
   }
 
+  static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
+    await db.collection("batches").doc(batch.id).update({"sgMeasurements": FieldValue.arrayUnion([
+        {
+          "date": date,
+          "SG": value
+        }])});
+
+    batch.sgMeasurements[date] = value;
+    return batch;
+  }
+
   static Future<List<Product>> getProducts() async {
     List<Product> result = [];
     List docs = (await db.collection("products").get()).docs;

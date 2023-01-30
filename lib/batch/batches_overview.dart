@@ -58,110 +58,80 @@ class _BatchesOverviewState extends State<BatchesOverview> {
 
   @override
   Widget build(BuildContext context) {
-    return loading
-        ? const Center(child: CircularProgressIndicator())
-        : Wrap(
-            alignment: WrapAlignment.center,
+    return Center(child: loading
+        ? const CircularProgressIndicator()
+        : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: DataTable(
+          showCheckboxColumn: false,
+          rows: Store.batches
+              .map(
+                (b) => DataRow(
+                cells: [
+                  DataCell(Text(b.name)),
+                  DataCell(Text(b.getStatus().text)),
+                ],
+                onSelectChanged: (bool? selected) async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) =>
+                          BatchDetails(batch: b),
+                    ),
+                  );
+                }),
+          )
+              .toList(),
+          columns: const [
+            DataColumn(label: Text("Naam", style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text("Status", style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+        ),
+      )
+    ]));
+
+
+
+    Wrap(
+            alignment: WrapAlignment.start,
             runAlignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             direction: Axis.horizontal,
             children: Store.batches
                 .map((batch) {
-              return SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: InkWell(onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (BuildContext context) =>
-                              BatchDetails(batch: batch),
-                        ),
-                      );
-                  }, child: Card(
-                      margin: const EdgeInsets.all(10),
-                      child: Container(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(children: [
-                                Text(
-                                  batch.name,
-                                  style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                getRow("Stijl", Text(batch.style ?? "-")),
-                                if (batch.bottleDate == null)
-                                  getRow("Vergisting",
-                                      Text(daysSinceDate(batch.brewDate))),
-                                if (batch.bottleDate != null)
-                                  getRow("Gebotteld",
-                                      Text(daysSinceDate(batch.bottleDate!))),
-                                getRow("Start SG",
-                                    Text(
-                                        batch.getStartSG()?.toString() ?? "-")),
-                                getRow("Eind SG",
-                                    Text(batch.getEndSG()?.toString() ?? "-")),
-                              ]),
-                              batch.brewDate == null
-                                  ? ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              BrewStep(batch: batch,
-                                                  contentList: getTexts(
-                                                      batch))),
-                                    );
-                                  },
-                                  child: const Text("Start"))
-                                  : ToggleButtons(
-                                  constraints:
-                                  const BoxConstraints(maxHeight: 30),
-                                  selectedBorderColor: Colors.blue,
-                                  selectedColor: Colors.white,
-                                  fillColor: Colors.blue,
-                                  color: Colors.blue,
-                                  borderColor: Colors.blue,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(8)),
-                                  onPressed: (int selected) {},
-                                  isSelected: const [
-                                    true,
-                                    false
-                                  ],
-                                  children: [
-                                    batch.isReadyToBottle()
-                                        ? const Text("Bottelen")
-                                        : Container(
-                                        color: Colors.blue,
-                                        padding: const EdgeInsets.only(
-                                            left: 10, right: 10),
-                                        child: Row(children: const [
-                                          Icon(Icons.add),
-                                          Text("Meting")
-                                        ])),
-                                    PopupMenuButton(
-                                        icon: const Icon(
-                                            Icons.keyboard_arrow_down,
-                                            size: 20),
-                                        itemBuilder:
-                                            (BuildContext context) =>
-                                        [
-                                          const PopupMenuItem(
-                                              child: Text(
-                                                  "Bottelen"))
-                                        ])
-                                  ])
-
-                              // OutlinedButton(
-                              //     onPressed: () {},
-                              //     child: Text(e.bottleDate == null
-                              //         ? "Bottelen"
-                              //         : "Afronden"))
-                            ],
-                          )))));
+              return Card(
+                  margin: const EdgeInsets.all(10),
+                  child: Container(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(children: [
+                            Text(
+                              batch.name,
+                              style:
+                              const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(mainAxisSize: MainAxisSize.min, children: [
+                            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Status:"), const Text("Stijl:")],),
+                            SizedBox(width: 10),
+                            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(batch.getStatus().text), Text(batch.style ?? "-")],)
+                              ])
+                          ]),
+                          SizedBox(height: 20),
+                          ElevatedButton(onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute<void>(
+                                builder: (BuildContext context) =>
+                                    BatchDetails(batch: batch),
+                              ),
+                            );
+                          }, child: const Text("Bekijken"))
+                        ],
+                      )));
             })
                 .toList(),
           );

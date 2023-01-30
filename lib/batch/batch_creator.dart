@@ -37,6 +37,7 @@ class _BatchCreatorState extends State<BatchCreator> {
 
   Map<Product, double> amountsUsed = {};
   late double batchAmount;
+  String? explanation;
 
   Future<void> updateProductAmounts() async {
     for (var p in amountsUsed.keys) {
@@ -44,8 +45,7 @@ class _BatchCreatorState extends State<BatchCreator> {
     }
   }
 
-  void addProductForSpec(
-      SpecToProducts stp, Product product, double amount) {
+  void addProductForSpec(SpecToProducts stp, Product product, double amount) {
     setState(() {
       stp.products ??= [];
       stp.products!.add(ProductInstance(product, amount));
@@ -168,7 +168,8 @@ class _BatchCreatorState extends State<BatchCreator> {
           .expand((step) => step.products.where(
               (p) => p.spec.category == ProductSpecCategory.cookingSugar))
           .toList();
-      bottleSugarMappings = batch.bottleSugar == null ? [] : [batch.bottleSugar!];
+      bottleSugarMappings =
+          batch.bottleSugar == null ? [] : [batch.bottleSugar!];
       otherMappings = batch.cooking.steps
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.other))
@@ -180,9 +181,8 @@ class _BatchCreatorState extends State<BatchCreator> {
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.hop))
           .toList();
-      yeastMappings = recipe.yeast == null
-          ? []
-          : [SpecToProducts(recipe.yeast!, [], null)];
+      yeastMappings =
+          recipe.yeast == null ? [] : [SpecToProducts(recipe.yeast!, [], null)];
       cookingSugarMappings = recipe.cooking.steps
           .expand((step) => step.products.where(
               (p) => p.spec.category == ProductSpecCategory.cookingSugar))
@@ -223,7 +223,7 @@ class _BatchCreatorState extends State<BatchCreator> {
     return Scaffold(
         appBar: appBar,
         body: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(20),
             child: Column(children: [
               SizedBox(
                   height: MediaQuery.of(context).size.height -
@@ -231,9 +231,10 @@ class _BatchCreatorState extends State<BatchCreator> {
                       100,
                   child: loading
                       ? const Center(child: CircularProgressIndicator())
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                      : SingleChildScrollView(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                               DoubleTextFieldRow(
                                 label: "Hoeveelheid (L)",
                                 initialValue: widget.batch?.amount ??
@@ -244,22 +245,50 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 },
                               ),
                               const SizedBox(height: 10),
-                              SingleChildScrollView(
-                                child: Wrap(
-                                    runSpacing: 15,
-                                    spacing: 15,
-                                    children: [
-                                      getCategory(ProductSpecCategory.malt),
-                                      getCategory(ProductSpecCategory.hop),
-                                      getCategory(
-                                          ProductSpecCategory.cookingSugar),
-                                      getCategory(ProductSpecCategory.yeast),
-                                      getCategory(
-                                          ProductSpecCategory.bottleSugar),
-                                      getCategory(ProductSpecCategory.other)
+                              Wrap(runSpacing: 15, spacing: 15, children: [
+                                getCategory(ProductSpecCategory.malt),
+                                getCategory(ProductSpecCategory.hop),
+                                getCategory(ProductSpecCategory.cookingSugar),
+                                getCategory(ProductSpecCategory.yeast),
+                                getCategory(ProductSpecCategory.bottleSugar),
+                                getCategory(ProductSpecCategory.other)
+                              ]),
+                                const SizedBox(height: 10),
+                                Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: const [
+                                      Text("Toelichting",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
                                     ]),
-                              )
-                            ])),
+                                const SizedBox(height: 5),
+                                SizedBox(
+                                    height: 100,
+                                    child: TextFormField(
+                                      minLines:
+                                      6, // any number you need (It works as the rows for the textarea)
+                                      keyboardType: TextInputType.multiline,
+                                      maxLines: null,
+                                      decoration: InputDecoration(
+                                        //Add isDense true and zero Padding.
+                                        //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                            top: 10,
+                                            bottom: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        //Add more decoration as you want here
+                                        //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
+                                      ),
+                                      onChanged: (value) {
+                                        explanation = value;
+                                      },
+                                    )),
+                            ]))),
               const Divider(),
               const SizedBox(height: 15),
               ElevatedButton(
@@ -295,11 +324,14 @@ class _BatchCreatorState extends State<BatchCreator> {
                       yeastMappings.isNotEmpty ? yeastMappings[0] : null,
                       widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
                       widget.batch?.fermTempMax ?? widget.recipe!.fermTempMax,
-                      bottleSugarMappings.isEmpty ? null : bottleSugarMappings[0],
-                      "",
+                      bottleSugarMappings.isEmpty
+                          ? null
+                          : bottleSugarMappings[0],
+                      explanation,
                       null,
                       null,
-                      null, {});
+                      null,
+                      {});
                   Store.saveBatch(newBatch);
                   updateProductAmounts();
                   if (mounted) {
@@ -307,7 +339,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                         MaterialPageRoute(
                             builder: (context) =>
                                 BatchDetails(batch: newBatch)),
-                            (Route<dynamic> route) => route.isFirst);
+                        (Route<dynamic> route) => route.isFirst);
                   }
                 },
                 child: const Text("Opslaan"),
@@ -413,19 +445,6 @@ class _BatchCreatorState extends State<BatchCreator> {
 
     /* TEMP DATA */
     List products = Store.products[spec.category.product]!;
-    // print(Store.maltProducts.length);
-    // if (spec is MaltSpec) {
-    //   products = Store.products[spec.category.product];
-    // } else if (spec is HopSpec) {
-    //   products = Store.hopProducts;
-    // } else if (spec is SugarSpec) {
-    //   products = Store.sugarProducts;
-    // } else if (spec is YeastSpec) {
-    //   products = Store.yeastProducts;
-    // } else {
-    //   products = Store.otherProducts;
-    // }
-
     Product? selectedProduct;
     double? amount = spec.amount;
     String? explanation;
@@ -639,8 +658,8 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 onPressed: amount == null
                                     ? null
                                     : () {
-                                        addProduct(stp, selectedProduct,
-                                            amount);
+                                        addProduct(
+                                            stp, selectedProduct, amount);
                                         Navigator.pop(context);
                                       },
                                 child: const Text("Voeg toe"))

@@ -100,9 +100,27 @@ class Batch {
   }
 
   bool isReadyToBottle() {
+    if (lagerDate == null) return false;
+    DateTime today = DateTime.now();
+    return today.difference(lagerDate!).inDays >= 7;
+  }
+
+  bool isReadyToLager() {
     if (brewDate == null) return false;
     DateTime today = DateTime.now();
     return isSGSteady() || today.difference(brewDate!).inDays >= 21;
+  }
+
+  bool isReadyToDrinkEarly() {
+    if (bottleDate == null) return false;
+    DateTime today = DateTime.now();
+    return today.difference(bottleDate!).inDays >= 14;
+  }
+
+  bool isReadyToDrink() {
+    if (bottleDate == null) return false;
+    DateTime today = DateTime.now();
+    return today.difference(bottleDate!).inDays >= 21;
   }
 
   bool isSGSteady() {
@@ -111,12 +129,41 @@ class Batch {
     dates.sort();
     DateTime latestDate = dates.last;
     double lastValue = sgMeasurements[latestDate]!;
-    DateTime prevDate = dates
+    List<DateTime> prevDates = dates
         .where((date) =>
-    !date.isAfter(dates.last.subtract(const Duration(days: 2))))
-        .last;
+    !date.isAfter(dates.last.subtract(const Duration(days: 2)))).toList();
+    if (prevDates.isEmpty) return false;
+    DateTime prevDate = prevDates.last;
     double diff = (sgMeasurements[prevDate]! - lastValue).abs();
-    return diff < 1;
+    return diff < 0.005;
+  }
+
+  BatchStatus getStatus() {
+    if (brewDate == null) {
+      if (mashing.steps.isNotEmpty && mashing.malts.isNotEmpty && cooking.steps.isNotEmpty) {
+        return BatchStatus.readyToBrew;
+      } else {
+        return BatchStatus.completeBrewPlan;
+      }
+    } else if (lagerDate == null) {
+      if (isReadyToLager()) {
+        return BatchStatus.readyToLager;
+      } else {
+        return BatchStatus.waitingForFermentation;
+      }
+    } else if (bottleDate == null) {
+      if (isReadyToBottle()) {
+        return BatchStatus.readyToBottle;
+      } else {
+        return BatchStatus.waitingForLagering;
+      }
+    } else if (isReadyToDrinkEarly()) {
+      return BatchStatus.readyToTaste;
+    } else if (isReadyToDrink()) {
+      return BatchStatus.ready;
+    } else {
+      return BatchStatus.waitingForAfterFermentation;
+    }
   }
 
   // For Brewing in a Bag
@@ -238,5 +285,25 @@ class Batch {
           .map((e) => {"date": e, "SG": sgMeasurements[e]})
           .toList()
     };
+  }
+}
+
+enum BatchStatus { readyToBrew, completeBrewPlan, readyToLager, waitingForFermentation,
+  readyToBottle, waitingForLagering, readyToTaste, ready, waitingForAfterFermentation }
+
+extension BatchStatusText on BatchStatus {
+  String get text {
+    switch (this) {
+      case BatchStatus.readyToBrew: return "Klaar om te brouwen";
+      case BatchStatus.completeBrewPlan: return "Vul het brouwplan aan";
+      case BatchStatus.readyToLager: return "Klaar om te lageren";
+      case BatchStatus.waitingForFermentation: return "Wachten op vergisting";
+      case BatchStatus.readyToBottle: return "Klaar om te bottelen";
+      case BatchStatus.waitingForLagering: return "Wachten op lageren";
+      case BatchStatus.readyToTaste: return "Klaar om te proeven.";
+      case BatchStatus.ready: return "Klaar!";
+      case BatchStatus.waitingForAfterFermentation: return "Wachten op nagisting";
+      default: return "-";
+    }
   }
 }

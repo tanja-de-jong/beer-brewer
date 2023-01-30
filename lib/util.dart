@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Util {
   static String capitalize(String input) {
@@ -45,5 +46,15 @@ class Util {
                 ])
               ]);
         });
+  }
+}
+
+extension DateFormatTryParse on DateFormat {
+  DateTime? tryParse(String inputString, [bool utc = false]) {
+    try {
+      return parseStrict(inputString, utc);
+    } on FormatException {
+      return null;
+    }
   }
 }

@@ -150,6 +150,15 @@ class Store {
     return brewedBatch;
   }
 
+  static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
+    Batch updatedBatch = await DatabaseController.addSGToBatch(batch, date, value);
+
+    int idx = Store.batches.indexWhere((b) => updatedBatch.id == b.id);
+    Store.batches[idx] = updatedBatch;
+
+    return updatedBatch;
+  }
+
   static Future<void> loadBatches() async {
     batches = await DatabaseController.getBatches();
   }
