@@ -1,12 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../authentication/authentication.dart';
 import '../models/batch.dart';
 import '../models/product.dart';
 import '../models/recipe.dart';
 
 class DatabaseController {
-  static FirebaseFirestore db = FirebaseFirestore.instance;
+  static DocumentReference<Map<String, dynamic>> db = FirebaseFirestore.instance.collection("users").doc(Authentication.email!.toLowerCase());
+
+  static Future<void> migrateData() async {
+    var products = (await FirebaseFirestore.instance.collection("products").get()).docs;
+    for (var product in products) {
+      db.collection("products").doc(product.id).set(product.data());
+    }
+
+    var recipes = (await FirebaseFirestore.instance.collection("recipes").get()).docs;
+    for (var product in recipes) {
+      db.collection("recipes").doc(product.id).set(product.data());
+    }
+  }
 
   static Future<List<Recipe>> getRecipes() async {
     List<Recipe> result = [];

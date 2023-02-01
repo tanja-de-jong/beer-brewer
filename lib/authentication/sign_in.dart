@@ -20,56 +20,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  void signInFromField(value) {
-    signIn();
-  }
-
-  void registerFromField(value) {
-    registerUser();
-  }
-
-  void signIn() async {
-    UserOrErrorMessage userOrErrorMessage =
-    await Authentication.signInWithUsernameAndPassword(
-        context: context, username: email, password: password);
-
-    if (userOrErrorMessage.user != null) {
-      setState(() {
-        error = '';
-      });
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
-    } else if (userOrErrorMessage.errorMessage != null) {
-      setState(() {
-        error = userOrErrorMessage.errorMessage!;
-      });
-      // }
-    }
-  }
-
-  void registerUser() async {
-    UserOrErrorMessage userOrErrorMessage =
-    await Authentication.registerUserWithEmailAndPassword(
-        context: context, username: email, password: password);
-
-    if (userOrErrorMessage.user != null) {
-      setState(() {
-        error = '';
-      });
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
-    }
-
-    if (userOrErrorMessage.errorMessage != null) {
-      setState(() {
-        error = userOrErrorMessage.errorMessage!;
-      });
-      // }
-    }
-  }
-
   @override
   void initState() {
     super.initState();

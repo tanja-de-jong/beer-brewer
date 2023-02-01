@@ -1,7 +1,4 @@
-import 'package:beer_brewer/batch/batches_overview.dart';
-import 'package:beer_brewer/products_overview.dart';
-import 'package:beer_brewer/recipe/recipe_creator.dart';
-import 'package:beer_brewer/recipe/recipes_overview.dart';
+// import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,28 +10,49 @@ import 'home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // AwesomeNotifications().initialize(
+  //   // set the icon to null if you want to use the default app icon
+  //     'resource://drawable/res_app_icon',
+  //     [
+  //       NotificationChannel(
+  //           channelGroupKey: 'basic_channel_group',
+  //           channelKey: 'basic_channel',
+  //           channelName: 'Basic notifications',
+  //           channelDescription: 'Notification channel for basic tests',
+  //           defaultColor: Color(0xFF9D50DD),
+  //           ledColor: Colors.white)
+  //     ],
+  //     debug: true
+  // );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+  print("Running");
+  runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
 
-  // This widget is the root of your application.
+class _MyAppState extends State<MyApp> {
+
+  // @override
+  // void initState() {
+  //   // Only after at least the action method is set, the notification events are delivered
+  //   AwesomeNotifications().setListeners(
+  //       onActionReceivedMethod:         NotificationController.onActionReceivedMethod,
+  //       onNotificationCreatedMethod:    NotificationController.onNotificationCreatedMethod,
+  //       onNotificationDisplayedMethod:  NotificationController.onNotificationDisplayedMethod,
+  //       onDismissActionReceivedMethod:  NotificationController.onDismissActionReceivedMethod
+  //   );
+
+  //   super.initState();
+  // }
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Bier Brouwen',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: const AuthenticationPage()
@@ -45,21 +63,16 @@ class MyApp extends StatelessWidget {
 class AuthenticationPage extends StatefulWidget {
   const AuthenticationPage({Key? key}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-
   @override
   State<AuthenticationPage> createState() => _AuthenticationPageState();
 }
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -70,13 +83,8 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
               final firebaseUser = snapshot.data;
               if (firebaseUser == null) {
                 return SizedBox(height: 30, width: 100, child: SignInScreen());
-                // Expanded(child: SignInButton(
-                //   Buttons.Google,
-                //   text: "Log in met Google",
-                //   onPressed: () =>
-                //       Authentication.signInWithGoogle(context: context),
-                // ));
               }
+              Authentication.email = firebaseUser.email;
               return HomePage();
             default:
               return Container(
@@ -87,13 +95,39 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             Authentication.signInWithGoogle(context: context),
                         child: Text("Inloggen met Google")),
                   ));
-          //   Center(child: CircularProgressIndicator(
-          //     valueColor: AlwaysStoppedAnimation<Color>(
-          //       Colors.pink,
-          //     )),
-          // );
           }
         });
   }
 }
-
+//
+// class NotificationController {
+//
+//   /// Use this method to detect when a new notification or a schedule is created
+//   @pragma("vm:entry-point")
+//   static Future <void> onNotificationCreatedMethod(ReceivedNotification receivedNotification) async {
+//     // Your code goes here
+//   }
+//
+//   /// Use this method to detect every time that a new notification is displayed
+//   @pragma("vm:entry-point")
+//   static Future <void> onNotificationDisplayedMethod(ReceivedNotification receivedNotification) async {
+//     // Your code goes here
+//   }
+//
+//   /// Use this method to detect if the user dismissed a notification
+//   @pragma("vm:entry-point")
+//   static Future <void> onDismissActionReceivedMethod(ReceivedAction receivedAction) async {
+//     // Your code goes here
+//   }
+//
+//   /// Use this method to detect when the user taps on a notification or action button
+//   @pragma("vm:entry-point")
+//   static Future <void> onActionReceivedMethod(ReceivedAction receivedAction) async {
+//     // Your code goes here
+//
+//     // Navigate into pages, avoiding to open the notification details page over another details page already opened
+//     MyApp.navigatorKey.currentState?.pushNamedAndRemoveUntil('/notification-page',
+//             (route) => (route.settings.name != '/notification-page') || route.isFirst,
+//         arguments: receivedAction);
+//   }
+// }

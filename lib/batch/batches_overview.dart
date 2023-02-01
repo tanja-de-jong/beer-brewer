@@ -8,7 +8,6 @@ import 'package:beer_brewer/steps/preparation.dart';
 import 'package:beer_brewer/steps/cooking.dart';
 import 'package:flutter/material.dart';
 
-import '../steps/brew_step.dart';
 import '../models/batch.dart';
 
 class BatchesOverview extends StatefulWidget {

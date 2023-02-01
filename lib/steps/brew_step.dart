@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../data/store.dart';
 import '../home_page.dart';
 import '../models/batch.dart';
+import '../notification.dart';
 
 class BrewStep extends StatefulWidget {
   final Batch batch;
@@ -67,6 +68,7 @@ class _BrewStepState extends State<BrewStep> {
                 } else {
                   Store.bottleBatch(widget.batch, Store.date);
                 }
+                // Notify.instantNotify();
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                         builder: (context) =>
