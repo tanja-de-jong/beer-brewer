@@ -7,7 +7,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 class Authentication {
 
   static String? error;
-  static List<String> allowedEmails = ["tanja@tanjadejong.com", "mattanjav@gmail.com", "samen@tanjadejong.com"];
   static String? email;
 
   static Future<String?> signInWithGoogle({required BuildContext context}) async {
@@ -24,12 +23,12 @@ class Authentication {
         final UserCredential userCredential =
         await auth.signInWithPopup(authProvider);
         user = userCredential.user;
-        if (!allowedEmails.contains(user?.email!.toLowerCase())) {
-          error = "Gebruiker heeft geen toegang tot deze app.";
-          auth.signOut();
-        } else {
-          error = null;
-        }
+        // if (!allowedEmails.contains(user?.email!.toLowerCase())) {
+        //   error = "Gebruiker heeft geen toegang tot deze app.";
+        //   auth.signOut();
+        // } else {
+        //   error = null;
+        // }
       } catch (e) {
         print(e);
       }
@@ -53,12 +52,12 @@ class Authentication {
           await auth.signInWithCredential(credential);
 
           user = userCredential.user;
-          if (!allowedEmails.contains(user?.email!.toLowerCase())) {
-            error = "Gebruiker heeft geen toegang tot deze app.";
-            auth.signOut();
-          } else {
-            error = null;
-          }
+          // if (!allowedEmails.contains(user?.email!.toLowerCase())) {
+          //   error = "Gebruiker heeft geen toegang tot deze app.";
+          //   auth.signOut();
+          // } else {
+          //   error = null;
+          // }
         } on FirebaseAuthException catch (e) {
           if (e.code == 'account-exists-with-different-credential') {
             // ...
