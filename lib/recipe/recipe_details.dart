@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../batch/batch_creator.dart';
 import '../data/store.dart';
+import '../home_page.dart';
 import '../models/product_spec.dart';
 import '../models/recipe.dart';
 
@@ -35,7 +36,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute<void>(
       builder: (BuildContext context) =>
-          const MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
+          const HomePage(title: 'Recepten', selectedPage: 1,),
     ), (route) => false);
     return true;
   }

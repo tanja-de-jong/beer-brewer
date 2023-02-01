@@ -3,10 +3,10 @@ import 'package:beer_brewer/form/TextFieldRow.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../home_page.dart';
 import '../steps/bottling.dart';
 import '../steps/brew_step.dart';
 import '../data/store.dart';
-import '../main.dart';
 import '../models/batch.dart';
 import '../models/product.dart';
 import '../steps/cooking.dart';
@@ -81,8 +81,7 @@ class _BatchDetailsState extends State<BatchDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => const MyHomePage(
-            title: 'Bier Brouwen',
+          builder: (BuildContext context) => const HomePage(
             selectedPage: 0,
           ),
         ),

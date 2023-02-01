@@ -2,10 +2,14 @@ import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:beer_brewer/products_overview.dart';
 import 'package:beer_brewer/recipe/recipe_creator.dart';
 import 'package:beer_brewer/recipe/recipes_overview.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'authentication/authentication.dart';
+import 'authentication/sign_in.dart';
 import 'firebase_options.dart';
+import 'home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,14 +37,13 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Bier Brouwen'),
+      home: const AuthenticationPage()
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title, this.selectedPage = 0})
-      : super(key: key);
+class AuthenticationPage extends StatefulWidget {
+  const AuthenticationPage({Key? key}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -51,74 +54,46 @@ class MyHomePage extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  final String title;
-  final int selectedPage;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AuthenticationPage> createState() => _AuthenticationPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<Widget> pages = [
-    const BatchesOverview(),
-    const RecipesOverview(),
-    const ProductsOverview()
-  ];
-  late int selected;
-
-  @override
-  void initState() {
-    selected = widget.selectedPage;
-    super.initState();
-  }
-
+class _AuthenticationPageState extends State<AuthenticationPage> {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-        actions: selected == 1
-            ? [
-                Padding(
-                    padding: const EdgeInsets.only(right: 20.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => const RecipeCreator()),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.add,
-                        size: 26.0,
-                      ),
-                    )),
-              ]
-            : null,
-      ),
-      body: pages[selected],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: selected,
-        onTap: (int value) {
-          setState(() {
-            selected = value;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.sync), label: "Batches"),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Recepten"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.local_grocery_store), label: "Voorraad")
-        ],
-      ),
-    );
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.active:
+              final firebaseUser = snapshot.data;
+              if (firebaseUser == null) {
+                return SizedBox(height: 30, width: 100, child: SignInScreen());
+                // Expanded(child: SignInButton(
+                //   Buttons.Google,
+                //   text: "Log in met Google",
+                //   onPressed: () =>
+                //       Authentication.signInWithGoogle(context: context),
+                // ));
+              }
+              return HomePage();
+            default:
+              return Container(
+                  constraints: BoxConstraints(maxWidth: 1000),
+                  child: Center(
+                    child: ElevatedButton(
+                        onPressed: () =>
+                            Authentication.signInWithGoogle(context: context),
+                        child: Text("Inloggen met Google")),
+                  ));
+          //   Center(child: CircularProgressIndicator(
+          //     valueColor: AlwaysStoppedAnimation<Color>(
+          //       Colors.pink,
+          //     )),
+          // );
+          }
+        });
   }
 }
+

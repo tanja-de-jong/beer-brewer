@@ -7,6 +7,7 @@ import '../data/store.dart';
 import '../form/DoubleTextFieldRow.dart';
 import '../form/DropDownRow.dart';
 import '../form/TextFieldRow.dart';
+import '../home_page.dart';
 import '../main.dart';
 import '../models/spec_to_products.dart';
 import '../models/cooking.dart';
@@ -308,8 +309,8 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                     if (mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute<void>(
-                          builder: (BuildContext context) => const MyHomePage(
-                            title: 'Bier Brouwen',
+                          builder: (BuildContext context) => const HomePage(
+                            title: 'Recepten',
                             selectedPage: 1,
                           ),
                         ),

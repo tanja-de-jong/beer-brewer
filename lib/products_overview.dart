@@ -148,6 +148,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
 
     setState(() {
       products = Store.products[cat.productType]! as List<Product>;
+      if (changeCategory) brands = products.map((p) => p.brand).toSet();
 
       if (filterInStock) {
         products = products

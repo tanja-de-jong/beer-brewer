@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/store.dart';
+import '../home_page.dart';
 import '../main.dart';
 import '../models/spec_to_products.dart';
 import '../models/batch.dart';
@@ -266,8 +267,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                     if (mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute<void>(
-                            builder: (BuildContext context) => const MyHomePage(
-                              title: 'Bier Brouwen',
+                            builder: (BuildContext context) => const HomePage(
                               selectedPage: 0,
                             ),
                           ),

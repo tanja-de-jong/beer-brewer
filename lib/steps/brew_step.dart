@@ -2,6 +2,7 @@ import 'package:beer_brewer/main.dart';
 import 'package:flutter/material.dart';
 
 import '../data/store.dart';
+import '../home_page.dart';
 import '../models/batch.dart';
 
 class BrewStep extends StatefulWidget {
@@ -69,7 +70,7 @@ class _BrewStepState extends State<BrewStep> {
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                         builder: (context) =>
-                        const MyHomePage(title: "Bier Brouwen")),
+                        const HomePage(title: "Batches")),
                         (Route<dynamic> route) => false);
               }, child: const Text("Rond af")),
             ])));
