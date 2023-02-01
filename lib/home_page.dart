@@ -18,6 +18,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<String> title = ["Batches", "Recepten", "Producten"];
   List<Widget> pages = [
     const BatchesOverview(),
     const RecipesOverview(),
@@ -36,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title[selected]),
         actions: selected == 1
             ? [
           Padding(
