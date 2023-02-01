@@ -25,7 +25,6 @@ Future<void> main() async {
   //     debug: true
   // );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("Running");
   runApp(MyApp());
 }
 

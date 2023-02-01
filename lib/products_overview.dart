@@ -524,7 +524,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                     alphaAcid = value;
                                   });
                                 }),
-                          const TextFieldRow(label: 'Te koop'),
+                          TextFieldRow(label: 'Te koop'),
                           DoubleTextFieldRow(
                             label: 'Op voorraad (g)',
                             initialValue: amount,

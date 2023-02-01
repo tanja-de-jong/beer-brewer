@@ -228,8 +228,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                           batch.bottleSugar!.products == null ||
                           batch.bottleSugar!.products!.isEmpty
                       ? "-"
-                      : batch.bottleSugar!.products![0].product
-                          .getProductString())),
+                      : "${Util.amountToString(batch.bottleSugar!.products![0].amount)}/L ${batch.bottleSugar!.products![0].product.name}")),
               const SizedBox(height: 20),
               Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                 Column(

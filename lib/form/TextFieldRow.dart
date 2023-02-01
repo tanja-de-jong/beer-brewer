@@ -13,7 +13,7 @@ class TextFieldRow extends StatefulWidget {
   final bool isPercentage;
   final Map? props;
 
-  const TextFieldRow(
+  TextFieldRow(
       {Key? key,
       required this.label,
       this.initialValue,
@@ -36,7 +36,6 @@ class _TextFieldRowState extends State<TextFieldRow> {
 
   @override
   void initState() {
-    print("${widget.initialValue}");
     if (widget.initialValue != null && widget.controller != null) {
       widget.controller!.text = widget.initialValue!.toString();
     }

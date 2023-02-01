@@ -25,6 +25,8 @@ class RecipeCreator extends StatefulWidget {
 }
 
 class _RecipeCreatorState extends State<RecipeCreator> {
+  bool loading = true;
+
   late Recipe? recipe;
 
   // Fields
@@ -309,6 +311,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
 
         remarks = recipe!.remarks;
       }
+      loading = false;
     });
   }
 
@@ -362,7 +365,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
                       100,
-                  child: SingleChildScrollView(
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
                       child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -376,7 +381,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                               ),
                               TextFieldRow(
                                   label: "Naam",
-                                  initialValue: name,
+                                  initialValue: name.toString(),
                                   onChanged: (value) {
                                     setState(() {
                                       name = value;
@@ -577,8 +582,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                           ),
                                         ]),
                                     ...malts.map((malt) => Row(children: [
-                                          Expanded(child: Text(
-                                              "${malt.amount}g ${malt.name} (${MaltSpec.getEbcToString(malt.ebcMin, malt.ebcMax)})", overflow: TextOverflow.ellipsis,)),
+                                          // Expanded(child: 
+                                          Text(
+                                              "${malt.amount}g ${malt.name} (${MaltSpec.getEbcToString(malt.ebcMin, malt.ebcMax)})", overflow: TextOverflow.ellipsis,),
+                                          // ),
                                           IconButton(
                                             icon: const Icon(Icons.close),
                                             splashRadius: 12,
