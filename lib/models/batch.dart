@@ -2,7 +2,7 @@ import 'package:beer_brewer/models/product.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../util.dart';
-import 'SpecToProducts.dart';
+import 'spec_to_products.dart';
 import 'cooking.dart';
 import 'mashing.dart';
 
@@ -114,7 +114,8 @@ class Batch {
   bool isReadyToDrinkEarly() {
     if (bottleDate == null) return false;
     DateTime today = DateTime.now();
-    return today.difference(bottleDate!).inDays >= 14;
+    int diff = today.difference(bottleDate!).inDays;
+    return diff >= 14 && diff < 21;
   }
 
   bool isReadyToDrink() {
@@ -306,4 +307,10 @@ extension BatchStatusText on BatchStatus {
       default: return "-";
     }
   }
+}
+
+enum BatchPhase {
+  brewing,
+  lagering,
+  bottling
 }

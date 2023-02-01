@@ -8,7 +8,7 @@ import '../form/DoubleTextFieldRow.dart';
 import '../form/DropDownRow.dart';
 import '../form/TextFieldRow.dart';
 import '../main.dart';
-import '../models/SpecToProducts.dart';
+import '../models/spec_to_products.dart';
 import '../models/cooking.dart';
 import '../models/mashing.dart';
 import '../models/product.dart';

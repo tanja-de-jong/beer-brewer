@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const RecipesOverview(),
     const ProductsOverview()
   ];
-  int selected = 0;
+  late int selected;
 
   @override
   void initState() {

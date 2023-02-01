@@ -1,15 +1,16 @@
 import 'package:beer_brewer/main.dart';
 import 'package:flutter/material.dart';
 
-import 'data/store.dart';
-import 'models/batch.dart';
+import '../data/store.dart';
+import '../models/batch.dart';
 
 class BrewStep extends StatefulWidget {
   final Batch batch;
   final List<Map<String, dynamic>> contentList;
   final int step;
+  final BatchPhase phase;
 
-  const BrewStep({Key? key, required this.batch, this.step = 0, required this.contentList}) : super(key: key);
+  const BrewStep({Key? key, required this.batch, this.step = 0, required this.contentList, this.phase = BatchPhase.brewing}) : super(key: key);
 
   @override
   State<BrewStep> createState() => _BrewStepState();
@@ -57,8 +58,14 @@ class _BrewStepState extends State<BrewStep> {
                 },
                 child: const Text("Volgende"),
               ) : ElevatedButton(onPressed: () {
-                Store.brewBatch(widget.batch, Store.startSG ?? 0);
-                Store.startSG = null;
+                if (widget.phase == BatchPhase.brewing) {
+                  Store.brewBatch(widget.batch, Store.date, Store.startSG ?? 0);
+                  Store.startSG = null;
+                } else if (widget.phase == BatchPhase.lagering) {
+                  Store.lagerBatch(widget.batch, Store.date);
+                } else {
+                  Store.bottleBatch(widget.batch, Store.date);
+                }
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                         builder: (context) =>

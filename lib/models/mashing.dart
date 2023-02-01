@@ -1,4 +1,4 @@
-import 'SpecToProducts.dart';
+import 'spec_to_products.dart';
 
 class Mashing {
   List<SpecToProducts> malts;

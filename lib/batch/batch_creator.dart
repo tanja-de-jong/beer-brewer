@@ -1,12 +1,15 @@
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
+import 'package:beer_brewer/form/TextFieldRow.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/store.dart';
-import '../models/SpecToProducts.dart';
+import '../main.dart';
+import '../models/spec_to_products.dart';
 import '../models/batch.dart';
 import '../models/cooking.dart';
 import '../models/mashing.dart';
@@ -39,9 +42,31 @@ class _BatchCreatorState extends State<BatchCreator> {
   late double batchAmount;
   String? explanation;
 
-  Future<void> updateProductAmounts() async {
-    for (var p in amountsUsed.keys) {
-      Store.updateAmountForProduct(p, (p.amount ?? 0) - (amountsUsed[p] ?? 0));
+  double? mashWater;
+  double? rinsingWater;
+
+  DateTime? brewDate;
+  DateTime? lagerDate;
+  DateTime? bottleDate;
+
+  Future<void> updateProductAmounts({ delete = false }) async {
+    if (delete) {
+      for (List<SpecToProducts> value in allMappings.values) {
+        for (SpecToProducts stp in value) {
+          if (stp.products != null) {
+            for (ProductInstance pi in stp.products!) {
+              Product p = pi.product;
+              if (p.amount != null) {
+                Store.updateAmountForProduct(p, p.amount! + pi.amount);
+              }
+            }
+          }
+        }
+      }
+    } else {
+      for (var p in amountsUsed.keys) {
+        Store.updateAmountForProduct(p, (p.amount ?? 0) - (amountsUsed[p] ?? 0));
+      }
     }
   }
 
@@ -143,7 +168,16 @@ class _BatchCreatorState extends State<BatchCreator> {
             spec.amount = double.parse(
                 Util.prettify(spec.amount! * ingredientRatio) ?? "");
           }
+          if (stp.products != null) {
+            for (ProductInstance pi in stp.products!) {
+              Product p = pi.product;
+              pi.amount = double.parse(
+                  Util.prettify(pi.amount * ingredientRatio) ?? "");
+            }
+          }
         }
+        if (mashWater != null) mashWater = mashWater! * ingredientRatio;
+        if (rinsingWater != null) rinsingWater = rinsingWater! * ingredientRatio;
         batchAmount = amount;
       });
     }
@@ -174,6 +208,12 @@ class _BatchCreatorState extends State<BatchCreator> {
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.other))
           .toList();
+      mashWater = batch.mashing.water;
+      rinsingWater = batch.rinsingWater;
+
+      brewDate = batch.brewDate;
+      lagerDate = batch.lagerDate;
+      bottleDate = batch.bottleDate;
     } else {
       Recipe recipe = widget.recipe!;
       maltMappings = recipe.mashing.malts;
@@ -194,6 +234,9 @@ class _BatchCreatorState extends State<BatchCreator> {
           .expand((step) => step.products
               .where((p) => p.spec.category == ProductSpecCategory.other))
           .toList();
+
+      mashWater = recipe.mashing.water;
+      rinsingWater = recipe.rinsingWater;
     }
 
     allMappings[ProductSpecCategory.malt] = maltMappings;
@@ -202,15 +245,8 @@ class _BatchCreatorState extends State<BatchCreator> {
     allMappings[ProductSpecCategory.bottleSugar] = bottleSugarMappings;
     allMappings[ProductSpecCategory.yeast] = yeastMappings;
     allMappings[ProductSpecCategory.other] = otherMappings;
-    //
-    // if (widget.recipe != null && batchAmount != widget.recipe!.amount!) {
-    //   double ingredientRatio = batchAmount / widget.recipe!.amount!;
-    //
-    //   for (SpecToProduct stp in allMappings.values.expand((e) => e)) {
-    //     ProductSpec spec = stp.spec;
-    //     if (spec.amount != null) spec.amount = spec.amount! * ingredientRatio;
-    //   }
-    // }
+
+    updateBatchAmount(5);
     super.initState();
   }
 
@@ -218,6 +254,33 @@ class _BatchCreatorState extends State<BatchCreator> {
   Widget build(BuildContext context) {
     AppBar appBar = AppBar(
       title: const Text("Maak brouwplan"),
+      actions: [
+        if (widget.batch != null)
+          Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  Util.showDeleteDialog(context, "batch", () async {
+                    await Store.removeBatch(widget.batch!);
+                    updateProductAmounts(delete: true);
+                    if (mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) => const MyHomePage(
+                              title: 'Bier Brouwen',
+                              selectedPage: 0,
+                            ),
+                          ),
+                              (route) => false);
+                    }
+                  }, deze: true);
+                },
+                child: const Icon(
+                  Icons.delete,
+                  size: 26.0,
+                ),
+              )),
+      ],
     );
 
     return Scaffold(
@@ -237,14 +300,41 @@ class _BatchCreatorState extends State<BatchCreator> {
                               children: [
                               DoubleTextFieldRow(
                                 label: "Hoeveelheid (L)",
-                                initialValue: widget.batch?.amount ??
-                                    widget.recipe!.amount!,
+                                initialValue: batchAmount,
                                 props: const {"isEditable": false},
                                 onChanged: (value) {
                                   if (value != null) updateBatchAmount(value);
                                 },
                               ),
                               const SizedBox(height: 10),
+                              if (widget.batch != null) Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                const Text("Datum", style: TextStyle(fontWeight: FontWeight.bold)),
+                                TextFieldRow(label: "Brouwdatum", initialValue: brewDate != null ? DateFormat("dd-MM-yyyy").format(brewDate!) : null, onChanged: (value) {
+                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                                  if (date != null) {
+                                    setState(() {
+                                      brewDate = date;
+                                    });
+                                  }
+                                }),
+                                TextFieldRow(label: "Lagerdatum", initialValue: lagerDate != null ? DateFormat("dd-MM-yyyy").format(lagerDate!) : null, onChanged: (value) {
+                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                                  if (date != null) {
+                                    setState(() {
+                                      lagerDate = date;
+                                    });
+                                  }
+                                }),
+                                TextFieldRow(label: "Botteldatum", initialValue: bottleDate != null ? DateFormat("dd-MM-yyyy").format(bottleDate!) : null, onChanged: (value) {
+                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                                  if (date != null) {
+                                    setState(() {
+                                      bottleDate = date;
+                                    });
+                                  }
+                                }),
+                              ],),
+                              if (widget.batch != null) const SizedBox(height: 10),
                               Wrap(runSpacing: 15, spacing: 15, children: [
                                 getCategory(ProductSpecCategory.malt),
                                 getCategory(ProductSpecCategory.hop),
@@ -297,6 +387,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                   Recipe? recipe = widget.recipe;
                   Mashing mashing = batch?.mashing ?? recipe!.mashing;
                   mashing.malts = maltMappings;
+                  mashing.water = mashWater;
                   Cooking cooking = batch?.cooking ?? recipe!.cooking;
                   for (CookingScheduleStep step in cooking.steps) {
                     for (SpecToProducts stp in step.products) {
@@ -319,7 +410,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                       widget.batch?.color ?? widget.recipe!.color,
                       widget.batch?.bitter ?? widget.recipe!.bitter,
                       mashing,
-                      widget.batch?.rinsingWater ?? widget.recipe!.rinsingWater,
+                      rinsingWater,
                       cooking,
                       yeastMappings.isNotEmpty ? yeastMappings[0] : null,
                       widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
@@ -328,10 +419,10 @@ class _BatchCreatorState extends State<BatchCreator> {
                           ? null
                           : bottleSugarMappings[0],
                       explanation,
-                      null,
-                      null,
-                      null,
-                      {});
+                      brewDate,
+                      lagerDate,
+                      bottleDate,
+                      widget.batch?.sgMeasurements ?? {});
                   Store.saveBatch(newBatch);
                   updateProductAmounts();
                   if (mounted) {
@@ -488,8 +579,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 if (spec is MaltSpec)
                                   DataCell(
                                       Text((product as Malt).ebcToString())),
-                                DataCell(Text(Util.amountToString(
-                                    amountsUsed[product] ?? 0))),
+                                DataCell(Text((product as Product).amountToString())),
                                 DataCell(Text(product.storesToString()))
                               ]))
                       .toList()

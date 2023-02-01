@@ -1,6 +1,8 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 
+import '../util.dart';
+
 class DropDownRow extends StatefulWidget {
   final MainAxisAlignment alignment;
   final String label;
@@ -96,7 +98,7 @@ class _DropDownRowState extends State<DropDownRow> {
             child: searchField
         ),
         searchMatchFn: (item, searchValue) {
-          return (items[item.value].toLowerCase().contains(searchValue.toLowerCase()));
+          return (Util.search(items[item.value], searchValue));
         },
         //This to clear the search value when you close the menu
         onMenuStateChange: (isOpen) {

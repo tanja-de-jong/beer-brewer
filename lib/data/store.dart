@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../models/recipe.dart';
 
 class Store {
+  static DateTime? date;
   static double? startSG; // TODO: necessary for FermentationStep => refactor
 
   static List<String> maltTypes = [
@@ -136,13 +137,31 @@ class Store {
     return batch;
   }
 
-  static Future<Batch> brewBatch(Batch batch, double startSG) async {
-    Batch brewedBatch = await DatabaseController.brewBatch(batch, startSG);
+  static Future<Batch> brewBatch(Batch batch, DateTime? date, double startSG) async {
+    Batch brewedBatch = await DatabaseController.brewBatch(batch, date, startSG);
 
     int idx = Store.batches.indexWhere((b) => brewedBatch.id == b.id);
     Store.batches[idx] = brewedBatch;
 
     return brewedBatch;
+  }
+
+  static Future<Batch> lagerBatch(Batch batch, DateTime? date) async {
+    Batch lageredBatch = await DatabaseController.lagerBatch(batch, date);
+
+    int idx = Store.batches.indexWhere((b) => lageredBatch.id == b.id);
+    Store.batches[idx] = lageredBatch;
+
+    return lageredBatch;
+  }
+
+  static Future<Batch> bottleBatch(Batch batch, DateTime? date) async {
+    Batch bottledBatch = await DatabaseController.bottleBatch(batch, date);
+
+    int idx = Store.batches.indexWhere((b) => bottledBatch.id == b.id);
+    Store.batches[idx] = bottledBatch;
+
+    return bottledBatch;
   }
 
   static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
@@ -152,6 +171,11 @@ class Store {
     Store.batches[idx] = updatedBatch;
 
     return updatedBatch;
+  }
+
+  static Future<void> removeBatch(Batch batch) async {
+    await DatabaseController.removeBatch(batch);
+    batches.remove(batch);
   }
 
   static Future<void> loadBatches() async {

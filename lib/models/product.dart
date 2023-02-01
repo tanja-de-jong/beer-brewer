@@ -73,21 +73,23 @@ class Malt extends Product {
 }
 
 class Hop extends Product {
+  String? type;
   double? alphaAcid;
-  HopType type;
+  HopShape shape;
 
-  Hop(super.id, super.name, super.brand, super.stores, super.amount,
-      this.alphaAcid, this.type);
+  Hop(super.id, super.name, this.type, super.brand, super.stores, super.amount,
+      this.alphaAcid, this.shape);
 
   static Hop create(String id, Map data) {
     return Hop(
         id,
         data["name"],
+        data["type"],
         data["brand"] ?? "-",
         data["stores"],
         data["amount"],
         data["alphaAcid"],
-        data["type"] == "korrels" ? HopType.korrels : HopType.bellen);
+        data["shape"] == "korrels" ? HopShape.korrels : HopShape.bellen);
   }
 }
 
@@ -109,7 +111,7 @@ class Yeast extends Product {
   }
 }
 
-enum HopType { korrels, bellen }
+enum HopShape { korrels, bellen }
 
 enum ProductCategory { malt, hop, sugar, yeast, other }
 

@@ -3,7 +3,8 @@ import 'package:beer_brewer/form/TextFieldRow.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../brew_step.dart';
+import '../steps/bottling.dart';
+import '../steps/brew_step.dart';
 import '../data/store.dart';
 import '../main.dart';
 import '../models/batch.dart';
@@ -12,6 +13,7 @@ import '../steps/cooking.dart';
 import '../steps/cooling.dart';
 import '../steps/fermentation.dart';
 import '../steps/filtering.dart';
+import '../steps/lagering.dart';
 import '../steps/malting.dart';
 import '../steps/preparation.dart';
 import '../util.dart';
@@ -43,7 +45,7 @@ class _BatchDetailsState extends State<BatchDetails> {
     );
   }
 
-  List<Map<String, dynamic>> getTexts(Batch batch) {
+  List<Map<String, dynamic>> getBrewingSteps(Batch batch) {
     return [
       {"title": "Voorbereiding", "description": PreparationStep(batch: batch)},
       {"title": "Maischen", "description": MaltingStep(batch: batch)},
@@ -61,6 +63,18 @@ class _BatchDetailsState extends State<BatchDetails> {
           batch: batch,
         )
       },
+    ];
+  }
+
+  List<Map<String, dynamic>> getLageringSteps(Batch batch) {
+    return [
+      {"title": "Lageren", "description": LageringStep(batch: batch)},
+    ];
+  }
+
+  List<Map<String, dynamic>> getBottlingStep(Batch batch) {
+    return [
+      {"title": "Bottelen", "description": BottlingStep(batch: batch)},
     ];
   }
 
@@ -119,17 +133,18 @@ class _BatchDetailsState extends State<BatchDetails> {
                   "SG-metingen",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                if (batch.brewDate != null) TextButton(
-                    onPressed:() {
-                      addSGMeasurement((DateTime date, double value) async {
-                        Batch updatedBatch =
-                            await Store.addSGToBatch(batch, date, value);
-                        setState(() {
-                          batch.sgMeasurements = updatedBatch.sgMeasurements;
+                if (batch.brewDate != null)
+                  TextButton(
+                      onPressed: () {
+                        addSGMeasurement((DateTime date, double value) async {
+                          Batch updatedBatch =
+                              await Store.addSGToBatch(batch, date, value);
+                          setState(() {
+                            batch.sgMeasurements = updatedBatch.sgMeasurements;
+                          });
                         });
-                      });
-                    },
-                    child: const Text("Voeg toe"))
+                      },
+                      child: const Text("Voeg toe"))
               ]),
               const SizedBox(height: 10),
               batch.sgMeasurements.isEmpty
@@ -210,7 +225,11 @@ class _BatchDetailsState extends State<BatchDetails> {
               _getRow("Spoelwater", Text("${batch.rinsingWater} liter")),
               _getRow(
                   "Bottelsuiker",
-                  Text(batch.bottleSugar == null || batch.bottleSugar!.products == null || batch.bottleSugar!.products!.isEmpty ? "-" : batch.bottleSugar!.products![0].product
+                  Text(batch.bottleSugar == null ||
+                          batch.bottleSugar!.products == null ||
+                          batch.bottleSugar!.products!.isEmpty
+                      ? "-"
+                      : batch.bottleSugar!.products![0].product
                           .getProductString())),
               const SizedBox(height: 20),
               Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -297,9 +316,12 @@ class _BatchDetailsState extends State<BatchDetails> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      batch.yeast == null || batch.yeast!.products == null || batch.yeast!.products!.isEmpty ||
-                      batch.yeast?.products?[0].product.name == null &&
-                              batch.yeast?.products?[0].product.amount == null
+                      batch.yeast == null ||
+                              batch.yeast!.products == null ||
+                              batch.yeast!.products!.isEmpty ||
+                              batch.yeast?.products?[0].product.name == null &&
+                                  batch.yeast?.products?[0].product.amount ==
+                                      null
                           ? const Text("Geen gist beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
                           : Table(
@@ -439,18 +461,55 @@ class _BatchDetailsState extends State<BatchDetails> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (context) => BrewStep(
-                                batch: batch, contentList: getTexts(batch))),
+                                batch: batch,
+                                contentList: getBrewingSteps(batch))),
                       );
                     },
                     child: Text("Brouwen")),
               if (status == BatchStatus.readyToLager)
-                ElevatedButton(onPressed: () {}, child: Text("Lageren")),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => BrewStep(
+                                batch: batch,
+                                contentList: getLageringSteps(batch), phase: BatchPhase.lagering,)),
+                      );
+                    },
+                    child: Text("Lageren")),
               if (status == BatchStatus.waitingForFermentation)
-                OutlinedButton(onPressed: () {}, child: Text("Lageren")),
+                OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => BrewStep(
+                                batch: batch,
+                                contentList: getLageringSteps(batch), phase: BatchPhase.lagering)),
+                      );
+                    },
+                    child: Text("Lageren")),
               if (status == BatchStatus.readyToBottle)
-                ElevatedButton(onPressed: () {}, child: Text("Bottelen")),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => BrewStep(
+                                batch: batch,
+                                contentList: getBottlingStep(batch), phase: BatchPhase.bottling)),
+                      );
+                    },
+                    child: Text("Bottelen")),
               if (status == BatchStatus.waitingForLagering)
-                OutlinedButton(onPressed: () {}, child: Text("Bottelen")),
+                OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => BrewStep(
+                                batch: batch,
+                                contentList: getBottlingStep(batch), phase: BatchPhase.bottling)),
+                      );
+                    },
+                    child: Text("Bottelen")),
             ])));
   }
 

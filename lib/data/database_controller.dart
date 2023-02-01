@@ -49,8 +49,8 @@ class DatabaseController {
     return newId;
   }
 
-  static Future<Batch> brewBatch(Batch batch, double startSG) async {
-    DateTime brewDate = DateTime.now();
+  static Future<Batch> brewBatch(Batch batch, DateTime? date, double startSG) async {
+    DateTime brewDate = date ?? DateTime.now();
 
     await db.collection("batches").doc(batch.id).update({
       "brewDate": brewDate,
@@ -67,6 +67,28 @@ class DatabaseController {
     return batch;
   }
 
+  static Future<Batch> lagerBatch(Batch batch, DateTime? date) async {
+    DateTime lagerDate = date ?? DateTime.now();
+
+    await db.collection("batches").doc(batch.id).update({
+      "lagerDate": lagerDate
+    });
+
+    batch.lagerDate = lagerDate;
+    return batch;
+  }
+
+  static Future<Batch> bottleBatch(Batch batch, DateTime? date) async {
+    DateTime bottleDate = date ?? DateTime.now();
+
+    await db.collection("batches").doc(batch.id).update({
+      "bottleDate": bottleDate
+    });
+
+    batch.bottleDate = bottleDate;
+    return batch;
+  }
+
   static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
     await db.collection("batches").doc(batch.id).update({"sgMeasurements": FieldValue.arrayUnion([
         {
@@ -76,6 +98,10 @@ class DatabaseController {
 
     batch.sgMeasurements[date] = value;
     return batch;
+  }
+
+  static Future<void> removeBatch(Batch batch) async {
+    await db.collection("batches").doc(batch.id).delete();
   }
 
   static Future<List<Product>> getProducts() async {

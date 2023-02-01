@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/SpecToProducts.dart';
+import '../models/spec_to_products.dart';
 import '../models/batch.dart';
 import '../models/product.dart';
 import '../util.dart';

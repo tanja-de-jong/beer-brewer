@@ -1,3 +1,4 @@
+import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -19,8 +20,12 @@ class Util {
     return d?.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0*$'), '');
   }
 
+  static bool search(String parent, String child) {
+    return removeDiacritics(parent.toLowerCase()).contains(removeDiacritics(child.toLowerCase()));
+  }
+
   static void showDeleteDialog(
-      BuildContext context, String subject, void Function()? onConfirm) {
+      BuildContext context, String subject, void Function()? onConfirm, { deze: false }) {
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -31,7 +36,7 @@ class Util {
                   Container(
                       padding: const EdgeInsets.only(left: 25, right: 25),
                       child: SelectableText(
-                          'Weet je zeker dat je dit ${subject.toLowerCase()} wil verwijderen?')),
+                          'Weet je zeker dat je ${deze ? "deze" : "dit"} ${subject.toLowerCase()} wil verwijderen?')),
                   const SizedBox(height: 20),
                   Center(
                       child: Wrap(spacing: 10, children: [
