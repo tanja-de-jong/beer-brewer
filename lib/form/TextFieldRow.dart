@@ -36,6 +36,7 @@ class _TextFieldRowState extends State<TextFieldRow> {
 
   @override
   void initState() {
+    print("${widget.initialValue}");
     if (widget.initialValue != null && widget.controller != null) {
       widget.controller!.text = widget.initialValue!.toString();
     }

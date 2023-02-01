@@ -8,7 +8,6 @@ import '../form/DoubleTextFieldRow.dart';
 import '../form/DropDownRow.dart';
 import '../form/TextFieldRow.dart';
 import '../home_page.dart';
-import '../main.dart';
 import '../models/spec_to_products.dart';
 import '../models/cooking.dart';
 import '../models/mashing.dart';
@@ -84,10 +83,31 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   FocusNode addHopFocusNode = FocusNode();
   FocusNode addOtherFocusNode = FocusNode();
 
+  List<TextEditingController> maltControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController()
+  ];
+
+  List<TextEditingController> hopControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController()
+  ];
+
+  List<TextEditingController> otherControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+  ];
+
   List<Widget> getOtherFields() {
     return [
       DropDownRow(
           focusNode: addOtherFocusNode,
+          controller: otherControllers[0],
           label: "Soort",
           initialValue: otherName,
           onChanged: (value) {
@@ -95,9 +115,13 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               otherName = value;
             });
           },
-      items: Store.products[Product]?.map((e) => e.name).toList().cast<String>()),
+          items: Store.products[Product]
+              ?.map((e) => e.name)
+              .toList()
+              .cast<String>()),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
+          controller: otherControllers[1],
           initialValue: otherAmount,
           onChanged: (value) {
             setState(() {
@@ -106,6 +130,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Tijd (min)",
+          controller: otherControllers[2],
           initialValue: otherTime,
           onChanged: (value) {
             setState(() {
@@ -119,6 +144,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
     return [
       DropDownRow(
           focusNode: addHopFocusNode,
+          controller: hopControllers[0],
           label: "Soort",
           initialValue: hopType,
           onChanged: (value) {
@@ -126,19 +152,19 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               hopType = value;
             });
           },
-          controller: hopTypeController,
           items: Store.hopTypes),
       DoubleTextFieldRow(
           label: "Alfazuur (%)",
+          controller: hopControllers[1],
           initialValue: hopAlphaAcid,
           onChanged: (value) {
             setState(() {
               hopAlphaAcid = value;
             });
-          },
-          controller: hopAlphaAcidController),
+          }),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
+          controller: hopControllers[2],
           initialValue: hopAmount,
           onChanged: (value) {
             setState(() {
@@ -147,6 +173,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Tijd (min)",
+          controller: hopControllers[3],
           initialValue: hopTime,
           onChanged: (value) {
             setState(() {
@@ -161,7 +188,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
       DropDownRow(
           focusNode: addMaltFocusNode,
           label: "Type",
-          initialValue: maltType,
+          controller: maltControllers[0],
           onChanged: (value) {
             setState(() {
               maltType = value;
@@ -184,7 +211,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           ]),
       DoubleTextFieldRow(
           label: "Min EBC",
-          initialValue: maltMinEBC,
+          controller: maltControllers[1],
           onChanged: (value) {
             setState(() {
               maltMinEBC = value;
@@ -192,7 +219,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Max EBC",
-          initialValue: maltMaxEBC,
+          controller: maltControllers[2],
           onChanged: (value) {
             setState(() {
               maltMaxEBC = value;
@@ -200,7 +227,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
-          initialValue: maltAmount,
+          controller: maltControllers[3],
           onChanged: (value) {
             setState(() {
               maltAmount = value;
@@ -308,13 +335,13 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                     await Store.removeRecipe(recipe!);
                     if (mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute<void>(
-                          builder: (BuildContext context) => const HomePage(
-                            title: 'Recepten',
-                            selectedPage: 1,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) => const HomePage(
+                              title: 'Recepten',
+                              selectedPage: 1,
+                            ),
                           ),
-                        ),
-                        (route) => false);
+                          (route) => false);
                     }
                   });
                 },
@@ -550,8 +577,8 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                           ),
                                         ]),
                                     ...malts.map((malt) => Row(children: [
-                                          Text(
-                                              "${malt.amount}g ${malt.name} (${MaltSpec.getEbcToString(malt.ebcMin, malt.ebcMax)})"),
+                                          Expanded(child: Text(
+                                              "${malt.amount}g ${malt.name} (${MaltSpec.getEbcToString(malt.ebcMin, malt.ebcMax)})", overflow: TextOverflow.ellipsis,)),
                                           IconButton(
                                             icon: const Icon(Icons.close),
                                             splashRadius: 12,
@@ -596,6 +623,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     maltMinEBC = null;
                                                     maltMaxEBC = null;
                                                     maltAmount = null;
+
+                                                    for (var element
+                                                        in maltControllers) {
+                                                      element.clear();
+                                                    }
                                                   });
                                                 },
                                           child: const Text("Voeg toe")),
@@ -656,68 +688,68 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                             WrapCrossAlignment.start,
                                         runSpacing: 15,
                                         spacing: 15,
-                                        children:
-                                            (hops.keys.toList()
-                                                  // ..sort((a, b) =>
-                                                  //     b!.compareTo(a!))
+                                        children: (hops.keys.toList()
+                                            // ..sort((a, b) =>
+                                            //     b!.compareTo(a!))
                                             )
-                                                .map((time) => SizedBox(
-                                                    width: 250,
-                                                    child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            time == null
-                                                                ? "-"
-                                                                : "$time minuten",
-                                                            style: const TextStyle(
-                                                              decoration:
-                                                                  TextDecoration
-                                                                      .underline,
-                                                            ),
-                                                          ),
-                                                          ...hops[time]!.map((hop) =>
-                                                              Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Text(
-                                                                        "${hop.amount}g ${hop.name} (${hop.alphaAcid}%)"),
-                                                                    IconButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          hops[time]!
-                                                                              .remove(hop);
-                                                                          if (hops[time]!
-                                                                              .isEmpty) {
-                                                                            hops.remove(time);
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                      icon: const Icon(
-                                                                          Icons
-                                                                              .close),
-                                                                      splashRadius:
-                                                                          12,
-                                                                      iconSize:
-                                                                          15,
-                                                                      padding:
-                                                                          EdgeInsets
-                                                                              .zero,
-                                                                      constraints:
-                                                                          const BoxConstraints(),
-                                                                    )
-                                                                  ]))
-                                                        ])))
-                                                .toList()),
+                                            .map((time) => SizedBox(
+                                                width: 250,
+                                                child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        time == null
+                                                            ? "-"
+                                                            : "$time minuten",
+                                                        style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline,
+                                                        ),
+                                                      ),
+                                                      ...hops[time]!.map((hop) =>
+                                                          Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Expanded(child: Text(
+                                                                    "${hop.amount}g ${hop.name} (${hop.alphaAcid}%)", overflow: TextOverflow.ellipsis,)),
+                                                                IconButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    setState(
+                                                                        () {
+                                                                      hops[time]!
+                                                                          .remove(
+                                                                              hop);
+                                                                      if (hops[
+                                                                              time]!
+                                                                          .isEmpty) {
+                                                                        hops.remove(
+                                                                            time);
+                                                                      }
+                                                                    });
+                                                                  },
+                                                                  icon: const Icon(
+                                                                      Icons
+                                                                          .close),
+                                                                  splashRadius:
+                                                                      12,
+                                                                  iconSize: 15,
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  constraints:
+                                                                      const BoxConstraints(),
+                                                                )
+                                                              ]))
+                                                    ])))
+                                            .toList()),
                                   ])
                             ]),
                             const SizedBox(
@@ -755,6 +787,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     hopType = null;
                                                     hopAlphaAcid = null;
                                                     hopAmount = null;
+
+                                                    for (var controller in hopControllers) {
+                                                      controller.clear();
+                                                    }
                                                   });
                                                 },
                                           child: const Text("Voeg toe")),
@@ -778,7 +814,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                           setState(() {
                                             yeast.name = value;
                                           });
-                                        }, items: Store.products[Yeast]?.map((e) => e.name).toList().cast<String>()),
+                                        },
+                                        items: Store.products[Yeast]
+                                            ?.map((e) => e.name)
+                                            .toList()
+                                            .cast<String>()),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
                                         initialValue: yeast.amount,
@@ -800,13 +840,18 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                   ),
                                   Wrap(spacing: 70, children: [
                                     DropDownRow(
-                                        label: "Naam",
-                                        initialValue: cookingSugar.name,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            cookingSugar.name = value;
-                                          });
-                                        }, items: Store.products[Sugar]?.map((e) => e.name).toList().cast<String>(),),
+                                      label: "Naam",
+                                      initialValue: cookingSugar.name,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          cookingSugar.name = value;
+                                        });
+                                      },
+                                      items: Store.products[Sugar]
+                                          ?.map((e) => e.name)
+                                          .toList()
+                                          .cast<String>(),
+                                    ),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g)",
                                         initialValue: cookingSugar.amount,
@@ -842,7 +887,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                           setState(() {
                                             bottleSugar.name = value;
                                           });
-                                        }, items: Store.products[Sugar]?.map((e) => e.name).toList().cast<String>()),
+                                        },
+                                        items: Store.products[Sugar]
+                                            ?.map((e) => e.name)
+                                            .toList()
+                                            .cast<String>()),
                                     DoubleTextFieldRow(
                                         label: "Hoeveelheid (g/L)",
                                         initialValue: bottleSugar.amount,
@@ -906,68 +955,68 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                             WrapCrossAlignment.start,
                                         runSpacing: 15,
                                         spacing: 15,
-                                        children:
-                                            (others.keys.toList()
-                                                  // ..sort((a, b) =>
-                                                  //     b!.compareTo(a!))
-                                                )
-                                                .map((time) => SizedBox(
-                                                    width: 250,
-                                                    child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            time == null
-                                                                ? "-"
-                                                                : "$time minuten",
-                                                            style: const TextStyle(
-                                                              decoration:
-                                                                  TextDecoration
-                                                                      .underline,
-                                                            ),
-                                                          ),
-                                                          ...others[time]!.map((other) =>
-                                                              Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Text(
-                                                                        "${other.amount}g ${other.name}"),
-                                                                    IconButton(
-                                                                      icon: const Icon(
-                                                                          Icons
-                                                                              .close),
-                                                                      splashRadius:
-                                                                          12,
-                                                                      iconSize:
-                                                                          15,
-                                                                      padding:
-                                                                          EdgeInsets
-                                                                              .zero,
-                                                                      constraints:
-                                                                          const BoxConstraints(),
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          others[time]!
-                                                                              .remove(other);
-                                                                          if (others[time]!
-                                                                              .isEmpty) {
-                                                                            others.remove(time);
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                    )
-                                                                  ]))
-                                                        ])))
-                                                .toList())
+                                        children: (others.keys.toList()
+                                            ..sort((a, b) =>
+                                                b!.compareTo(a!))
+                                            )
+                                            .map((time) => SizedBox(
+                                                width: 250,
+                                                child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        time == null
+                                                            ? "-"
+                                                            : "$time minuten",
+                                                        style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline,
+                                                        ),
+                                                      ),
+                                                      ...others[time]!.map((other) =>
+                                                          Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Expanded(child: Text(
+                                                                    "${other.amount}g ${other.name}", overflow: TextOverflow.ellipsis,)),
+                                                                IconButton(
+                                                                  icon: const Icon(
+                                                                      Icons
+                                                                          .close),
+                                                                  splashRadius:
+                                                                      12,
+                                                                  iconSize: 15,
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  constraints:
+                                                                      const BoxConstraints(),
+                                                                  onPressed:
+                                                                      () {
+                                                                    setState(
+                                                                        () {
+                                                                      others[time]!
+                                                                          .remove(
+                                                                              other);
+                                                                      if (others[
+                                                                              time]!
+                                                                          .isEmpty) {
+                                                                        others.remove(
+                                                                            time);
+                                                                      }
+                                                                    });
+                                                                  },
+                                                                )
+                                                              ]))
+                                                    ])))
+                                            .toList())
                                   ]),
                             ]),
                             const SizedBox(
@@ -991,8 +1040,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                               : () {
                                                   setState(() {
                                                     ProductSpec other =
-                                                        ProductSpec(
-                                                            otherName,
+                                                        ProductSpec(otherName,
                                                             otherAmount);
 
                                                     if (others.containsKey(
@@ -1008,6 +1056,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                                     otherName = null;
                                                     otherTime = null;
                                                     otherAmount = null;
+
+                                                    for (var controller in otherControllers) {
+                                                      controller.clear();
+                                                    }
                                                   });
                                                 },
                                           child: const Text("Voeg toe")),
@@ -1163,16 +1215,16 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                                         .toList() ??
                                     []))
                             .toList());
-                        if (cookingSugar.amount != null || cookingSugar.name != null) {
+                        if (cookingSugar.amount != null ||
+                            cookingSugar.name != null) {
                           cooking.addStep(cookingSugarTime,
-                            [SpecToProducts(cookingSugar, [], null)]);
+                              [SpecToProducts(cookingSugar, [], null)]);
                         }
                         for (double? time in others.keys) {
                           cooking.addStep(
                               time,
                               others[time]!
-                                  .map((ps) =>
-                                      SpecToProducts(ps, [], null))
+                                  .map((ps) => SpecToProducts(ps, [], null))
                                   .toList());
                         }
 
@@ -1189,67 +1241,34 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                             bitter,
                             Mashing(
                                 malts
-                                    .map((m) =>
-                                        SpecToProducts(m, [], null))
+                                    .map((m) => SpecToProducts(m, [], null))
                                     .toList(),
                                 mashSteps,
                                 mashWater),
                             rinsingWater,
                             cooking,
-                            yeast.amount != null || yeast.name != null ? yeast : null,
+                            yeast.amount != null || yeast.name != null
+                                ? yeast
+                                : null,
                             minTemp,
                             maxTemp,
-                            bottleSugar.amount != null || bottleSugar.name != null ? bottleSugar : null,
+                            bottleSugar.amount != null ||
+                                    bottleSugar.name != null
+                                ? bottleSugar
+                                : null,
                             remarks);
                         await Store.saveRecipe(newRecipe);
 
                         if (mounted) {
                           Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeDetails(recipe: newRecipe)),
-                            (Route<dynamic> route) => route.isFirst);
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      RecipeDetails(recipe: newRecipe)),
+                              (Route<dynamic> route) => route.isFirst);
                         }
                       },
                 child: const Text("Opslaan"),
               ),
             ])));
   }
-
-  // showDeleteDialog() {
-  //   showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return SimpleDialog(
-  //             title: const SelectableText('Recept verwijderen'),
-  //             children: [
-  //               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-  //                 Container(
-  //                     padding: const EdgeInsets.only(left: 25, right: 25),
-  //                     child: const SelectableText(
-  //                         'Weet je zeker dat je dit recept wil verwijderen?')),
-  //                 const SizedBox(height: 20),
-  //                 Center(
-  //                     child: Wrap(spacing: 10, children: [
-  //                   OutlinedButton(
-  //                       onPressed: () async {
-  //                         await Store.removeRecipe(recipe!);
-  //                         Navigator.of(context).pushAndRemoveUntil(
-  //                             MaterialPageRoute<void>(
-  //                               builder: (BuildContext context) =>
-  //                                   MyHomePage(title: 'Bier Brouwen', selectedPage: 1,),
-  //                             ),
-  //                             (route) => false);
-  //                       },
-  //                       child: const Text('Ja')),
-  //                   ElevatedButton(
-  //                       onPressed: () {
-  //                         Navigator.pop(context);
-  //                       },
-  //                       child: const Text('Nee')),
-  //                 ]))
-  //               ])
-  //             ]);
-  //       });
-  // }
 }
