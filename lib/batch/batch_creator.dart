@@ -761,7 +761,6 @@ class _BatchCreatorState extends State<BatchCreator> {
   }
 
   isInStock(ProductInstance sel) {
-    print(sel.product.name);
     if (!amountsUsed.containsKey(sel.product)) return true;
     return (sel.product.amountInStock ?? 0) >= amountsUsed[sel.product]!;
   }

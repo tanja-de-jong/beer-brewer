@@ -217,8 +217,6 @@ class Store {
         batch, NotificationType.bottlingDone, date);
     Notification.scheduleNotification(batch, NotificationType.done, date);
 
-    print(batch.notifications.toString());
-
     Batch bottledBatch = await DatabaseController.bottleBatch(batch, date);
 
     int idx = Store.batches.indexWhere((b) => bottledBatch.id == b.id);
@@ -247,7 +245,6 @@ class Store {
     batches = await DatabaseController.getBatches();
     notificationIds =
         batches.expand((b) => b.notifications.values).toList().cast<int>();
-    print("Notification ids: $notificationIds");
   }
 
   static Future<Product> saveProduct(
