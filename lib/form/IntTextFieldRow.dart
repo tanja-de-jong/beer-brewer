@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 class IntTextFieldRow extends StatefulWidget {
   final MainAxisAlignment alignment;
   final String label;
-  final bool isDouble;
+  final bool isnum;
 
-  const IntTextFieldRow({Key? key, required this.label, this.isDouble = false, this.alignment = MainAxisAlignment.spaceBetween}) : super(key: key);
+  const IntTextFieldRow({Key? key, required this.label, this.isnum = false, this.alignment = MainAxisAlignment.spaceBetween}) : super(key: key);
 
   @override
   State<IntTextFieldRow> createState() => _IntTextFieldRowState();
@@ -21,10 +21,10 @@ class _IntTextFieldRowState extends State<IntTextFieldRow> {
         style: const TextStyle(fontStyle: FontStyle.italic),
       ),
       SizedBox(height: 30, width: 80, child: TextField(
-        keyboardType: widget.isDouble ?
+        keyboardType: widget.isnum ?
         const TextInputType.numberWithOptions(
             decimal: true, signed: false) : null,
-        inputFormatters: widget.isDouble ? [
+        inputFormatters: widget.isnum ? [
           FilteringTextInputFormatter.allow(
               RegExp(r"[\d.,]")),
           TextInputFormatter.withFunction(
@@ -33,7 +33,7 @@ class _IntTextFieldRowState extends State<IntTextFieldRow> {
                   final text = newValue.text
                       .replaceAll(RegExp(r','), ".");
                   if (text.isNotEmpty) {
-                    double.parse(text);
+                    num.parse(text);
                   }
                   return newValue;
                 } catch (e) {}

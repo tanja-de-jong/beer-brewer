@@ -5,7 +5,7 @@ import '../util.dart';
 
 class ProductSpec {
   String? name;
-  double? amount;
+  num? amount;
   ProductSpecCategory category;
 
   ProductSpec(this.name, this.amount,
@@ -48,8 +48,8 @@ class ProductSpec {
 }
 
 class MaltSpec extends ProductSpec {
-  double? ebcMin;
-  double? ebcMax;
+  num? ebcMin;
+  num? ebcMax;
 
   MaltSpec(name, this.ebcMin, this.ebcMax, amount) : super(name, amount) {
     category = ProductSpecCategory.malt;
@@ -60,16 +60,16 @@ class MaltSpec extends ProductSpec {
         data["name"], data["ebcMin"], data["ebcMax"], data["amount"]);
   }
 
-  String ebcToString({double? min, double? max}) {
-    double? minEbc = min ?? ebcMin;
-    double? maxEbc = max ?? ebcMax;
+  String ebcToString({num? min, num? max}) {
+    num? minEbc = min ?? ebcMin;
+    num? maxEbc = max ?? ebcMax;
     if (minEbc == null && ebcMax == null) return "-";
     if (minEbc == maxEbc || minEbc == null) return "$maxEbc EBC";
     if (maxEbc == null) return "$minEbc EBC";
     return "$minEbc - $maxEbc EBC";
   }
 
-  static String getEbcToString(double? min, double? max) {
+  static String getEbcToString(num? min, num? max) {
     if (min == null && max == null) return "-";
     if (min == max || min == null) return "$max EBC";
     if (max == null) return "$min EBC";
@@ -93,7 +93,7 @@ class MaltSpec extends ProductSpec {
 }
 
 class HopSpec extends ProductSpec {
-  double? alphaAcid;
+  num? alphaAcid;
 
   HopSpec(name, this.alphaAcid, amount) : super(name, amount) {
     category = ProductSpecCategory.hop;

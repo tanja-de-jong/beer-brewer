@@ -1,3 +1,4 @@
+import 'package:beer_brewer/notification.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -50,19 +51,24 @@ class DatabaseController {
       Map data = doc.data();
       Batch batch = Batch.create(doc.id, data);
       result.add(batch);
+      if (batch.isReadyToDrink() && batch.notifications.isNotEmpty) {
+        db.collection("batches").doc(batch.id).update({
+          "notifications": null
+        });
+        batch.notifications = {};
+      }
     }
     return result;
   }
 
   static Future<String> saveBatch(Batch batch) async {
-    String newId = batch.id == null ? (db.collection("batched").doc()).id : batch.id!;
+    String newId = batch.id == null ? (db.collection("batches").doc()).id : batch.id!;
 
     await db.collection("batches").doc(newId).set(batch.toMap());
-
     return newId;
   }
 
-  static Future<Batch> brewBatch(Batch batch, DateTime? date, double startSG) async {
+  static Future<Batch> brewBatch(Batch batch, DateTime? date, num startSG) async {
     DateTime brewDate = date ?? DateTime.now();
 
     await db.collection("batches").doc(batch.id).update({
@@ -70,7 +76,11 @@ class DatabaseController {
       "sgMeasurements": [{
         "date": brewDate,
         "SG": startSG
-      }]
+      }],
+      "notifications": batch.notifications.keys.map((e) => {
+        "type": e.name,
+        "id": batch.notifications[e]
+      }).toList()
     });
 
     batch.brewDate = brewDate;
@@ -84,7 +94,11 @@ class DatabaseController {
     DateTime lagerDate = date ?? DateTime.now();
 
     await db.collection("batches").doc(batch.id).update({
-      "lagerDate": lagerDate
+      "lagerDate": lagerDate,
+      "notifications": batch.notifications.keys.map((e) => {
+        "type": e.name,
+        "id": batch.notifications[e]
+      }).toList()
     });
 
     batch.lagerDate = lagerDate;
@@ -95,14 +109,18 @@ class DatabaseController {
     DateTime bottleDate = date ?? DateTime.now();
 
     await db.collection("batches").doc(batch.id).update({
-      "bottleDate": bottleDate
+      "bottleDate": bottleDate,
+      "notifications": batch.notifications.keys.map((e) => {
+        "type": e.name,
+        "id": batch.notifications[e]
+      }).toList()
     });
 
     batch.bottleDate = bottleDate;
     return batch;
   }
 
-  static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
+  static Future<Batch> addSGToBatch(Batch batch, DateTime date, num value) async {
     await db.collection("batches").doc(batch.id).update({"sgMeasurements": FieldValue.arrayUnion([
         {
           "date": date,
@@ -128,7 +146,7 @@ class DatabaseController {
     return result;
   }
 
-  static Future<Product> saveProduct(String? id, ProductCategory category, String name, String? brand, Map<String, Map<String, dynamic>>? stores, double? amount, Map? extraProps) async {
+  static Future<Product> saveProduct(String? id, ProductCategory category, String name, String? brand, Map<String, Map<String, dynamic>>? stores, num? amount, Map? extraProps) async {
     Map<String, dynamic> data = {
       "category": describeEnum(category),
       "name": name,
@@ -148,9 +166,9 @@ class DatabaseController {
     return p;
   }
 
-  static Future<Product> updateAmountForProduct(Product product, double amount) async {
+  static Future<Product> updateAmountForProduct(Product product, num amount) async {
     await db.collection("products").doc(product.id).update({ "amount": amount });
-    product.amount = amount;
+    product.amountInStock = amount;
     return product;
   }
 

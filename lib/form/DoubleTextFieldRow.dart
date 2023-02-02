@@ -4,7 +4,7 @@ import 'TextFieldRow.dart';
 class DoubleTextFieldRow extends StatefulWidget {
   final MainAxisAlignment alignment;
   final String label;
-  final double? initialValue;
+  final num? initialValue;
   final Function(dynamic)? onChanged;
   final TextEditingController? controller;
   final bool isPercentage;
@@ -19,6 +19,6 @@ class DoubleTextFieldRow extends StatefulWidget {
 class _DoubleTextFieldRowState extends State<DoubleTextFieldRow> {
   @override
   Widget build(BuildContext context) {
-    return TextFieldRow(label: widget.label, initialValue: widget.initialValue, controller: widget.controller, isDouble: true, isPercentage: widget.isPercentage, props: widget.props, alignment: widget.alignment, onChanged: widget.onChanged);
+    return TextFieldRow(label: widget.label, initialValue: widget.initialValue, controller: widget.controller, isnum: true, isPercentage: widget.isPercentage, props: widget.props, alignment: widget.alignment, onChanged: widget.onChanged);
   }
 }

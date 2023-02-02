@@ -1,12 +1,16 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:beer_brewer/data/database_controller.dart';
 
 import '../models/batch.dart';
 import '../models/product.dart';
 import '../models/recipe.dart';
+import '../notification.dart';
 
 class Store {
   static DateTime? date;
-  static double? startSG; // TODO: necessary for FermentationStep => refactor
+  static num? startSG; // TODO: necessary for FermentationStep => refactor
+
+  static List<int> notificationIds = [];
 
   static List<String> maltTypes = [
     "Pils",
@@ -125,6 +129,44 @@ class Store {
 
   // TODO
   static Future<Batch> saveBatch(Batch batch) async {
+    if (batch.id != null) {
+      Batch existingBatch = Store.batches.firstWhere((b) => batch.id == b.id);
+      if (batch.brewDate != existingBatch.brewDate) {
+        Notification.replaceNotification(
+            batch,
+            NotificationType.fermentationPossiblyDone,
+            existingBatch
+                .notifications[NotificationType.fermentationPossiblyDone]
+                ?.toInt(),
+            batch.brewDate);
+        Notification.replaceNotification(
+            batch,
+            NotificationType.fermentationDone,
+            existingBatch
+                .notifications[NotificationType.fermentationDone]
+                ?.toInt(),
+            batch.brewDate);
+      }
+      if (batch.lagerDate != existingBatch.lagerDate) {
+        Notification.replaceNotification(
+            batch,
+            NotificationType.lageringDone,
+            existingBatch
+                .notifications[NotificationType.lageringDone]
+                ?.toInt(),
+            batch.lagerDate);
+      }
+      if (batch.bottleDate != existingBatch.bottleDate) {
+        Notification.replaceNotification(
+            batch,
+            NotificationType.bottlingDone,
+            existingBatch
+                .notifications[NotificationType.bottlingDone]
+                ?.toInt(),
+            batch.bottleDate);
+      }
+    }
+
     String newId = await DatabaseController.saveBatch(batch);
     if (batch.id == null) {
       batch.id = newId;
@@ -137,8 +179,15 @@ class Store {
     return batch;
   }
 
-  static Future<Batch> brewBatch(Batch batch, DateTime? date, double startSG) async {
-    Batch brewedBatch = await DatabaseController.brewBatch(batch, date, startSG);
+  static Future<Batch> brewBatch(
+      Batch batch, DateTime? date, num startSG) async {
+    Notification.scheduleNotification(
+        batch, NotificationType.fermentationPossiblyDone, date);
+    Notification.scheduleNotification(
+        batch, NotificationType.fermentationDone, date);
+
+    Batch brewedBatch =
+        await DatabaseController.brewBatch(batch, date, startSG);
 
     int idx = Store.batches.indexWhere((b) => brewedBatch.id == b.id);
     Store.batches[idx] = brewedBatch;
@@ -147,6 +196,12 @@ class Store {
   }
 
   static Future<Batch> lagerBatch(Batch batch, DateTime? date) async {
+    Notification.cancelNotification(
+        batch, NotificationType.fermentationPossiblyDone);
+    Notification.cancelNotification(batch, NotificationType.fermentationDone);
+    Notification.scheduleNotification(
+        batch, NotificationType.lageringDone, date);
+
     Batch lageredBatch = await DatabaseController.lagerBatch(batch, date);
 
     int idx = Store.batches.indexWhere((b) => lageredBatch.id == b.id);
@@ -156,6 +211,14 @@ class Store {
   }
 
   static Future<Batch> bottleBatch(Batch batch, DateTime? date) async {
+    Notification.cancelNotification(batch, NotificationType.lageringDone);
+
+    Notification.scheduleNotification(
+        batch, NotificationType.bottlingDone, date);
+    Notification.scheduleNotification(batch, NotificationType.done, date);
+
+    print(batch.notifications.toString());
+
     Batch bottledBatch = await DatabaseController.bottleBatch(batch, date);
 
     int idx = Store.batches.indexWhere((b) => bottledBatch.id == b.id);
@@ -164,8 +227,10 @@ class Store {
     return bottledBatch;
   }
 
-  static Future<Batch> addSGToBatch(Batch batch, DateTime date, double value) async {
-    Batch updatedBatch = await DatabaseController.addSGToBatch(batch, date, value);
+  static Future<Batch> addSGToBatch(
+      Batch batch, DateTime date, num value) async {
+    Batch updatedBatch =
+        await DatabaseController.addSGToBatch(batch, date, value);
 
     int idx = Store.batches.indexWhere((b) => updatedBatch.id == b.id);
     Store.batches[idx] = updatedBatch;
@@ -180,6 +245,9 @@ class Store {
 
   static Future<void> loadBatches() async {
     batches = await DatabaseController.getBatches();
+    notificationIds =
+        batches.expand((b) => b.notifications.values).toList().cast<int>();
+    print("Notification ids: $notificationIds");
   }
 
   static Future<Product> saveProduct(
@@ -188,7 +256,7 @@ class Store {
       String name,
       String? brand,
       Map<String, Map<String, dynamic>>? stores,
-      double? amount,
+      num? amount,
       Map? extraProps) async {
     Product product = await DatabaseController.saveProduct(
         id, category, name, brand, stores, amount, extraProps);
@@ -217,7 +285,7 @@ class Store {
   }
 
   static Future<Product> updateAmountForProduct(
-      Product product, double amount) async {
+      Product product, num amount) async {
     return DatabaseController.updateAmountForProduct(product, amount);
   }
 

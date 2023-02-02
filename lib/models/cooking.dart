@@ -9,7 +9,7 @@ class Cooking {
     return steps.expand((step) => step.products).toSet();
   }
 
-  void addStep(double? time, List<SpecToProducts> products) {
+  void addStep(num? time, List<SpecToProducts> products) {
     Iterable<CookingScheduleStep> matchingSteps =
     steps.where((step) => step.time == time);
     if (matchingSteps.isEmpty) {
@@ -36,7 +36,7 @@ class Cooking {
 
 class CookingScheduleStep {
   List<SpecToProducts> products = [];
-  double? time;
+  num? time;
 
   CookingScheduleStep(this.time, List<SpecToProducts> products) {
     this.products.addAll(products);

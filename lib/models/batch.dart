@@ -10,24 +10,25 @@ class Batch {
   String? id;
   String name;
   String recipeId;
-  double amount;
+  num amount;
   String? style;
-  double? expStartSG;
-  double? expFinalSG;
-  double? color;
-  double? bitter;
+  num? expStartSG;
+  num? expFinalSG;
+  num? color;
+  num? bitter;
   Mashing mashing;
-  double? rinsingWater;
+  num? rinsingWater;
   Cooking cooking;
   SpecToProducts? yeast;
-  double? fermTempMin;
-  double? fermTempMax;
+  num? fermTempMin;
+  num? fermTempMax;
   SpecToProducts? bottleSugar;
   String? remarks;
   DateTime? brewDate;
   DateTime? lagerDate;
   DateTime? bottleDate;
-  Map<DateTime, double> sgMeasurements;
+  Map<DateTime, num> sgMeasurements;
+  Map<NotificationType, num> notifications;
 
   Batch(
       this.id,
@@ -50,14 +51,24 @@ class Batch {
       this.brewDate,
       this.lagerDate,
       this.bottleDate,
-      this.sgMeasurements);
+      this.sgMeasurements,
+      this.notifications);
 
   static Batch create(String id, Map data) {
-    Map<DateTime, double> sgMeasurements = {};
+    Map<DateTime, num> sgMeasurements = {};
     if (data.containsKey("sgMeasurements")) {
       List sgData = data["sgMeasurements"];
       for (var sg in sgData) {
         sgMeasurements.putIfAbsent(sg["date"].toDate(), () => sg["SG"]);
+      }
+    }
+
+    Map<NotificationType, num> notifications = {};
+    if (data.containsKey("notifications")) {
+      List notificationData = data["notifications"];
+      for (var n in notificationData) {
+        NotificationType type = NotificationType.values.firstWhere((e) => e.name == n["type"]);
+        notifications[type] = n["id"];
       }
     }
 
@@ -82,17 +93,19 @@ class Batch {
         data["brewDate"]?.toDate(),
         data["lagerDate"]?.toDate(),
         data["bottleDate"]?.toDate(),
-        sgMeasurements);
+        sgMeasurements,
+        notifications
+    );
   }
 
-  double? getStartSG() {
+  num? getStartSG() {
     if (sgMeasurements.isEmpty) return null;
     List<DateTime> dates = sgMeasurements.keys.toList();
     dates.sort();
     return sgMeasurements[dates.first]!;
   }
 
-  double? getEndSG() {
+  num? getEndSG() {
     if (sgMeasurements.length < 2) return null;
     List<DateTime> dates = sgMeasurements.keys.toList();
     dates.sort();
@@ -129,13 +142,13 @@ class Batch {
     List<DateTime> dates = sgMeasurements.keys.toList();
     dates.sort();
     DateTime latestDate = dates.last;
-    double lastValue = sgMeasurements[latestDate]!;
+    num lastValue = sgMeasurements[latestDate]!;
     List<DateTime> prevDates = dates
         .where((date) =>
     !date.isAfter(dates.last.subtract(const Duration(days: 2)))).toList();
     if (prevDates.isEmpty) return false;
     DateTime prevDate = prevDates.last;
-    double diff = (sgMeasurements[prevDate]! - lastValue).abs();
+    num diff = (sgMeasurements[prevDate]! - lastValue).abs();
     return diff < 0.005;
   }
 
@@ -261,6 +274,38 @@ class Batch {
     return "${fermTempMin ?? "?"} - ${fermTempMax ?? "?"}°C";
   }
 
+  List<SpecToProducts> getAllSpecToProducts() {
+    List<SpecToProducts> allStps = [...mashing.malts, ...(cooking.steps.expand((e) => e.products))];
+    if (bottleSugar != null) allStps.add(bottleSugar!);
+    if (yeast != null) allStps.add(yeast!);
+    return allStps;
+  }
+
+  Map<Product, num> getShoppingList() {
+    Map<Product, num> shoppingList = {};
+
+    if (brewDate == null) {
+      for (SpecToProducts stp in getAllSpecToProducts()) {
+        if (stp.products != null) {
+          for (ProductInstance pi in stp.products!) {
+            Product p = pi.product;
+            num shortage = pi.amount -
+                (p.amountInStock == null || p.amountInStock! < 0 ? 0 : p
+                    .amountInStock!);
+            if (shortage > 0) {
+              shoppingList[p] = (shoppingList[p] ?? 0) + shortage;
+            }
+          }
+        }
+      }
+    }
+    return shoppingList;
+  }
+
+  void addNotification(int id, NotificationType type) {
+    notifications[type] = id; // TODO
+  }
+
   Map<String, dynamic> toMap() {
     return {
       "name": name,
@@ -284,7 +329,8 @@ class Batch {
       "bottleDate": bottleDate,
       "sgMeasurements": sgMeasurements.keys
           .map((e) => {"date": e, "SG": sgMeasurements[e]})
-          .toList()
+          .toList(),
+      "notifications": notifications.keys.map((e) => {"type": e.name, "id": notifications[e]}).toList()
     };
   }
 }
@@ -313,4 +359,12 @@ enum BatchPhase {
   brewing,
   lagering,
   bottling
+}
+
+enum NotificationType {
+  fermentationPossiblyDone,
+  fermentationDone,
+  lageringDone,
+  bottlingDone,
+  done
 }

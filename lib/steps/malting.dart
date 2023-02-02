@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/batch.dart';
 import '../models/product.dart';
+import '../models/spec_to_products.dart';
 import '../util.dart';
 
 class MaltingStep extends StatefulWidget {
@@ -84,7 +85,7 @@ class _MaltingStepState extends State<MaltingStep> {
         const SizedBox(height: 20),
         const Text("Mouten", style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        ...batch.mashing.malts.expand((stp) => stp.products ?? []).map((pi) => Text("${Util.amountToString(pi.amount)} ${pi.product.name} van ${pi.product.brand} (${(pi.product as Malt).ebcToString()})")),
+        ...batch.mashing.malts.expand((stp) => stp.products ?? []).map((pi) => Text("${Util.amountToString((pi as ProductInstance).amount)} ${pi.product.name} van ${pi.product.brand} (${(pi.product as Malt).ebcToString()})")),
         const SizedBox(height: 10),
     ]);
   }

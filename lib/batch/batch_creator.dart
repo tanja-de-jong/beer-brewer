@@ -39,12 +39,12 @@ class _BatchCreatorState extends State<BatchCreator> {
   List<SpecToProducts> otherMappings = [];
   Map<ProductSpecCategory, List<SpecToProducts>> allMappings = {};
 
-  Map<Product, double> amountsUsed = {};
-  late double batchAmount;
+  Map<Product, num> amountsUsed = {};
+  late num batchAmount;
   String? explanation;
 
-  double? mashWater;
-  double? rinsingWater;
+  num? mashWater;
+  num? rinsingWater;
 
   DateTime? brewDate;
   DateTime? lagerDate;
@@ -57,8 +57,8 @@ class _BatchCreatorState extends State<BatchCreator> {
           if (stp.products != null) {
             for (ProductInstance pi in stp.products!) {
               Product p = pi.product;
-              if (p.amount != null) {
-                Store.updateAmountForProduct(p, p.amount! + pi.amount);
+              if (p.amountInStock != null) {
+                Store.updateAmountForProduct(p, p.amountInStock! + pi.amount);
               }
             }
           }
@@ -66,12 +66,12 @@ class _BatchCreatorState extends State<BatchCreator> {
       }
     } else {
       for (var p in amountsUsed.keys) {
-        Store.updateAmountForProduct(p, (p.amount ?? 0) - (amountsUsed[p] ?? 0));
+        Store.updateAmountForProduct(p, (p.amountInStock ?? 0) - (amountsUsed[p] ?? 0));
       }
     }
   }
 
-  void addProductForSpec(SpecToProducts stp, Product product, double amount) {
+  void addProductForSpec(SpecToProducts stp, Product product, num amount) {
     setState(() {
       stp.products ??= [];
       stp.products!.add(ProductInstance(product, amount));
@@ -104,7 +104,7 @@ class _BatchCreatorState extends State<BatchCreator> {
               Expanded(
                   child: Text(
                       "${sel.amount}g ${sel.product.name} (${sel.product.brand})",
-                      overflow: TextOverflow.ellipsis)),
+                      overflow: TextOverflow.ellipsis, style: TextStyle(color: isInStock(sel) ? null : Colors.red),)),
               IconButton(
                 onPressed: () {
                   setState(() {
@@ -159,21 +159,22 @@ class _BatchCreatorState extends State<BatchCreator> {
             ));
   }
 
-  void updateBatchAmount(double amount) {
+  void updateBatchAmount(num amount) {
     if (amount != batchAmount) {
-      double ingredientRatio = amount / batchAmount;
+      num ingredientRatio = amount / batchAmount;
       setState(() {
         for (SpecToProducts stp in allMappings.values.expand((e) => e)) {
           ProductSpec spec = stp.spec;
-          if (spec.amount != null) {
-            spec.amount = double.parse(
-                Util.prettify(spec.amount! * ingredientRatio) ?? "");
-          }
-          if (stp.products != null) {
-            for (ProductInstance pi in stp.products!) {
-              Product p = pi.product;
-              pi.amount = double.parse(
-                  Util.prettify(pi.amount * ingredientRatio) ?? "");
+          if (spec.category != ProductSpecCategory.bottleSugar) {
+            if (spec.amount != null) {
+              spec.amount = num.parse(
+                  Util.prettify(spec.amount! * ingredientRatio) ?? "");
+            }
+            if (stp.products != null) {
+              for (ProductInstance pi in stp.products!) {
+                pi.amount = num.parse(
+                    Util.prettify(pi.amount * ingredientRatio) ?? "");
+              }
             }
           }
         }
@@ -291,7 +292,7 @@ class _BatchCreatorState extends State<BatchCreator> {
               SizedBox(
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
-                      100,
+                      170,
                   child: loading
                       ? const Center(child: CircularProgressIndicator())
                       : SingleChildScrollView(
@@ -380,7 +381,6 @@ class _BatchCreatorState extends State<BatchCreator> {
                                     )),
                             ]))),
               const Divider(),
-              const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () {
                   Batch? batch = widget.batch;
@@ -422,7 +422,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                       brewDate,
                       lagerDate,
                       bottleDate,
-                      widget.batch?.sgMeasurements ?? {});
+                      widget.batch?.sgMeasurements ?? {}, widget.batch?.notifications ?? {});
                   Store.saveBatch(newBatch);
                   updateProductAmounts();
                   if (mounted) {
@@ -537,7 +537,7 @@ class _BatchCreatorState extends State<BatchCreator> {
     /* TEMP DATA */
     List products = Store.products[spec.category.product]!;
     Product? selectedProduct;
-    double? amount = spec.amount;
+    num? amount = spec.amount;
     String? explanation;
 
     showDialog(
@@ -579,7 +579,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                 if (spec is MaltSpec)
                                   DataCell(
                                       Text((product as Malt).ebcToString())),
-                                DataCell(Text((product as Product).amountToString())),
+                                DataCell(Text(Util.amountToString(((product as Product).amountInStock ?? 0) - (amountsUsed[product] ?? 0)))),
                                 DataCell(Text(product.storesToString()))
                               ]))
                       .toList()
@@ -669,7 +669,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                       initialValue: amount.toString(),
                                       onChanged: (value) {
                                         setState(() {
-                                          amount = double.tryParse(value);
+                                          amount = num.tryParse(value);
                                         });
                                       },
                                       decoration: InputDecoration(
@@ -700,7 +700,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                             final text = newValue.text
                                                 .replaceAll(RegExp(r','), ".");
                                             if (text.isNotEmpty) {
-                                              double.parse(text);
+                                              num.parse(text);
                                             }
                                             return newValue;
                                           } catch (e) {}
@@ -758,5 +758,11 @@ class _BatchCreatorState extends State<BatchCreator> {
                 ]);
           });
         });
+  }
+
+  isInStock(ProductInstance sel) {
+    print(sel.product.name);
+    if (!amountsUsed.containsKey(sel.product)) return true;
+    return (sel.product.amountInStock ?? 0) >= amountsUsed[sel.product]!;
   }
 }

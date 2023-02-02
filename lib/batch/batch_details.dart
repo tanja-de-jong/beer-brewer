@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../home_page.dart';
+import '../models/spec_to_products.dart';
 import '../steps/bottling.dart';
 import '../steps/brew_step.dart';
 import '../data/store.dart';
@@ -97,6 +98,8 @@ class _BatchDetailsState extends State<BatchDetails> {
   }
 
   Widget brewInfo() {
+    Map<Product, num> shoppingList = batch.getShoppingList();
+
     return SizedBox(
         width: 350,
         child: Column(
@@ -127,59 +130,96 @@ class _BatchDetailsState extends State<BatchDetails> {
                           DateFormat("dd-MM-yyyy").format(batch.bottleDate!))),
               _getRow("Status", Text(batch.getStatus().text)),
               const SizedBox(height: 20),
-              Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                const Text(
-                  "SG-metingen",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (batch.brewDate != null)
-                  TextButton(
-                      onPressed: () {
-                        addSGMeasurement((DateTime date, double value) async {
-                          Batch updatedBatch =
-                              await Store.addSGToBatch(batch, date, value);
-                          setState(() {
-                            batch.sgMeasurements = updatedBatch.sgMeasurements;
+              if (batch.sgMeasurements.isNotEmpty)
+                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  const Text(
+                    "SG-metingen",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (batch.brewDate != null)
+                    TextButton(
+                        onPressed: () {
+                          addSGMeasurement((DateTime date, num value) async {
+                            Batch updatedBatch =
+                                await Store.addSGToBatch(batch, date, value);
+                            setState(() {
+                              batch.sgMeasurements =
+                                  updatedBatch.sgMeasurements;
+                            });
                           });
-                        });
-                      },
-                      child: const Text("Voeg toe"))
-              ]),
-              const SizedBox(height: 10),
-              batch.sgMeasurements.isEmpty
-                  ? const Text("Geen metingen beschikbaar.",
-                      style: TextStyle(fontStyle: FontStyle.italic))
-                  : Table(
-                      border: TableBorder.all(),
-                      defaultColumnWidth: const IntrinsicColumnWidth(),
-                      children: [
-                        const TableRow(children: [
-                          Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Text(
-                                "Datum",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              )),
-                          Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Text("SG",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
-                        ]),
-                        ...(batch.sgMeasurements.keys.toList()..sort()).map(
-                          (date) => TableRow(children: [
-                            Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Text(
-                                    DateFormat("dd-MM-yyyy").format(date))),
-                            Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Text(batch.sgMeasurements[date]!
-                                    .toStringAsFixed(3))),
-                          ]),
-                        )
-                      ],
-                    ),
+                        },
+                        child: const Text("Voeg toe"))
+                ]),
+              if (batch.sgMeasurements.isNotEmpty) const SizedBox(height: 10),
+              if (batch.sgMeasurements.isNotEmpty)
+                SizedBox(width: 350, child: Table(
+                  border: TableBorder.all(),
+                  defaultColumnWidth: const IntrinsicColumnWidth(),
+                  children: [
+                    const TableRow(children: [
+                      Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Datum",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          )),
+                      Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text("SG",
+                              style: TextStyle(fontWeight: FontWeight.bold))),
+                    ]),
+                    ...(batch.sgMeasurements.keys.toList()..sort()).map(
+                      (date) => TableRow(children: [
+                        Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(DateFormat("dd-MM-yyyy").format(date))),
+                        Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(batch.sgMeasurements[date]!
+                                .toStringAsFixed(3))),
+                      ]),
+                    )
+                  ],
+                )),
+              const SizedBox(height: 20),
+              if (shoppingList.isNotEmpty)
+                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  const Text(
+                    "Boodschappenlijst",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ]),
+              if (shoppingList.isNotEmpty) const SizedBox(height: 10),
+              if (shoppingList.isNotEmpty)
+    SizedBox(width: 350, child: Table(
+                  border: TableBorder.all(),
+                  defaultColumnWidth: const IntrinsicColumnWidth(),
+                  children: [
+                    const TableRow(children: [
+                      Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Product",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          )),
+                      Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text("Nodig",
+                              style: TextStyle(fontWeight: FontWeight.bold))),
+                    ]),
+                    ...(shoppingList.keys.toList()..sort()).map(
+                      (product) => TableRow(children: [
+                        Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(product.name)),
+                        Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(
+                                Util.amountToString(shoppingList[product]))),
+                      ]),
+                    )
+                  ],
+                )),
             ]));
   }
 
@@ -243,7 +283,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                       batch.mashing.malts.isEmpty
                           ? const Text("Geen mouten beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
-                          : Table(
+                          : SizedBox(width: 350, child: Table(
                               border: TableBorder.all(),
                               defaultColumnWidth: const IntrinsicColumnWidth(),
                               children: [
@@ -279,14 +319,15 @@ class _BatchDetailsState extends State<BatchDetails> {
                                                 .ebcToString())),
                                         Padding(
                                             padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                                Util.amountToString(pi.amount)))
+                                            child: Text(Util.amountToString(
+                                                (pi as ProductInstance)
+                                                    .amount)))
                                       ]),
                                     )
                               ],
-                            ),
+                            )),
                       const SizedBox(height: 10),
-                      batch.getMashingSchedule()
+                      SizedBox(width: 350, child: batch.getMashingSchedule())
                     ])
               ]),
               const SizedBox(height: 20),
@@ -300,7 +341,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      batch.getCookingSchedule()
+                      SizedBox(width: 350, child: batch.getCookingSchedule())
                     ])
               ]),
               const SizedBox(height: 20),
@@ -318,28 +359,29 @@ class _BatchDetailsState extends State<BatchDetails> {
                               batch.yeast!.products == null ||
                               batch.yeast!.products!.isEmpty ||
                               batch.yeast?.products?[0].product.name == null &&
-                                  batch.yeast?.products?[0].product.amount ==
+                                  batch.yeast?.products?[0].product
+                                          .amountInStock ==
                                       null
                           ? const Text("Geen gist beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
-                          : Table(
+                          : SizedBox(width: 350, child: Table(
                               border: TableBorder.all(),
-                              defaultColumnWidth: const IntrinsicColumnWidth(),
+                              defaultColumnWidth: FixedColumnWidth(50.0),
                               children: [
-                                  const TableRow(children: [
-                                    Padding(
+                                  TableRow(children: [
+                                    Container(
                                         padding: EdgeInsets.all(10),
                                         child: Text(
                                           "Gist",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold),
                                         )),
-                                    Padding(
+                                    Container(
                                         padding: EdgeInsets.all(10),
                                         child: Text("Gewicht",
                                             style: TextStyle(
-                                                fontWeight: FontWeight.bold))),
-                                    Padding(
+                                                fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                                    Container(
                                         padding: EdgeInsets.all(10),
                                         child: Text("Temperatuur",
                                             style: TextStyle(
@@ -363,7 +405,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                                           child: Text(
                                               "${batch.fermTempMin} - ${batch.fermTempMax}ºC")),
                                     ]),
-                                ]),
+                                ])),
                     ])
               ]),
               const SizedBox(height: 20),
@@ -415,7 +457,7 @@ class _BatchDetailsState extends State<BatchDetails> {
               SizedBox(
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
-                      80,
+                      150,
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,8 +512,10 @@ class _BatchDetailsState extends State<BatchDetails> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (context) => BrewStep(
-                                batch: batch,
-                                contentList: getLageringSteps(batch), phase: BatchPhase.lagering,)),
+                                  batch: batch,
+                                  contentList: getLageringSteps(batch),
+                                  phase: BatchPhase.lagering,
+                                )),
                       );
                     },
                     child: Text("Lageren")),
@@ -482,7 +526,8 @@ class _BatchDetailsState extends State<BatchDetails> {
                         MaterialPageRoute(
                             builder: (context) => BrewStep(
                                 batch: batch,
-                                contentList: getLageringSteps(batch), phase: BatchPhase.lagering)),
+                                contentList: getLageringSteps(batch),
+                                phase: BatchPhase.lagering)),
                       );
                     },
                     child: Text("Lageren")),
@@ -493,7 +538,8 @@ class _BatchDetailsState extends State<BatchDetails> {
                         MaterialPageRoute(
                             builder: (context) => BrewStep(
                                 batch: batch,
-                                contentList: getBottlingStep(batch), phase: BatchPhase.bottling)),
+                                contentList: getBottlingStep(batch),
+                                phase: BatchPhase.bottling)),
                       );
                     },
                     child: Text("Bottelen")),
@@ -504,7 +550,8 @@ class _BatchDetailsState extends State<BatchDetails> {
                         MaterialPageRoute(
                             builder: (context) => BrewStep(
                                 batch: batch,
-                                contentList: getBottlingStep(batch), phase: BatchPhase.bottling)),
+                                contentList: getBottlingStep(batch),
+                                phase: BatchPhase.bottling)),
                       );
                     },
                     child: Text("Bottelen")),
@@ -513,7 +560,7 @@ class _BatchDetailsState extends State<BatchDetails> {
 
   addSGMeasurement(Function addMeasurement) {
     String sgDate = DateFormat("dd-MM-yyyy").format(DateTime.now());
-    double? sgValue;
+    num? sgValue;
 
     showDialog(
         context: context,

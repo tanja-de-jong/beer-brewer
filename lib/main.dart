@@ -1,29 +1,27 @@
-// import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'authentication/authentication.dart';
-import 'authentication/sign_in.dart';
 import 'firebase_options.dart';
-import 'home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // AwesomeNotifications().initialize(
-  //   // set the icon to null if you want to use the default app icon
-  //     'resource://drawable/res_app_icon',
-  //     [
-  //       NotificationChannel(
-  //           channelGroupKey: 'basic_channel_group',
-  //           channelKey: 'basic_channel',
-  //           channelName: 'Basic notifications',
-  //           channelDescription: 'Notification channel for basic tests',
-  //           defaultColor: Color(0xFF9D50DD),
-  //           ledColor: Colors.white)
-  //     ],
-  //     debug: true
-  // );
+  AwesomeNotifications().initialize(
+    // set the icon to null if you want to use the default app icon
+    //   'resource://drawable/res_app_icon',
+      null,
+      [
+        NotificationChannel(
+            channelGroupKey: 'basic_channel_group',
+            channelKey: 'basic_channel',
+            channelName: 'Basic notifications',
+            channelDescription: 'Notification channel for basic tests',
+            defaultColor: Color(0xFF9D50DD),
+            ledColor: Colors.white)
+      ],
+      debug: true
+  );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
 }
@@ -67,35 +65,9 @@ class AuthenticationPage extends StatefulWidget {
 }
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.active:
-              final firebaseUser = snapshot.data;
-              if (firebaseUser == null) {
-                return SizedBox(height: 30, width: 100, child: SignInScreen());
-              }
-              Authentication.email = firebaseUser.email;
-              return HomePage();
-            default:
-              return Container(
-                  constraints: BoxConstraints(maxWidth: 1000),
-                  child: Center(
-                    child: ElevatedButton(
-                        onPressed: () =>
-                            Authentication.signInWithGoogle(context: context),
-                        child: Text("Inloggen met Google")),
-                  ));
-          }
-        });
+    return Authentication().handleAuthState();
   }
 }
 //

@@ -14,7 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "116124637798-7j0vhut8blogeei0i6a8saoibitdbab7.apps.googleusercontent.com",
+          "client_id": "116124637798-aofovbhs43s6df0uotbsd88jv54oc6qr.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -29,6 +29,13 @@
             {
               "client_id": "116124637798-7j0vhut8blogeei0i6a8saoibitdbab7.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "116124637798-o8fttemnh2sfglq1i1akvsubfe86i6fp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tanjadejong.beerBrewer"
+              }
             }
           ]
         }

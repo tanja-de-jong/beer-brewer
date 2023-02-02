@@ -3,7 +3,7 @@ import 'spec_to_products.dart';
 class Mashing {
   List<SpecToProducts> malts;
   List<MashStep> steps;
-  double? water;
+  num? water;
 
   Mashing(this.malts, this.steps, this.water);
 
@@ -18,8 +18,8 @@ class Mashing {
 
   Map<String, dynamic> toMap() {
     return {
-      "malts": malts.map((e) => e.toMap()),
-      "steps": steps.map((e) => e.toMap()),
+      "malts": malts.map((e) => e.toMap()).toList(),
+      "steps": steps.map((e) => e.toMap()).toList(),
       "water": water
     };
   }

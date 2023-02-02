@@ -4,10 +4,37 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../home_page.dart';
+
 class Authentication {
 
   static String? error;
   static String? email;
+
+  handleAuthState() {
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.active:
+              final firebaseUser = snapshot.data;
+              if (firebaseUser == null) {
+                return SizedBox(height: 30, width: 100, child: SignInScreen());
+              }
+              Authentication.email = firebaseUser.email;
+              return HomePage();
+            default:
+              return Container(
+                  constraints: BoxConstraints(maxWidth: 1000),
+                  child: Center(
+                    child: ElevatedButton(
+                        onPressed: () =>
+                            Authentication.signInWithGoogle(context: context),
+                        child: Text("Inloggen met Google")),
+                  ));
+          }
+        });
+  }
 
   static Future<String?> signInWithGoogle({required BuildContext context}) async {
     FirebaseAuth auth = FirebaseAuth.instance;

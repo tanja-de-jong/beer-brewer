@@ -8,7 +8,7 @@ class Util {
     return output + input.substring(1);
   }
 
-  static String amountToString(double? amount) {
+  static String amountToString(num? amount) {
     return amount == null
         ? "-"
         : amount >= 1000
@@ -16,7 +16,7 @@ class Util {
             : "$amount g";
   }
 
-  static String? prettify(double? d) {
+  static String? prettify(num? d) {
     return d?.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0*$'), '');
   }
 

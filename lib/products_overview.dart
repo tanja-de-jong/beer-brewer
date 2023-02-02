@@ -32,7 +32,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   List<String> filteredTypes = [];
 
   Set<String> brands = {};
-  double tableWidth = 150 + 100 + 50 + 100 + 3 * 20;
+  num tableWidth = 150 + 100 + 50 + 100 + 3 * 20;
 
   Widget getProductGroup() {
     cat = ProductCategory.values[selected];
@@ -152,7 +152,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
 
       if (filterInStock) {
         products = products
-            .where((product) => product.amount != null && product.amount! > 0)
+            .where((product) => product.amountInStock != null && product.amountInStock! > 0)
             .toList();
       }
       if (filteredTypes.isNotEmpty) {
@@ -179,19 +179,19 @@ class _ProductsOverviewState extends State<ProductsOverview> {
             .toList();
       }
       if (minEBCFilter != "" && cat == ProductCategory.malt) {
-        double? minEbc = double.tryParse(minEBCFilter);
+        num? minEbc = num.tryParse(minEBCFilter);
         if (minEbc != null) {
           products = products.where((product) {
-            double? ebcMin = (product as Malt).ebcMin;
+            num? ebcMin = (product as Malt).ebcMin;
             return ebcMin == null || ebcMin >= minEbc;
           }).toList();
         }
       }
       if (maxEBCFilter != "" && cat == ProductCategory.malt) {
-        double? maxEbc = double.tryParse(maxEBCFilter);
+        num? maxEbc = num.tryParse(maxEBCFilter);
         if (maxEbc != null) {
           products = products.where((product) {
-            double? ebcMax = (product as Malt).ebcMax;
+            num? ebcMax = (product as Malt).ebcMax;
             return ebcMax == null || ebcMax <= maxEbc;
           }).toList();
         }
@@ -226,9 +226,9 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   }
 
   Widget getTextFilterWidget(String hintText, void Function(String) onChanged,
-      {double width = 200}) {
+      {num width = 200}) {
     return SizedBox(
-        width: width,
+        width: width.toDouble(),
         child: TextField(
           decoration: InputDecoration(
             hintText: hintText,
@@ -298,8 +298,8 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   }
 
   Widget getButtonBar() {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double barWidth = min(tableWidth, screenWidth - 30);
+    num screenWidth = MediaQuery.of(context).size.width;
+    num barWidth = min(tableWidth, screenWidth - 30);
     return Row(children: [
       if (screenWidth > barWidth)
         SizedBox(width: (screenWidth - barWidth) / 2 - 15 + 20),
@@ -403,7 +403,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
-                                        width: tableWidth,
+                                        width: tableWidth.toDouble(),
                                         child: getProductGroup())
                                   ]))))
                 ]))
@@ -426,10 +426,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                       : null;
           String? brand = product?.brand;
           Map<String, Map<String, dynamic>>? stores = product?.stores;
-          double? amount = product?.amount;
-          double? ebcMin = product is Malt ? product.ebcMin : null;
-          double? ebcMax = product is Malt ? product.ebcMax : null;
-          double? alphaAcid = product is Hop ? product.alphaAcid : null;
+          num? amount = product?.amountInStock;
+          num? ebcMin = product is Malt ? product.ebcMin : null;
+          num? ebcMax = product is Malt ? product.ebcMax : null;
+          num? alphaAcid = product is Hop ? product.alphaAcid : null;
           String? hopType = product is Hop ? product.type : null;
           String? hopShape =
               product is Hop ? product.shape.name : HopShape.korrels.name;
@@ -481,7 +481,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                 initialValue: ebcMin,
                                 onChanged: (value) {
                                   setState(() {
-                                    ebcMin = double.parse(value);
+                                    ebcMin = num.parse(value);
                                   });
                                 }),
                           if (category == ProductCategory.malt)
@@ -490,7 +490,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                 initialValue: ebcMax,
                                 onChanged: (value) {
                                   setState(() {
-                                    ebcMax = double.parse(value);
+                                    ebcMax = num.parse(value);
                                   });
                                 }),
                           if (category == ProductCategory.hop)

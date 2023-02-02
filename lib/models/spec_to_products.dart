@@ -33,7 +33,7 @@ class SpecToProducts {
 
 class ProductInstance {
   Product product;
-  double amount;
+  num amount;
 
   ProductInstance(this.product, this.amount);
 

@@ -1,5 +1,7 @@
 import 'package:beer_brewer/models/product_spec.dart';
 
+import '../data/store.dart';
+import 'batch.dart';
 import 'cooking.dart';
 import 'mashing.dart';
 
@@ -8,18 +10,18 @@ class Recipe {
   String name;
   String? style;
   String? source;
-  double? amount;
-  double? expStartSG;
-  double? expFinalSG;
-  double? efficiency;
-  double? color;
-  double? bitter;
+  num? amount;
+  num? expStartSG;
+  num? expFinalSG;
+  num? efficiency;
+  num? color;
+  num? bitter;
   late Mashing mashing;
-  double? rinsingWater;
+  num? rinsingWater;
   late Cooking cooking;
   YeastSpec? yeast;
-  double? fermTempMin;
-  double? fermTempMax;
+  num? fermTempMin;
+  num? fermTempMax;
   BottleSugarSpec? bottleSugar;
   String? remarks;
 
@@ -91,5 +93,9 @@ class Recipe {
       "bottleSugar": bottleSugar?.toMap(),
       "remarks": remarks
     };
+  }
+
+  List<Batch> getBatches() {
+    return Store.batches.where((b) => b.recipeId == id).toList()..sort((a, b) => a.brewDate == null ? 0 : b.brewDate == null ? 1 : a.brewDate!.isBefore(b.brewDate!) ? 0 : 1);
   }
 }

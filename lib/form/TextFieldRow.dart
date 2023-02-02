@@ -5,7 +5,7 @@ class TextFieldRow extends StatefulWidget {
   final MainAxisAlignment alignment;
   final String label;
   final bool isInt;
-  final bool isDouble;
+  final bool isnum;
   final dynamic? initialValue;
   final Function(dynamic)? onChanged;
   final TextEditingController? controller;
@@ -21,7 +21,7 @@ class TextFieldRow extends StatefulWidget {
       this.controller,
       this.focusNode,
       this.isInt = false,
-      this.isDouble = false,
+      this.isnum = false,
       this.isPercentage = false,
       this.props,
       this.alignment = MainAxisAlignment.spaceBetween})
@@ -88,8 +88,8 @@ class _TextFieldRowState extends State<TextFieldRow> {
                       ? widget.initialValue?.toString()
                       : null,
                   focusNode: widget.focusNode,
-                  onChanged: widget.onChanged != null && widget.isDouble
-                      ? (value) => widget.onChanged!(double.tryParse(value))
+                  onChanged: widget.onChanged != null && widget.isnum
+                      ? (value) => widget.onChanged!(num.tryParse(value))
                       : widget.onChanged,
                   decoration: InputDecoration(
                     //Add isDense true and zero Padding.
@@ -104,11 +104,11 @@ class _TextFieldRowState extends State<TextFieldRow> {
                     //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
                   ),
                   controller: widget.controller,
-                  keyboardType: widget.isDouble
+                  keyboardType: widget.isnum
                       ? const TextInputType.numberWithOptions(
                           decimal: true, signed: false)
                       : null,
-                  inputFormatters: widget.isDouble
+                  inputFormatters: widget.isnum
                       ? [
                           FilteringTextInputFormatter.allow(
                               RegExp(r"[\d.,]")),
@@ -117,12 +117,12 @@ class _TextFieldRowState extends State<TextFieldRow> {
                             try {
                               final text =
                                   newValue.text.replaceAll(RegExp(r','), ".");
-                              double doubleValue = 0;
+                              num numValue = 0;
                               if (text.isNotEmpty) {
-                                doubleValue = double.parse(text);
+                                numValue = num.parse(text);
                               }
                               if (widget.isPercentage &&
-                                  (doubleValue > 100 || doubleValue < 0)) {
+                                  (numValue > 100 || numValue < 0)) {
                                 return oldValue;
                               }
                               return newValue;

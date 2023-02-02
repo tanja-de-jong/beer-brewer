@@ -4,9 +4,9 @@ class Product {
   String brand;
   Map<String, Map<String, dynamic>>?
   stores; // Brouwstore => {url: www.brouwstore.com, variants: {1kg: www.bla.com}}
-  double? amount;
+  num? amountInStock;
 
-  Product(this.id, this.name, this.brand, this.stores, this.amount);
+  Product(this.id, this.name, this.brand, this.stores, this.amountInStock);
 
   String getStoreUrl(String storeName) {
     return stores?[storeName]?["url"] ?? "-";
@@ -21,11 +21,11 @@ class Product {
   }
 
   String amountToString() {
-    return amount == null
+    return amountInStock == null
         ? "-"
-        : amount! >= 1000
-        ? "${(amount! / 1000).toString().replaceAll(RegExp(r'\.'), ",")} kg"
-        : "$amount g";
+        : amountInStock! >= 1000
+        ? "${(amountInStock! / 1000).toString().replaceAll(RegExp(r'\.'), ",")} kg"
+        : "$amountInStock g";
   }
 
   static Product create(String id, Map data) {
@@ -48,8 +48,8 @@ class Product {
 
 class Malt extends Product {
   String? type;
-  double? ebcMin;
-  double? ebcMax;
+  num? ebcMin;
+  num? ebcMax;
 
   Malt(super.id, super.name, this.type, super.brand, super.stores, super.amount,
       this.ebcMin, this.ebcMax);
@@ -74,7 +74,7 @@ class Malt extends Product {
 
 class Hop extends Product {
   String? type;
-  double? alphaAcid;
+  num? alphaAcid;
   HopShape shape;
 
   Hop(super.id, super.name, this.type, super.brand, super.stores, super.amount,

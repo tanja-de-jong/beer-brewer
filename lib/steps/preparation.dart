@@ -30,7 +30,7 @@ class _PreparationStepState extends State<PreparationStep> {
   ];
   late List<bool> materialsCB;
   // List<String> materialsLater = ["Bierflessen", "Bierdoppen", ""];
-  Map<Product, double> ingredients = {};
+  Map<Product, num> ingredients = {};
   Map<Product, bool> ingredientsCB = {};
 
   @override

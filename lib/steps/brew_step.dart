@@ -45,7 +45,7 @@ class _BrewStepState extends State<BrewStep> {
               SizedBox(
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
-                      100,
+                      170,
                   child: SingleChildScrollView(
                     child: description,
                   )),

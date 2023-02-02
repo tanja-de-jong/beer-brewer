@@ -33,50 +33,50 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   String? name;
   String? style;
   String? source;
-  double? amount;
-  double? startSG;
-  double? finalSG;
-  double? efficiency;
-  double? color;
-  double? bitter;
-  double? mashWater;
-  double? rinsingWater;
+  num? amount;
+  num? startSG;
+  num? finalSG;
+  num? efficiency;
+  num? color;
+  num? bitter;
+  num? mashWater;
+  num? rinsingWater;
 
   List<MaltSpec> malts = [];
   String? maltType;
-  double? maltAmount;
-  double? maltMinEBC;
-  double? maltMaxEBC;
+  num? maltAmount;
+  num? maltMinEBC;
+  num? maltMaxEBC;
   bool showAddMalt = false;
 
-  Map<double?, List<HopSpec>> hops = {};
+  Map<num?, List<HopSpec>> hops = {};
   String? hopType;
   TextEditingController hopTypeController = TextEditingController();
-  double? hopAmount;
-  double? hopAlphaAcid;
+  num? hopAmount;
+  num? hopAlphaAcid;
   TextEditingController hopAlphaAcidController = TextEditingController();
-  double? hopTime;
+  num? hopTime;
   bool showAddHop = false;
 
   YeastSpec yeast = YeastSpec(null, null);
 
   CookingSugarSpec cookingSugar = CookingSugarSpec(null, null);
-  double? cookingSugarTime;
+  num? cookingSugarTime;
 
   BottleSugarSpec bottleSugar = BottleSugarSpec(null, null);
 
-  Map<double?, List<ProductSpec>> others = {};
+  Map<num?, List<ProductSpec>> others = {};
   String? otherName;
-  double? otherAmount;
-  double? otherTime;
+  num? otherAmount;
+  num? otherTime;
   bool showAddOther = false;
 
-  double? minTemp;
-  double? maxTemp;
+  num? minTemp;
+  num? maxTemp;
 
   List<MashStep> mashSteps = [];
-  double? mashTemp;
-  double? mashTime;
+  num? mashTemp;
+  num? mashTime;
   bool showAddMashStep = false;
 
   String? remarks;
@@ -280,7 +280,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                 [];
         mashSteps = recipe?.mashing.steps ?? [];
         for (CookingScheduleStep step in recipe!.cooking.steps) {
-          double? time = step.time;
+          num? time = step.time;
           List<HopSpec> hopSpecs = [];
           List<ProductSpec> otherSpecs = [];
           for (SpecToProducts stp in step.products) {
@@ -364,7 +364,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               SizedBox(
                   height: MediaQuery.of(context).size.height -
                       appBar.preferredSize.height -
-                      100,
+                      150,
                   child: loading
                       ? const Center(child: CircularProgressIndicator())
                       : SingleChildScrollView(
@@ -1227,7 +1227,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                           cooking.addStep(cookingSugarTime,
                               [SpecToProducts(cookingSugar, [], null)]);
                         }
-                        for (double? time in others.keys) {
+                        for (num? time in others.keys) {
                           cooking.addStep(
                               time,
                               others[time]!
