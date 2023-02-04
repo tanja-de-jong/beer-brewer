@@ -2,7 +2,6 @@ import 'package:beer_brewer/data/store.dart';
 import 'package:beer_brewer/recipe/recipe_details.dart';
 import 'package:flutter/material.dart';
 
-import '../data/store.dart';
 import '../screen.dart';
 
 class RecipesOverview extends StatefulWidget {

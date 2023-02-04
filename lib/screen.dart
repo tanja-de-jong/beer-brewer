@@ -66,7 +66,7 @@ class _ScreenState extends State<Screen> {
         appBar: AppBar(
           title: Text(widget.title),
           actions: widget.actions,
-          bottom: widget.tabs == null ? null : TabBar(tabs: widget.tabs!.keys.map((e) => Tab(text: e)).toList()),
+          bottom: widget.tabs == null ? null : TabBar(labelPadding: const EdgeInsets.all(0), tabs: widget.tabs!.keys.map((e) => Tab(height: 20, text: e)).toList()),
         ),
         bottomNavigationBar: selected != null
             ? getMainBottomNavigationBar(selected!)
