@@ -2,12 +2,12 @@ import 'dart:math';
 
 import 'package:beer_brewer/form/DropDownRow.dart';
 import 'package:beer_brewer/data/store.dart';
+import 'package:beer_brewer/screen.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:multi_select_flutter/util/multi_select_list_type.dart';
 
-import 'data/store.dart';
 import 'form/DoubleTextFieldRow.dart';
 import 'form/TextFieldRow.dart';
 import 'models/product.dart';
@@ -22,150 +22,174 @@ class ProductsOverview extends StatefulWidget {
 class _ProductsOverviewState extends State<ProductsOverview> {
   bool loading = true;
   int selected = 0;
-  ProductCategory cat = ProductCategory.values.first;
   List<Product> products = [];
 
   bool filterInStock = true;
   String searchFilter = "";
   String minEBCFilter = "";
   String maxEBCFilter = "";
-  List<String> filteredTypes = [];
+  List<String> filteredMaltTypes = [];
+  List<String> filteredHopTypes = [];
 
   Set<String> brands = {};
-  num tableWidth = 150 + 100 + 50 + 100 + 3 * 20;
 
-  Widget getProductGroup() {
-    cat = ProductCategory.values[selected];
-
-    return DataTable(
-      columnSpacing: 20,
-      showCheckboxColumn: false,
-      rows: products
-          .map(
-            (product) => DataRow(
-              onSelectChanged: (selected) => selected == null || !selected
-                  ? null
-                  : showAddDialog(product, (Product newProduct) {
-                      setState(() {
-                        brands.add(Util.capitalize(newProduct.brand));
-                      });
-                      Navigator.pop(context);
-                    }, onDelete: () {
-                      setState(() {});
-                    }),
-              cells: [
-                DataCell(SizedBox(
-                    width: 150,
-                    child: Text(
-                      product.name,
-                      overflow: TextOverflow.ellipsis,
-                    ))),
-                if (product is Malt)
+  Widget getProductGroup(ProductCategory cat) {
+    products = Store.products[cat.productType]! as List<Product>;
+    filterProducts(cat);
+    return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+      DataTable(
+        columnSpacing: 20,
+        showCheckboxColumn: false,
+        rows: products
+            .map(
+              (product) => DataRow(
+                onSelectChanged: (selected) => selected == null || !selected
+                    ? null
+                    : showAddDialog(product, (Product newProduct) {
+                        setState(() {
+                          brands.add(Util.capitalize(newProduct.brand));
+                        });
+                        Navigator.pop(context);
+                      }, onDelete: () {
+                        setState(() {});
+                      }),
+                cells: [
                   DataCell(SizedBox(
-                      width: 75,
+                      width: 150,
                       child: Text(
-                        product.typeToString(),
+                        product.name,
                         overflow: TextOverflow.ellipsis,
                       ))),
-                if (product is Hop)
-                  DataCell(SizedBox(
-                      width: 75,
-                      child: Text(
-                        product.type ?? "-",
-                        overflow: TextOverflow.ellipsis,
-                      ))),
-                if (product is Hop)
-                  DataCell(SizedBox(
-                      width: 50,
-                      child: Text(
-                        product.shape.name,
-                        overflow: TextOverflow.ellipsis,
-                      ))),
-                DataCell(SizedBox(
-                    width: 100,
-                    child: Text(
-                      product.brand,
-                      overflow: TextOverflow.ellipsis,
-                    ))),
-                DataCell(SizedBox(
-                    width: 50,
-                    child: Text(
-                      product.amountToString(),
-                      overflow: TextOverflow.ellipsis,
-                    ))),
-                if (product is Malt)
+                  if (product is Malt)
+                    DataCell(SizedBox(
+                        width: 75,
+                        child: Text(
+                          product.typeToString(),
+                          overflow: TextOverflow.ellipsis,
+                        ))),
+                  if (product is Hop)
+                    DataCell(SizedBox(
+                        width: 75,
+                        child: Text(
+                          product.type ?? "-",
+                          overflow: TextOverflow.ellipsis,
+                        ))),
+                  if (product is Hop)
+                    DataCell(SizedBox(
+                        width: 50,
+                        child: Text(
+                          product.shape.name,
+                          overflow: TextOverflow.ellipsis,
+                        ))),
                   DataCell(SizedBox(
                       width: 100,
                       child: Text(
-                        product.ebcToString(),
+                        product.brand,
                         overflow: TextOverflow.ellipsis,
                       ))),
-                if (product is Hop)
                   DataCell(SizedBox(
-                      width: 50,
+                      width: 60,
                       child: Text(
-                        product.alphaAcid == null
-                            ? "-"
-                            : "${product.alphaAcid}%",
+                        product.amountToString(),
                         overflow: TextOverflow.ellipsis,
                       ))),
-                DataCell(SizedBox(
+                  if (product is Malt)
+                    DataCell(SizedBox(
+                        width: 100,
+                        child: Text(
+                          product.ebcToString(),
+                          overflow: TextOverflow.ellipsis,
+                        ))),
+                  if (product is Hop)
+                    DataCell(SizedBox(
+                        width: 50,
+                        child: Text(
+                          product.alphaAcid == null
+                              ? "-"
+                              : "${product.alphaAcid}%",
+                          overflow: TextOverflow.ellipsis,
+                        ))),
+                  DataCell(SizedBox(
+                      width: 100,
+                      child: Text(
+                        product.storesToString(),
+                        overflow: TextOverflow.ellipsis,
+                      ))),
+                ],
+              ),
+            )
+            .toList(),
+        columns: [
+          const DataColumn(
+              label:
+              SizedBox(
+                  width: 150,
+                  child: Text("Naam", style: TextStyle(fontWeight: FontWeight.bold)))),
+          if (cat == ProductCategory.malt || cat == ProductCategory.hop)
+            const DataColumn(
+                label: SizedBox(
+                    width: 75,
+                    child: Text("Type",
+                        style: TextStyle(fontWeight: FontWeight.bold)))),
+          if (cat == ProductCategory.hop)
+            const DataColumn(
+                label: SizedBox(
+                    width: 50,
+                    child: Text("Vorm",
+                        style: TextStyle(fontWeight: FontWeight.bold)))),
+          const DataColumn(
+              label:
+              SizedBox(
+                  width: 100,
+                  child: Text("Merk", style: TextStyle(fontWeight: FontWeight.bold)))),
+          const DataColumn(
+              label: SizedBox(
+                  width: 60,
+                  child: Text("Voorraad",
+                      style: TextStyle(fontWeight: FontWeight.bold)))),
+          if (cat == ProductCategory.malt)
+            const DataColumn(
+                label:
+                SizedBox(
                     width: 100,
-                    child: Text(
-                      product.storesToString(),
-                      overflow: TextOverflow.ellipsis,
-                    ))),
-              ],
-            ),
-          )
-          .toList(),
-      columns: [
-        const DataColumn(label: Text("Naam", style: TextStyle(fontWeight: FontWeight.bold))),
-        if (cat == ProductCategory.malt || cat == ProductCategory.hop)
-          const DataColumn(label: Text("Type", style: TextStyle(fontWeight: FontWeight.bold))),
-        if (cat == ProductCategory.hop) const DataColumn(label: Text("Vorm", style: TextStyle(fontWeight: FontWeight.bold))),
-        const DataColumn(label: Text("Merk", style: TextStyle(fontWeight: FontWeight.bold))),
-        const DataColumn(label: Text("Voorraad", style: TextStyle(fontWeight: FontWeight.bold))),
-        if (cat == ProductCategory.malt) const DataColumn(label: Text("EBC", style: TextStyle(fontWeight: FontWeight.bold))),
-        if (cat == ProductCategory.hop)
-          const DataColumn(label: Text("Alfazuur", style: TextStyle(fontWeight: FontWeight.bold))),
-        const DataColumn(label: Text("Te koop", style: TextStyle(fontWeight: FontWeight.bold))),
-      ],
-    );
+                    child: Text("EBC", style: TextStyle(fontWeight: FontWeight.bold)))),
+          if (cat == ProductCategory.hop)
+            const DataColumn(
+                label: SizedBox(
+                    width: 50,
+                    child: Text("Alfazuur",
+                        style: TextStyle(fontWeight: FontWeight.bold)))),
+          const DataColumn(
+              label: SizedBox(
+                  width: 100,
+                  child: Text("Te koop",
+                      style: TextStyle(fontWeight: FontWeight.bold)))),
+        ],
+      )
+    ]);
   }
 
-  void filterProducts({bool changeCategory = false}) {
-    if (changeCategory) {
-      cat = ProductCategory.values[selected];
-      filteredTypes = [];
-      tableWidth = 150 + 100 + 50 + 100 + 3 * 20;
-      if (cat == ProductCategory.malt) {
-        tableWidth += 75 + 100 + 2 * 20;
-      } else if (cat == ProductCategory.hop) {
-        tableWidth += 75 + 50 + 50 + 3 * 20;
-      }
-    }
-
+  void filterProducts(ProductCategory cat, {bool changeCategory = false}) {
     setState(() {
       products = Store.products[cat.productType]! as List<Product>;
       if (changeCategory) brands = products.map((p) => p.brand).toSet();
 
       if (filterInStock) {
         products = products
-            .where((product) => product.amountInStock != null && product.amountInStock! > 0)
+            .where((product) =>
+                product.amountInStock != null && product.amountInStock! > 0)
             .toList();
       }
-      if (filteredTypes.isNotEmpty) {
-        if (cat == ProductCategory.malt) {
-          products = products
-              .where(
-                  (product) => filteredTypes.contains((product as Malt).type))
-              .toList();
-        } else if (cat == ProductCategory.hop) {
-          products = products
-              .where((product) => filteredTypes.contains((product as Hop).type))
-              .toList();
-        }
+      if (cat == ProductCategory.malt && filteredMaltTypes.isNotEmpty) {
+        products = products
+            .where(
+                (product) => filteredMaltTypes.contains((product as Malt).type))
+            .toList();
+      } else if (cat == ProductCategory.hop && filteredHopTypes.isNotEmpty) {
+        products = products
+            .where(
+                (product) => filteredHopTypes.contains((product as Hop).type))
+            .toList();
       }
       if (searchFilter != "") {
         String filter = searchFilter.toLowerCase();
@@ -199,33 +223,31 @@ class _ProductsOverviewState extends State<ProductsOverview> {
     });
   }
 
-  void loadData() async {
+  void loadData(ProductCategory cat) async {
     await Store.loadProducts();
     setState(() {
-      products = Store.products[ProductCategory.values[selected].productType]!
-          as List<Product>;
       brands = products.map((p) => p.brand).toSet();
-      filterProducts(changeCategory: true);
       loading = false;
     });
   }
 
-  Widget getSearchWidget() {
+  Widget getSearchWidget(ProductCategory cat) {
     return getTextFilterWidget(
-        "Zoek product...", (value) => searchFilter = value);
+        cat, "Zoek product...", (value) => searchFilter = value);
   }
 
-  Widget getMinEBCWidget() {
-    return getTextFilterWidget("Min EBC", (value) => minEBCFilter = value,
+  Widget getMinEBCWidget(ProductCategory cat) {
+    return getTextFilterWidget(cat, "Min EBC", (value) => minEBCFilter = value,
         width: 85);
   }
 
-  Widget getMaxEBCWidget() {
-    return getTextFilterWidget("Max EBC", (value) => maxEBCFilter = value,
+  Widget getMaxEBCWidget(ProductCategory cat) {
+    return getTextFilterWidget(cat, "Max EBC", (value) => maxEBCFilter = value,
         width: 85);
   }
 
-  Widget getTextFilterWidget(String hintText, void Function(String) onChanged,
+  Widget getTextFilterWidget(
+      ProductCategory cat, String hintText, void Function(String) onChanged,
       {num width = 200}) {
     return SizedBox(
         width: width.toDouble(),
@@ -244,13 +266,12 @@ class _ProductsOverviewState extends State<ProductsOverview> {
           onChanged: (value) {
             setState(() {
               onChanged(value);
-              filterProducts();
             });
           },
         ));
   }
 
-  Widget getStockFilterWidget() {
+  Widget getStockFilterWidget(ProductCategory cat) {
     return SizedBox(
         height: 30,
         child: ToggleButtons(
@@ -258,7 +279,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
           onPressed: (value) {
             setState(() {
               filterInStock = value == 0;
-              filterProducts();
             });
           },
           children: const [
@@ -283,7 +303,8 @@ class _ProductsOverviewState extends State<ProductsOverview> {
           color: Colors.lightBlue,
           shape: CircleBorder(),
         ),
-        child: const Icon(Icons.add,
+        child: const Icon(
+          Icons.add,
           size: 25,
           color: Colors.white,
         ),
@@ -297,12 +318,18 @@ class _ProductsOverviewState extends State<ProductsOverview> {
     );
   }
 
-  Widget getButtonBar() {
+  Widget getButtonBar(ProductCategory cat) {
+    num tableWidth = 150 + 100 + 50 + 100 + 3 * 20 + 40 + 20;
+    if (cat == ProductCategory.malt) {
+      tableWidth += 75 + 100 + 2 * 20;
+    } else if (cat == ProductCategory.hop) {
+      tableWidth += 75 + 50 + 50 + 3 * 20;
+    }
     num screenWidth = MediaQuery.of(context).size.width;
     num barWidth = min(tableWidth, screenWidth - 30);
     return Row(children: [
       if (screenWidth > barWidth)
-        SizedBox(width: (screenWidth - barWidth) / 2 - 15 + 20),
+        SizedBox(width: (screenWidth - barWidth) / 2 - 15 + 30),
       SizedBox(
           width: barWidth - 20,
           child: Row(
@@ -315,99 +342,62 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        getSearchWidget(),
+                        getSearchWidget(cat),
                         if (cat == ProductCategory.malt)
-                          getTypeDropdown(Store.maltTypes),
-                        if (cat == ProductCategory.malt) getMinEBCWidget(),
-                        if (cat == ProductCategory.malt) getMaxEBCWidget(),
+                          getTypeDropdown(Store.maltTypes, cat),
+                        if (cat == ProductCategory.malt) getMinEBCWidget(cat),
+                        if (cat == ProductCategory.malt) getMaxEBCWidget(cat),
                         if (cat == ProductCategory.hop)
-                          getTypeDropdown(Store.hopTypes),
-                        getStockFilterWidget()
+                          getTypeDropdown(Store.hopTypes, cat),
+                        getStockFilterWidget(cat)
                       ],
                     )),
                 getAddWidget()
               ]))
-        ]);
+    ]);
   }
 
   @override
   void initState() {
-    loadData();
+    loadData(ProductCategory.values.first);
     super.initState();
+  }
+
+  Map<String, Widget> getTabs() {
+    Map<String, Widget> result = {};
+    for (var cat in ProductCategory.values) {
+      result[cat.name] = getTabView(cat);
+    }
+    return result;
+  }
+
+  Widget getTabView(ProductCategory cat) {
+    return Column(children: [
+      Padding(padding: const EdgeInsets.only(top: 20, bottom: 10, left: 10, right: 10), child: getButtonBar(cat)),
+      Expanded(
+        child: ListView(
+          children: [Center(
+              child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                                child: getProductGroup(cat))
+                          ]))))]))
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: loading
-            ? const CircularProgressIndicator()
-            : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Container(
-                    // Tabs
-                    height: 50,
-                    color: Colors.blue,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: ProductCategory.values
-                            .map(
-                              (cat) => TextButton(
-                                child: Text(
-                                  cat.name,
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight:
-                                          ProductCategory.values.indexOf(cat) ==
-                                                  selected
-                                              ? FontWeight.bold
-                                              : null),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    selected =
-                                        ProductCategory.values.indexOf(cat);
-                                    filterProducts(changeCategory: true);
-                                  });
-                                },
-                              ),
-                            )
-                            .toList())),
-                SizedBox(
-                    height: 5,
-                    child: Row(children: [
-                      Container(
-                          width: MediaQuery.of(context).size.width / 5,
-                          color: selected == 0 ? Colors.white : Colors.blue),
-                      Container(
-                          width: MediaQuery.of(context).size.width / 5,
-                          color: selected == 1 ? Colors.white : Colors.blue),
-                      Container(
-                          width: MediaQuery.of(context).size.width / 5,
-                          color: selected == 2 ? Colors.white : Colors.blue),
-                      Container(
-                          width: MediaQuery.of(context).size.width / 5,
-                          color: selected == 3 ? Colors.white : Colors.blue),
-                      Container(
-                          width: MediaQuery.of(context).size.width / 5,
-                          color: selected == 4 ? Colors.white : Colors.blue)
-                    ])),
-                Padding(
-                    padding: const EdgeInsets.all(10), child: getButtonBar()),
-                Expanded(
-                    child: ListView(children: [
-                  Center(
-                      child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                        width: tableWidth.toDouble(),
-                                        child: getProductGroup())
-                                  ]))))
-                ]))
-              ]));
+    return Screen(
+        title: 'Products',
+        page: OverviewPage.products,
+        loading: loading,
+        scroll: false,
+        tabs: getTabs());
   }
 
   showAddDialog(Product? product, void Function(Product) onChange,
@@ -581,7 +571,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                                                     amount,
                                                     extraProps)
                                                 .then((newProduct) {
-                                              filterProducts();
                                               onChange(newProduct);
                                             });
                                           }
@@ -595,7 +584,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
         });
   }
 
-  SizedBox getTypeDropdown(List<String> items) {
+  SizedBox getTypeDropdown(List<String> items, ProductCategory cat) {
     return SizedBox(
         height: 30,
         width: 80,
@@ -611,32 +600,42 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                     children: [
                       Expanded(
                           child: Text(
-                        filteredTypes.isEmpty
-                            ? "Type"
-                            : filteredTypes
-                                .join(", ")
-                                .replaceAll(' ', '\u00A0'),
+                        cat == ProductCategory.malt
+                            ? filteredMaltTypes.isEmpty
+                                ? "Type"
+                                : filteredMaltTypes
+                                    .join(", ")
+                                    .replaceAll(' ', '\u00A0')
+                            : filteredHopTypes.isEmpty
+                                ? "Type"
+                                : filteredHopTypes
+                                    .join(", ")
+                                    .replaceAll(' ', '\u00A0'),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             color: Colors.grey.shade600, fontSize: 14),
                       )),
                       const Icon(Icons.keyboard_arrow_down)
                     ])),
-            onTap: () => _showMultiSelect(context, items)));
+            onTap: () => _showMultiSelect(context, items, cat)));
   }
 
-  void _showMultiSelect(BuildContext context, List<String> items) async {
+  void _showMultiSelect(
+      BuildContext context, List<String> items, ProductCategory cat) async {
     await showDialog(
       context: context,
       builder: (ctx) {
         return MultiSelectDialog(
           items: items.map((e) => MultiSelectItem(e, e)).toList(),
-          initialValue: filteredTypes,
+          initialValue: cat == ProductCategory.malt ? filteredMaltTypes : filteredHopTypes,
           searchable: true,
           onConfirm: (values) {
             setState(() {
-              filteredTypes = values.cast<String>();
-              filterProducts();
+              if (cat == ProductCategory.malt) {
+                filteredMaltTypes = values.cast<String>();
+              } else {
+                filteredHopTypes = values.cast<String>();
+              }
             });
           },
           listType: MultiSelectListType.CHIP,

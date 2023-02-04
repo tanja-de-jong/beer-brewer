@@ -1,10 +1,9 @@
 import 'package:beer_brewer/authentication/sign_in.dart';
+import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-import '../home_page.dart';
 
 class Authentication {
 
@@ -22,7 +21,7 @@ class Authentication {
                 return SizedBox(height: 30, width: 100, child: SignInScreen());
               }
               Authentication.email = firebaseUser.email;
-              return HomePage();
+              return const BatchesOverview();
             default:
               return Container(
                   constraints: BoxConstraints(maxWidth: 1000),

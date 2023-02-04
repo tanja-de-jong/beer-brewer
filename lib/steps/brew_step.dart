@@ -1,10 +1,8 @@
-import 'package:beer_brewer/main.dart';
+import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:flutter/material.dart';
 
 import '../data/store.dart';
-import '../home_page.dart';
 import '../models/batch.dart';
-import '../notification.dart';
 
 class BrewStep extends StatefulWidget {
   final Batch batch;
@@ -72,7 +70,7 @@ class _BrewStepState extends State<BrewStep> {
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                         builder: (context) =>
-                        const HomePage(title: "Batches")),
+                        const BatchesOverview()),
                         (Route<dynamic> route) => false);
               }, child: const Text("Rond af")),
             ])));

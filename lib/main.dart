@@ -1,6 +1,7 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'authentication/authentication.dart';
 import 'firebase_options.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
       ],
       debug: true
   );
+  // MobileAds.instance.initialize();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
 }

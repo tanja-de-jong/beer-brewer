@@ -3,6 +3,7 @@ import 'package:beer_brewer/recipe/recipe_details.dart';
 import 'package:flutter/material.dart';
 
 import '../data/store.dart';
+import '../screen.dart';
 
 class RecipesOverview extends StatefulWidget {
   const RecipesOverview({Key? key}) : super(key: key);
@@ -24,6 +25,42 @@ class _RecipesOverviewState extends State<RecipesOverview> {
 
   @override
   Widget build(BuildContext context) {
+    return Screen(
+      title: 'Recipes',
+      page: OverviewPage.recipes,
+      loading: loading,
+      child: Expanded(child: DataTable(
+        showCheckboxColumn: false,
+        rows: Store.recipes
+            .map(
+              (r) => DataRow(
+              cells: [
+                DataCell(Text(r.name)),
+                DataCell(Text(r.style ?? "-")),
+                DataCell(Text(Store.batches
+                    .where((b) => b.recipeId == r.id)
+                    .length
+                    .toString()))
+              ],
+              onSelectChanged: (bool? selected) async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) =>
+                        RecipeDetails(recipe: r),
+                  ),
+                );
+              }),
+        )
+            .toList(),
+        columns: const [
+          DataColumn(label: Text("Naam", style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text("Stijl", style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text("Batches", style: TextStyle(fontWeight: FontWeight.bold))),
+        ],
+      ))
+    );
+
     return Center(
         child: loading
             ? const CircularProgressIndicator()

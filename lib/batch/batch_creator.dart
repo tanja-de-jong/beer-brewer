@@ -1,3 +1,4 @@
+import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
 import 'package:beer_brewer/form/TextFieldRow.dart';
 import 'package:beer_brewer/util.dart';
@@ -8,8 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/store.dart';
-import '../home_page.dart';
-import '../main.dart';
 import '../models/spec_to_products.dart';
 import '../models/batch.dart';
 import '../models/cooking.dart';
@@ -268,9 +267,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                     if (mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute<void>(
-                            builder: (BuildContext context) => const HomePage(
-                              selectedPage: 0,
-                            ),
+                            builder: (BuildContext context) => const BatchesOverview(),
                           ),
                               (route) => false);
                     }

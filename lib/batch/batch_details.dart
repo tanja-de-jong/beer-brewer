@@ -1,9 +1,10 @@
+import 'dart:math';
+
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
 import 'package:beer_brewer/form/TextFieldRow.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../home_page.dart';
 import '../models/spec_to_products.dart';
 import '../steps/bottling.dart';
 import '../steps/brew_step.dart';
@@ -19,6 +20,7 @@ import '../steps/malting.dart';
 import '../steps/preparation.dart';
 import '../util.dart';
 import 'batch_creator.dart';
+import 'batches_overview.dart';
 
 class BatchDetails extends StatefulWidget {
   final Batch batch;
@@ -32,6 +34,7 @@ class BatchDetails extends StatefulWidget {
 class _BatchDetailsState extends State<BatchDetails> {
   late Batch batch;
   late BatchStatus status;
+  late double availableWidth;
 
   Row _getRow(String label, Widget value) {
     return Row(
@@ -82,9 +85,7 @@ class _BatchDetailsState extends State<BatchDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => const HomePage(
-            selectedPage: 0,
-          ),
+          builder: (BuildContext context) => const BatchesOverview()
         ),
         (route) => false);
     return true;
@@ -152,35 +153,39 @@ class _BatchDetailsState extends State<BatchDetails> {
                 ]),
               if (batch.sgMeasurements.isNotEmpty) const SizedBox(height: 10),
               if (batch.sgMeasurements.isNotEmpty)
-                SizedBox(width: 350, child: Table(
-                  border: TableBorder.all(),
-                  defaultColumnWidth: const IntrinsicColumnWidth(),
-                  children: [
-                    const TableRow(children: [
-                      Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Text(
-                            "Datum",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          )),
-                      Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Text("SG",
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ]),
-                    ...(batch.sgMeasurements.keys.toList()..sort()).map(
-                      (date) => TableRow(children: [
-                        Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Text(DateFormat("dd-MM-yyyy").format(date))),
-                        Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Text(batch.sgMeasurements[date]!
-                                .toStringAsFixed(3))),
-                      ]),
-                    )
-                  ],
-                )),
+                SizedBox(
+                    width: availableWidth,
+                    child: Table(
+                      border: TableBorder.all(),
+                      defaultColumnWidth: const IntrinsicColumnWidth(),
+                      children: [
+                        const TableRow(children: [
+                          Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text(
+                                "Datum",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              )),
+                          Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text("SG",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                        ]),
+                        ...(batch.sgMeasurements.keys.toList()..sort()).map(
+                          (date) => TableRow(children: [
+                            Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Text(
+                                    DateFormat("dd-MM-yyyy").format(date))),
+                            Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Text(batch.sgMeasurements[date]!
+                                    .toStringAsFixed(3))),
+                          ]),
+                        )
+                      ],
+                    )),
               const SizedBox(height: 20),
               if (shoppingList.isNotEmpty)
                 Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -191,35 +196,38 @@ class _BatchDetailsState extends State<BatchDetails> {
                 ]),
               if (shoppingList.isNotEmpty) const SizedBox(height: 10),
               if (shoppingList.isNotEmpty)
-    SizedBox(width: 350, child: Table(
-                  border: TableBorder.all(),
-                  defaultColumnWidth: const IntrinsicColumnWidth(),
-                  children: [
-                    const TableRow(children: [
-                      Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Text(
-                            "Product",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          )),
-                      Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Text("Nodig",
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ]),
-                    ...(shoppingList.keys.toList()..sort()).map(
-                      (product) => TableRow(children: [
-                        Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Text(product.name)),
-                        Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Text(
-                                Util.amountToString(shoppingList[product]))),
-                      ]),
-                    )
-                  ],
-                )),
+                SizedBox(
+                    width: availableWidth,
+                    child: Table(
+                      border: TableBorder.all(),
+                      defaultColumnWidth: const IntrinsicColumnWidth(),
+                      children: [
+                        const TableRow(children: [
+                          Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text(
+                                "Product",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              )),
+                          Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text("Nodig",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                        ]),
+                        ...(shoppingList.keys.toList()..sort()).map(
+                          (product) => TableRow(children: [
+                            Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Text(product.name)),
+                            Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Text(Util.amountToString(
+                                    shoppingList[product]))),
+                          ]),
+                        )
+                      ],
+                    )),
             ]));
   }
 
@@ -283,51 +291,56 @@ class _BatchDetailsState extends State<BatchDetails> {
                       batch.mashing.malts.isEmpty
                           ? const Text("Geen mouten beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
-                          : SizedBox(width: 350, child: Table(
-                              border: TableBorder.all(),
-                              defaultColumnWidth: const IntrinsicColumnWidth(),
-                              children: [
-                                const TableRow(children: [
-                                  Padding(
-                                      padding: EdgeInsets.all(10),
-                                      child: Text(
-                                        "Type",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      )),
-                                  Padding(
-                                      padding: EdgeInsets.all(10),
-                                      child: Text("EBC",
+                          : SizedBox(
+                              width: availableWidth,
+                              child: Table(
+                                border: TableBorder.all(),
+                                defaultColumnWidth:
+                                    const IntrinsicColumnWidth(),
+                                children: [
+                                  const TableRow(children: [
+                                    Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: Text(
+                                          "Type",
                                           style: TextStyle(
-                                              fontWeight: FontWeight.bold))),
-                                  Padding(
-                                      padding: EdgeInsets.all(10),
-                                      child: Text("Gewicht",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)))
-                                ]),
-                                ...batch.mashing.malts
-                                    .expand((stp) => stp.products ?? [])
-                                    .map(
-                                      (pi) => TableRow(children: [
-                                        Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(pi.product.name)),
-                                        Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text((pi.product as Malt)
-                                                .ebcToString())),
-                                        Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(Util.amountToString(
-                                                (pi as ProductInstance)
-                                                    .amount)))
-                                      ]),
-                                    )
-                              ],
-                            )),
+                                              fontWeight: FontWeight.bold),
+                                        )),
+                                    Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: Text("EBC",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold))),
+                                    Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: Text("Gewicht",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold)))
+                                  ]),
+                                  ...batch.mashing.malts
+                                      .expand((stp) => stp.products ?? [])
+                                      .map(
+                                        (pi) => TableRow(children: [
+                                          Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Text(pi.product.name)),
+                                          Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Text((pi.product as Malt)
+                                                  .ebcToString())),
+                                          Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Text(Util.amountToString(
+                                                  (pi as ProductInstance)
+                                                      .amount)))
+                                        ]),
+                                      )
+                                ],
+                              )),
                       const SizedBox(height: 10),
-                      SizedBox(width: 350, child: batch.getMashingSchedule())
+                      SizedBox(
+                          width: availableWidth,
+                          child: batch.getMashingSchedule())
                     ])
               ]),
               const SizedBox(height: 20),
@@ -341,7 +354,9 @@ class _BatchDetailsState extends State<BatchDetails> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      SizedBox(width: 350, child: batch.getCookingSchedule())
+                      SizedBox(
+                          width: availableWidth,
+                          child: batch.getCookingSchedule())
                     ])
               ]),
               const SizedBox(height: 20),
@@ -364,48 +379,55 @@ class _BatchDetailsState extends State<BatchDetails> {
                                       null
                           ? const Text("Geen gist beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
-                          : SizedBox(width: 350, child: Table(
-                              border: TableBorder.all(),
-                              defaultColumnWidth: FixedColumnWidth(50.0),
-                              children: [
-                                  TableRow(children: [
-                                    Container(
-                                        padding: EdgeInsets.all(10),
-                                        child: Text(
-                                          "Gist",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        )),
-                                    Container(
-                                        padding: EdgeInsets.all(10),
-                                        child: Text("Gewicht",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                                    Container(
-                                        padding: EdgeInsets.all(10),
-                                        child: Text("Temperatuur",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold))),
-                                  ]),
-                                  if (batch.yeast != null)
+                          : SizedBox(
+                              width: availableWidth,
+                              child: Table(
+                                  border: TableBorder.all(),
+                                  defaultColumnWidth: FixedColumnWidth(50.0),
+                                  children: [
                                     TableRow(children: [
-                                      Padding(
-                                          padding: const EdgeInsets.all(10),
-                                          child: Text(batch.yeast?.products?[0]
-                                                  .product.name ??
-                                              "-")),
-                                      Padding(
-                                          padding: const EdgeInsets.all(10),
-                                          child: Text(batch
-                                                  .yeast?.products?[0].product
-                                                  .amountToString() ??
-                                              "-")),
-                                      Padding(
-                                          padding: const EdgeInsets.all(10),
+                                      Container(
+                                          padding: EdgeInsets.all(10),
                                           child: Text(
-                                              "${batch.fermTempMin} - ${batch.fermTempMax}ºC")),
+                                            "Gist",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          )),
+                                      Container(
+                                          padding: EdgeInsets.all(10),
+                                          child: Text("Gewicht",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                              overflow: TextOverflow.ellipsis)),
+                                      Container(
+                                          padding: EdgeInsets.all(10),
+                                          child: Text("Temperatuur",
+                                              style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
                                     ]),
-                                ])),
+                                    if (batch.yeast != null)
+                                      TableRow(children: [
+                                        Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Text(batch
+                                                    .yeast
+                                                    ?.products?[0]
+                                                    .product
+                                                    .name ??
+                                                "-")),
+                                        Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Text(batch
+                                                    .yeast?.products?[0].product
+                                                    .amountToString() ??
+                                                "-")),
+                                        Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Text(
+                                                "${batch.fermTempMin} - ${batch.fermTempMax}ºC")),
+                                      ]),
+                                  ])),
                     ])
               ]),
               const SizedBox(height: 20),
@@ -419,7 +441,9 @@ class _BatchDetailsState extends State<BatchDetails> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      SizedBox(width: 300, child: Text(batch.remarks ?? "-")),
+                      ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 300),
+                          child: Text(batch.remarks ?? "-")),
                     ])
               ]),
             ]));
@@ -427,6 +451,8 @@ class _BatchDetailsState extends State<BatchDetails> {
 
   @override
   Widget build(BuildContext context) {
+    availableWidth = min(MediaQuery.of(context).size.width - 40, 350);
+
     AppBar appBar = AppBar(
       // Here we take the value from the MyHomePage object that was created by
       // the App.build method, and use it to set our appbar title.
@@ -453,109 +479,112 @@ class _BatchDetailsState extends State<BatchDetails> {
         onWillPop: _onWillPop,
         child: Scaffold(
             appBar: appBar,
-            body: Column(children: [
-              SizedBox(
-                  height: MediaQuery.of(context).size.height -
-                      appBar.preferredSize.height -
-                      150,
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Flexible(
-                            child: SingleChildScrollView(
-                                child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(children: [
-                                      // width: 400,
-                                      MediaQuery.of(context).size.width >= 700
-                                          ? Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                brewInfo(),
-                                                const SizedBox(width: 50),
-                                                generalInfo()
-                                              ],
-                                            )
-                                          : Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                brewInfo(),
-                                                const SizedBox(width: 50),
-                                                generalInfo()
-                                              ],
-                                            )
-                                    ]))))
-                      ])),
-              const Divider(),
-              const SizedBox(height: 15),
-              if (status == BatchStatus.readyToBrew)
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BrewStep(
-                                batch: batch,
-                                contentList: getBrewingSteps(batch))),
-                      );
-                    },
-                    child: Text("Brouwen")),
-              if (status == BatchStatus.readyToLager)
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BrewStep(
-                                  batch: batch,
-                                  contentList: getLageringSteps(batch),
-                                  phase: BatchPhase.lagering,
-                                )),
-                      );
-                    },
-                    child: Text("Lageren")),
-              if (status == BatchStatus.waitingForFermentation)
-                OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BrewStep(
-                                batch: batch,
-                                contentList: getLageringSteps(batch),
-                                phase: BatchPhase.lagering)),
-                      );
-                    },
-                    child: Text("Lageren")),
-              if (status == BatchStatus.readyToBottle)
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BrewStep(
-                                batch: batch,
-                                contentList: getBottlingStep(batch),
-                                phase: BatchPhase.bottling)),
-                      );
-                    },
-                    child: Text("Bottelen")),
-              if (status == BatchStatus.waitingForLagering)
-                OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BrewStep(
-                                batch: batch,
-                                contentList: getBottlingStep(batch),
-                                phase: BatchPhase.bottling)),
-                      );
-                    },
-                    child: Text("Bottelen")),
-            ])));
+            body: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(children: [
+                  SizedBox(
+                      height: MediaQuery.of(context).size.height -
+                          appBar.preferredSize.height -
+                          150,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Flexible(
+                                child: SingleChildScrollView(
+                                    child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(children: [
+                                          // width: 400,
+                                          MediaQuery.of(context).size.width >=
+                                                  700
+                                              ? Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    brewInfo(),
+                                                    const SizedBox(width: 50),
+                                                    generalInfo()
+                                                  ],
+                                                )
+                                              : Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    brewInfo(),
+                                                    const SizedBox(width: 50),
+                                                    generalInfo()
+                                                  ],
+                                                )
+                                        ]))))
+                          ])),
+                  const Divider(),
+                  const SizedBox(height: 15),
+                  if (status == BatchStatus.readyToBrew)
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => BrewStep(
+                                    batch: batch,
+                                    contentList: getBrewingSteps(batch))),
+                          );
+                        },
+                        child: Text("Brouwen")),
+                  if (status == BatchStatus.readyToLager)
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => BrewStep(
+                                      batch: batch,
+                                      contentList: getLageringSteps(batch),
+                                      phase: BatchPhase.lagering,
+                                    )),
+                          );
+                        },
+                        child: Text("Lageren")),
+                  if (status == BatchStatus.waitingForFermentation)
+                    OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => BrewStep(
+                                    batch: batch,
+                                    contentList: getLageringSteps(batch),
+                                    phase: BatchPhase.lagering)),
+                          );
+                        },
+                        child: Text("Lageren")),
+                  if (status == BatchStatus.readyToBottle)
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => BrewStep(
+                                    batch: batch,
+                                    contentList: getBottlingStep(batch),
+                                    phase: BatchPhase.bottling)),
+                          );
+                        },
+                        child: Text("Bottelen")),
+                  if (status == BatchStatus.waitingForLagering)
+                    OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => BrewStep(
+                                    batch: batch,
+                                    contentList: getBottlingStep(batch),
+                                    phase: BatchPhase.bottling)),
+                          );
+                        },
+                        child: Text("Bottelen")),
+                ]))));
   }
 
   addSGMeasurement(Function addMeasurement) {

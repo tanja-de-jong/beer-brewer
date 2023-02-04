@@ -1,13 +1,13 @@
 import 'dart:core';
 
 import 'package:beer_brewer/recipe/recipe_details.dart';
+import 'package:beer_brewer/recipe/recipes_overview.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/material.dart';
 import '../data/store.dart';
 import '../form/DoubleTextFieldRow.dart';
 import '../form/DropDownRow.dart';
 import '../form/TextFieldRow.dart';
-import '../home_page.dart';
 import '../models/spec_to_products.dart';
 import '../models/cooking.dart';
 import '../models/mashing.dart';
@@ -339,10 +339,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                     if (mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute<void>(
-                            builder: (BuildContext context) => const HomePage(
-                              title: 'Recepten',
-                              selectedPage: 1,
-                            ),
+                            builder: (BuildContext context) => const RecipesOverview(),
                           ),
                           (route) => false);
                     }

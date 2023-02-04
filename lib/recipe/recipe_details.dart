@@ -1,10 +1,10 @@
-import 'package:beer_brewer/main.dart';
+import 'dart:math';
+
 import 'package:beer_brewer/recipe/recipe_creator.dart';
+import 'package:beer_brewer/recipe/recipes_overview.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../batch/batch_creator.dart';
-import '../data/store.dart';
-import '../home_page.dart';
 import '../models/product_spec.dart';
 import '../models/recipe.dart';
 
@@ -19,6 +19,7 @@ class RecipeDetails extends StatefulWidget {
 
 class _RecipeDetailsState extends State<RecipeDetails> {
   late Recipe recipe;
+  late double availableWidth;
 
   Row _getRow(String label, Widget value) {
     return Row(
@@ -36,10 +37,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   Future<bool> _onWillPop() async {
     Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => const HomePage(
-            title: 'Recepten',
-            selectedPage: 1,
-          ),
+          builder: (BuildContext context) => const RecipesOverview(),
         ),
         (route) => false);
     return true;
@@ -113,7 +111,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                           ? const Text("Geen mouten beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
                           : SizedBox(
-                              width: 350,
+                              width: availableWidth,
                               child: Table(
                                 border: TableBorder.all(),
                                 defaultColumnWidth:
@@ -159,7 +157,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                           ? const Text("Geen moutschema beschikbaar.",
                               style: TextStyle(fontStyle: FontStyle.italic))
                           : SizedBox(
-                              width: 350,
+                              width: availableWidth,
                               child: Table(
                                   border: TableBorder.all(),
                                   defaultColumnWidth:
@@ -214,7 +212,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       ? const Text("Geen kookschema beschikbaar.",
                           style: TextStyle(fontStyle: FontStyle.italic))
                       : SizedBox(
-                          width: 350,
+                          width: availableWidth,
                           child: Table(
                               border: TableBorder.all(),
                               defaultColumnWidth: const IntrinsicColumnWidth(),
@@ -283,7 +281,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                       ? const Text("Geen gist beschikbaar.",
                           style: TextStyle(fontStyle: FontStyle.italic))
                       : SizedBox(
-                          width: 350,
+                          width: availableWidth,
                           child: Table(
                               border: TableBorder.all(),
                               defaultColumnWidth: const IntrinsicColumnWidth(),
@@ -349,7 +347,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     ? const Text("Geen batches beschikbaar.",
                         style: TextStyle(fontStyle: FontStyle.italic))
                     : SizedBox(
-                        width: 350,
+                        width: availableWidth,
                         child: Table(
                           border: TableBorder.all(),
                           defaultColumnWidth: const IntrinsicColumnWidth(),
@@ -401,6 +399,8 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   @override
   Widget build(BuildContext context) {
+    availableWidth = min(MediaQuery.of(context).size.width - 40, 350);
+
     AppBar appBar = AppBar(
       // Here we take the value from the MyHomePage object that was created by
       // the App.build method, and use it to set our appbar title.
