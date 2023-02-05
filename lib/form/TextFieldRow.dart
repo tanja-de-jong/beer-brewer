@@ -12,6 +12,7 @@ class TextFieldRow extends StatefulWidget {
   final FocusNode? focusNode;
   final bool isPercentage;
   final Map? props;
+  final double? width;
 
   TextFieldRow(
       {Key? key,
@@ -24,7 +25,8 @@ class TextFieldRow extends StatefulWidget {
       this.isnum = false,
       this.isPercentage = false,
       this.props,
-      this.alignment = MainAxisAlignment.spaceBetween})
+      this.alignment = MainAxisAlignment.spaceBetween,
+      this.width = 200})
       : super(key: key);
 
   @override
@@ -62,7 +64,7 @@ class _TextFieldRowState extends State<TextFieldRow> {
           isEditable
               ? SizedBox(
                   height: 30,
-                  width: 200,
+                  width: widget.width,
                   child: buildTextFormField())
               : Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                   Text(widget.initialValue?.toString() ?? "-"),

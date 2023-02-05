@@ -437,6 +437,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                         children: [
                           TextFieldRow(
                             label: 'Naam',
+                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: name,
                             onChanged: (value) {
                               setState(() {
@@ -447,6 +448,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             DropDownRow(
                               label: "Soort",
+                              width: MediaQuery.of(context).size.width - 250,
                               initialValue: type,
                               items: Store.maltTypes,
                               onChanged: (value) {
@@ -457,6 +459,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                             ),
                           DropDownRow(
                             label: 'Merk',
+                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: brand,
                             onChanged: (value) {
                               setState(() {
@@ -468,6 +471,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Min EBC",
+                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: ebcMin,
                                 onChanged: (value) {
                                   setState(() {
@@ -477,6 +481,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Max EBC",
+                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: ebcMax,
                                 onChanged: (value) {
                                   setState(() {
@@ -486,6 +491,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DropDownRow(
                                 label: "Type",
+                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: hopType,
                                 onChanged: (value) {
                                   setState(() {
@@ -496,6 +502,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DropDownRow(
                               label: "Vorm",
+                              width: MediaQuery.of(context).size.width - 250,
                               initialValue: hopShape,
                               onChanged: (value) {
                                 setState(() {
@@ -508,15 +515,17 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DoubleTextFieldRow(
                                 label: "Alfazuur (%)",
+                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: alphaAcid,
                                 onChanged: (value) {
                                   setState(() {
                                     alphaAcid = value;
                                   });
                                 }),
-                          TextFieldRow(label: 'Te koop'),
+                          TextFieldRow(label: 'Te koop', width: MediaQuery.of(context).size.width - 250,),
                           DoubleTextFieldRow(
                             label: 'Op voorraad (g)',
+                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: amount,
                             onChanged: (value) {
                               setState(() {

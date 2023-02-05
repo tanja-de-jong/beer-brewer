@@ -589,7 +589,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(children: [
-                      TextFieldRow(
+                        TextFieldRow(
                         label: "Datum",
                         initialValue: sgDate,
                         onChanged: (value) {

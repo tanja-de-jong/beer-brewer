@@ -11,8 +11,9 @@ class DropDownRow extends StatefulWidget {
   final Function(String)? onChanged;
   final TextEditingController? controller;
   final FocusNode? focusNode;
+  final double width;
 
-  const DropDownRow({Key? key, required this.label, required this.items, this.initialValue, this.onChanged, this.controller, this.focusNode, this.alignment = MainAxisAlignment.spaceBetween}) : super(key: key);
+  const DropDownRow({Key? key, required this.label, required this.items, this.initialValue, this.onChanged, this.controller, this.focusNode, this.alignment = MainAxisAlignment.spaceBetween, this.width = 200}) : super(key: key);
 
   @override
   State<DropDownRow> createState() => _DropDownRowState();
@@ -143,7 +144,7 @@ class _DropDownRowState extends State<DropDownRow> {
         style: const TextStyle(fontStyle: FontStyle.italic),
       ),
       Column(children: [
-      SizedBox(height: 30, width: 200, child: widget.items == null ? TextFormField(initialValue: widget.initialValue, onChanged: widget.onChanged,) : getDropDown(widget.label, items)),
+      SizedBox(height: 30, width: widget.width, child: widget.items == null ? TextFormField(initialValue: widget.initialValue, onChanged: widget.onChanged,) : getDropDown(widget.label, items)),
         const SizedBox(height: 5),
     ])
     ],));
