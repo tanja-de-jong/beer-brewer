@@ -12,16 +12,18 @@ class Screen extends StatefulWidget {
   final OverviewPage page;
   final bool scroll;
   final Map<String, Widget>? tabs;
+  final Widget? bottomButton;
 
   const Screen(
       {Key? key,
       required this.title,
       this.actions,
-        this.child,
+      this.child,
       this.loading = false,
       this.page = OverviewPage.other,
       this.scroll = true,
-      this.tabs})
+      this.tabs,
+      this.bottomButton})
       : super(key: key);
 
   @override
@@ -50,35 +52,93 @@ class _ScreenState extends State<Screen> {
     super.initState();
   }
 
+  AppBar getAppBar() {
+    if (widget.tabs == null) {
+      return AppBar(
+        title: Text(widget.title),
+        actions: widget.actions,
+      );
+    } else {
+      return AppBar(
+        title: Text(widget.title),
+        actions: widget.actions,
+        bottom: widget.tabs == null
+            ? null
+            : TabBar(
+                labelPadding: const EdgeInsets.all(0),
+                tabs: widget.tabs!.keys
+                    .map((e) => Tab(height: 20, text: e))
+                    .toList()),
+      );
+    }
+  }
+
+  Widget getBody() {
+    if (widget.tabs == null) {
+      return widget.loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(children: [
+              SizedBox(height: getBodyHeight(), child: getScrollableContent()),
+              if (widget.bottomButton != null)
+                Column(
+                  children: [
+                    const Divider(),
+                    SizedBox(height: 50, child: widget.bottomButton!),
+                  ],
+                )
+            ]);
+    } else {
+      return widget.loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(children: [
+              SizedBox(
+                  height: getBodyHeight(),
+                  child: TabBarView(children: widget.tabs!.values.toList())),
+              if (widget.bottomButton != null)
+                Column(
+                  children: [
+                    const Divider(),
+                    SizedBox(height: 50, child: widget.bottomButton!),
+                  ],
+                )
+            ]);
+    }
+  }
+
+  double getBodyHeight() {
+    double bottomButtonHeight = widget.bottomButton != null ? 20 : 0;
+    double tabBarHeight = widget.tabs != null ? 48 : 0;
+    return MediaQuery.of(context).size.height -
+        kToolbarHeight -
+        MediaQuery.of(context).padding.top -
+        kBottomNavigationBarHeight -
+        bottomButtonHeight -
+        tabBarHeight;
+  }
+
   Widget getTabbedContent() {
-    return widget.tabs == null ? Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          actions: widget.actions,
-        ),
-        body: widget.loading
-            ? const Center(child: CircularProgressIndicator())
-            : getScrollableContent(),
-        bottomNavigationBar: selected != null
-            ? getMainBottomNavigationBar(selected!)
-            : null) : DefaultTabController(length: widget.tabs!.length, child:
-    Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          actions: widget.actions,
-          bottom: widget.tabs == null ? null : TabBar(labelPadding: const EdgeInsets.all(0), tabs: widget.tabs!.keys.map((e) => Tab(height: 20, text: e)).toList()),
-        ),
-        bottomNavigationBar: selected != null
-            ? getMainBottomNavigationBar(selected!)
-            : null,
-        body: widget.loading
-            ? const Center(child: CircularProgressIndicator())
-            : widget.tabs == null ? getScrollableContent() : TabBarView(children: widget.tabs!.values.toList())),);
+    return widget.tabs == null
+        ? Scaffold(
+            appBar: getAppBar(),
+            body: getBody(),
+            bottomNavigationBar:
+                selected != null ? getMainBottomNavigationBar(selected!) : null,
+          )
+        : DefaultTabController(
+            length: widget.tabs!.length,
+            child: Scaffold(
+                appBar: getAppBar(),
+                bottomNavigationBar: selected != null
+                    ? getMainBottomNavigationBar(selected!)
+                    : null,
+                body: getBody()),
+          );
   }
 
   Widget getScrollableContent() {
-    return widget.scroll ? SingleChildScrollView(
-        child: getPaddedContent()) : getPaddedContent();
+    return widget.scroll
+        ? SingleChildScrollView(child: getPaddedContent())
+        : getPaddedContent();
   }
 
   Widget getPaddedContent() {
@@ -86,7 +146,7 @@ class _ScreenState extends State<Screen> {
         padding: const EdgeInsets.all(20),
         child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [widget.child!]));
+            children: [SizedBox(width: MediaQuery.of(context).size.width - 40, child: widget.child!)]));
   }
 
   @override
@@ -100,9 +160,8 @@ class _ScreenState extends State<Screen> {
       onTap: (int value) {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-                builder: (context) =>
-                OverviewPage.values[value].widget!),
-                (Route<dynamic> route) => false);
+                builder: (context) => OverviewPage.values[value].widget!),
+            (Route<dynamic> route) => false);
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.sync), label: "Batches"),
@@ -114,12 +173,7 @@ class _ScreenState extends State<Screen> {
   }
 }
 
-enum OverviewPage {
-  batches,
-  recipes,
-  products,
-  other
-}
+enum OverviewPage { batches, recipes, products, other }
 
 extension ProductName on OverviewPage {
   Widget? get widget {

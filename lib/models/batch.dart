@@ -100,9 +100,14 @@ class Batch {
 
   num? getStartSG() {
     if (sgMeasurements.isEmpty) return null;
-    List<DateTime> dates = sgMeasurements.keys.toList();
-    dates.sort();
-    return sgMeasurements[dates.first]!;
+    if (sgMeasurements.length == 1) return sgMeasurements.values.first;
+    return sgMeasurements[(sgMeasurements.keys.toList()..sort()).first];
+  }
+
+  double? getAlcoholPercentage(num sg) {
+    num? startSG = getStartSG();
+    if (startSG == null) return null;
+    return (startSG - sg) * 131.25;
   }
 
   num? getEndSG() {

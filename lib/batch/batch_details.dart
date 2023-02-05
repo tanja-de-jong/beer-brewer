@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
 import 'package:beer_brewer/form/TextFieldRow.dart';
+import 'package:beer_brewer/screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -20,7 +21,6 @@ import '../steps/malting.dart';
 import '../steps/preparation.dart';
 import '../util.dart';
 import 'batch_creator.dart';
-import 'batches_overview.dart';
 
 class BatchDetails extends StatefulWidget {
   final Batch batch;
@@ -82,15 +82,6 @@ class _BatchDetailsState extends State<BatchDetails> {
     ];
   }
 
-  Future<bool> _onWillPop() async {
-    Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const BatchesOverview()
-        ),
-        (route) => false);
-    return true;
-  }
-
   @override
   void initState() {
     batch = widget.batch;
@@ -107,6 +98,46 @@ class _BatchDetailsState extends State<BatchDetails> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                "Algemeen",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _getRow("Naam", Text(batch.name)),
+              _getRow("Stijl", Text(batch.style ?? "-")),
+              _getRow("Hoeveelheid", Text("${batch.amount} liter")),
+              const SizedBox(height: 10),
+              _getRow(
+                  "Start",
+                  Text(batch.expStartSG == null
+                      ? "-"
+                      : ("${batch.expStartSG!.toStringAsFixed(3)} SG"))),
+              _getRow(
+                  "Eind",
+                  Text(batch.expFinalSG == null
+                      ? "-"
+                      : ("${batch.expFinalSG!.toStringAsFixed(3)} SG"))),
+              _getRow(
+                  "Alcohol",
+                  Text(batch.expFinalSG == null || batch.expStartSG == null
+                      ? "-"
+                      : ("${((batch.expStartSG! - batch.expFinalSG!) * 131.25).toStringAsFixed(1)}%"))),
+              const SizedBox(height: 10),
+              _getRow("Kleur",
+                  Text(batch.color == null ? "-" : "${batch.color} EBC")),
+              _getRow("Bitterheid",
+                  Text(batch.bitter == null ? "-" : "${batch.bitter} EBU")),
+              const SizedBox(height: 10),
+              _getRow("Maischwater", Text("${batch.mashing.water} liter")),
+              _getRow("Spoelwater", Text("${batch.rinsingWater} liter")),
+              _getRow(
+                  "Bottelsuiker",
+                  Text(batch.bottleSugar == null ||
+                      batch.bottleSugar!.products == null ||
+                      batch.bottleSugar!.products!.isEmpty
+                      ? "-"
+                      : "${Util.amountToString(batch.bottleSugar!.products![0].amount)}/L ${batch.bottleSugar!.products![0].product.name}")),
+              const SizedBox(height: 20),
               const Text(
                 "Status",
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -141,6 +172,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                     TextButton(
                         onPressed: () {
                           addSGMeasurement((DateTime date, num value) async {
+                            if (value >= 1000) value = value / 1000;
                             Batch updatedBatch =
                                 await Store.addSGToBatch(batch, date, value);
                             setState(() {
@@ -171,18 +203,31 @@ class _BatchDetailsState extends State<BatchDetails> {
                               child: Text("SG",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold))),
+                          Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text("Alcohol",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
                         ]),
                         ...(batch.sgMeasurements.keys.toList()..sort()).map(
-                          (date) => TableRow(children: [
-                            Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Text(
-                                    DateFormat("dd-MM-yyyy").format(date))),
-                            Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Text(batch.sgMeasurements[date]!
-                                    .toStringAsFixed(3))),
-                          ]),
+                          (date) {
+                            num sg = batch.sgMeasurements[date]!;
+                            num? alcohol = batch.getAlcoholPercentage(sg);
+                            return TableRow(children: [
+                              Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Text(
+                                      DateFormat("dd-MM-yyyy").format(date))),
+                              Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Text(sg.toStringAsFixed(3))),
+                              Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Text(alcohol == 0
+                                      ? "-"
+                                      : ("${alcohol!.toStringAsFixed(1)}%"))),
+                            ]);
+                          },
                         )
                       ],
                     )),
@@ -238,46 +283,6 @@ class _BatchDetailsState extends State<BatchDetails> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Algemeen",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              _getRow("Naam", Text(batch.name)),
-              _getRow("Stijl", Text(batch.style ?? "-")),
-              _getRow("Hoeveelheid", Text("${batch.amount} liter")),
-              const SizedBox(height: 10),
-              _getRow(
-                  "Start",
-                  Text(batch.expStartSG == null
-                      ? "-"
-                      : ("${batch.expStartSG!.toStringAsFixed(3)} SG"))),
-              _getRow(
-                  "Eind",
-                  Text(batch.expFinalSG == null
-                      ? "-"
-                      : ("${batch.expFinalSG!.toStringAsFixed(3)} SG"))),
-              _getRow(
-                  "Alcohol",
-                  Text(batch.expFinalSG == null || batch.expStartSG == null
-                      ? "-"
-                      : ("${((batch.expStartSG! - batch.expFinalSG!) * 131.25).toStringAsFixed(1)}%"))),
-              const SizedBox(height: 10),
-              _getRow("Kleur",
-                  Text(batch.color == null ? "-" : "${batch.color} EBC")),
-              _getRow("Bitterheid",
-                  Text(batch.bitter == null ? "-" : "${batch.bitter} EBU")),
-              const SizedBox(height: 10),
-              _getRow("Maischwater", Text("${batch.mashing.water} liter")),
-              _getRow("Spoelwater", Text("${batch.rinsingWater} liter")),
-              _getRow(
-                  "Bottelsuiker",
-                  Text(batch.bottleSugar == null ||
-                          batch.bottleSugar!.products == null ||
-                          batch.bottleSugar!.products!.isEmpty
-                      ? "-"
-                      : "${Util.amountToString(batch.bottleSugar!.products![0].amount)}/L ${batch.bottleSugar!.products![0].product.name}")),
-              const SizedBox(height: 20),
               Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                 Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,142 +454,118 @@ class _BatchDetailsState extends State<BatchDetails> {
             ]));
   }
 
+  getBottomButton() {
+    if (status == BatchStatus.readyToBrew) {
+      return ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => BrewStep(
+                      batch: batch, contentList: getBrewingSteps(batch))),
+            );
+          },
+          child: Text("Brouwen"));
+    }
+    if (status == BatchStatus.readyToLager) {
+      return ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => BrewStep(
+                        batch: batch,
+                        contentList: getLageringSteps(batch),
+                        phase: BatchPhase.lagering,
+                      )),
+            );
+          },
+          child: Text("Lageren"));
+    }
+    if (status == BatchStatus.waitingForFermentation) {
+      return OutlinedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => BrewStep(
+                      batch: batch,
+                      contentList: getLageringSteps(batch),
+                      phase: BatchPhase.lagering)),
+            );
+          },
+          child: Text("Lageren"));
+    }
+    if (status == BatchStatus.readyToBottle) {
+      return ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => BrewStep(
+                      batch: batch,
+                      contentList: getBottlingStep(batch),
+                      phase: BatchPhase.bottling)),
+            );
+          },
+          child: Text("Bottelen"));
+    }
+    if (status == BatchStatus.waitingForLagering) {
+      return OutlinedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => BrewStep(
+                      batch: batch,
+                      contentList: getBottlingStep(batch),
+                      phase: BatchPhase.bottling)),
+            );
+          },
+          child: Text("Bottelen"));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     availableWidth = min(MediaQuery.of(context).size.width - 40, 350);
 
-    AppBar appBar = AppBar(
-      // Here we take the value from the MyHomePage object that was created by
-      // the App.build method, and use it to set our appbar title.
-      title: const Text("Batch"),
-      actions: [
-        Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => BatchCreator(batch: batch)),
-                );
-              },
-              child: const Icon(
-                Icons.edit,
-                size: 26.0,
-              ),
-            )),
-      ],
-    );
-
-    return WillPopScope(
-        onWillPop: _onWillPop,
-        child: Scaffold(
-            appBar: appBar,
-            body: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(children: [
-                  SizedBox(
-                      height: MediaQuery.of(context).size.height -
-                          appBar.preferredSize.height -
-                          150,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Flexible(
-                                child: SingleChildScrollView(
-                                    child: Container(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Column(children: [
-                                          // width: 400,
-                                          MediaQuery.of(context).size.width >=
-                                                  700
-                                              ? Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    brewInfo(),
-                                                    const SizedBox(width: 50),
-                                                    generalInfo()
-                                                  ],
-                                                )
-                                              : Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    brewInfo(),
-                                                    const SizedBox(width: 50),
-                                                    generalInfo()
-                                                  ],
-                                                )
-                                        ]))))
-                          ])),
-                  const Divider(),
-                  const SizedBox(height: 15),
-                  if (status == BatchStatus.readyToBrew)
-                    ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => BrewStep(
-                                    batch: batch,
-                                    contentList: getBrewingSteps(batch))),
-                          );
-                        },
-                        child: Text("Brouwen")),
-                  if (status == BatchStatus.readyToLager)
-                    ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => BrewStep(
-                                      batch: batch,
-                                      contentList: getLageringSteps(batch),
-                                      phase: BatchPhase.lagering,
-                                    )),
-                          );
-                        },
-                        child: Text("Lageren")),
-                  if (status == BatchStatus.waitingForFermentation)
-                    OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => BrewStep(
-                                    batch: batch,
-                                    contentList: getLageringSteps(batch),
-                                    phase: BatchPhase.lagering)),
-                          );
-                        },
-                        child: Text("Lageren")),
-                  if (status == BatchStatus.readyToBottle)
-                    ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => BrewStep(
-                                    batch: batch,
-                                    contentList: getBottlingStep(batch),
-                                    phase: BatchPhase.bottling)),
-                          );
-                        },
-                        child: Text("Bottelen")),
-                  if (status == BatchStatus.waitingForLagering)
-                    OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => BrewStep(
-                                    batch: batch,
-                                    contentList: getBottlingStep(batch),
-                                    phase: BatchPhase.bottling)),
-                          );
-                        },
-                        child: Text("Bottelen")),
-                ]))));
+    return Screen(
+        title: "Batch",
+        actions: [
+          Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => BatchCreator(batch: batch)),
+                  );
+                },
+                child: const Icon(
+                  Icons.edit,
+                  size: 26.0,
+                ),
+              )),
+        ],
+        bottomButton: getBottomButton(),
+        child: Column(children: [
+          // width: 400,
+          MediaQuery.of(context).size.width >= 700
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    brewInfo(),
+                    const SizedBox(width: 50),
+                    generalInfo()
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    brewInfo(),
+                    const SizedBox(width: 50),
+                    generalInfo()
+                  ],
+                )
+        ]));
   }
 
   addSGMeasurement(Function addMeasurement) {

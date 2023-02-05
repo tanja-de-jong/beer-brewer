@@ -1,4 +1,5 @@
 import 'package:beer_brewer/data/store.dart';
+import 'package:beer_brewer/recipe/recipe_creator.dart';
 import 'package:beer_brewer/recipe/recipe_details.dart';
 import 'package:flutter/material.dart';
 
@@ -26,9 +27,27 @@ class _RecipesOverviewState extends State<RecipesOverview> {
   Widget build(BuildContext context) {
     return Screen(
       title: 'Recipes',
+      actions: [
+        Padding(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => const RecipeCreator()),
+                );
+              },
+              child: const Icon(
+                Icons.add,
+                size: 26.0,
+              ),
+            )),
+      ],
       page: OverviewPage.recipes,
       loading: loading,
-      child: Expanded(child: DataTable(
+      child:
+      // Expanded(child:
+      DataTable(
         showCheckboxColumn: false,
         rows: Store.recipes
             .map(
@@ -57,7 +76,8 @@ class _RecipesOverviewState extends State<RecipesOverview> {
           DataColumn(label: Text("Stijl", style: TextStyle(fontWeight: FontWeight.bold))),
           DataColumn(label: Text("Batches", style: TextStyle(fontWeight: FontWeight.bold))),
         ],
-      ))
+      )
+    // )
     );
 
     return Center(

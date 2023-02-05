@@ -70,7 +70,9 @@ class _BatchesOverviewState extends State<BatchesOverview> {
         title: 'Batches',
         page: OverviewPage.batches,
         loading: loading,
-        child: Expanded(child: DataTable(
+        child:
+        // Expanded(child:
+        DataTable(
           showCheckboxColumn: false,
           rows: Store.batches
               .map(
@@ -98,7 +100,9 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                 label: Text("Status",
                     style: TextStyle(fontWeight: FontWeight.bold))),
           ],
-        )));
+        ))
+    // )
+    ;
     return Center(
         child: loading
             ? const CircularProgressIndicator()

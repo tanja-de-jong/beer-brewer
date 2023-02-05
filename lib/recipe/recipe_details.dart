@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:beer_brewer/recipe/recipe_creator.dart';
 import 'package:beer_brewer/recipe/recipes_overview.dart';
+import 'package:beer_brewer/screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../batch/batch_creator.dart';
@@ -34,15 +35,6 @@ class _RecipeDetailsState extends State<RecipeDetails> {
     );
   }
 
-  Future<bool> _onWillPop() async {
-    Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const RecipesOverview(),
-        ),
-        (route) => false);
-    return true;
-  }
-
   @override
   void initState() {
     recipe = widget.recipe;
@@ -64,7 +56,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               _getRow("Naam", Text(recipe.name)),
               _getRow("Stijl", Text(recipe.style ?? "-")),
               _getRow("Bron", Text(recipe.source ?? "-")),
-              _getRow("Hoeveelheid", Text("${recipe.amount} liter")),
+              _getRow("Hoeveelheid", Text(recipe.amount == null ? "-" : "${recipe.amount} liter")),
               const SizedBox(height: 10),
               _getRow(
                   "Start",
@@ -92,8 +84,8 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               _getRow("Bitterheid",
                   Text(recipe.bitter == null ? "-" : "${recipe.bitter} EBU")),
               const SizedBox(height: 10),
-              _getRow("Maischwater", Text("${recipe.mashing.water} liter")),
-              _getRow("Spoelwater", Text("${recipe.rinsingWater} liter")),
+              _getRow("Maischwater", Text(recipe.mashing.water == null ? "-" : "${recipe.mashing.water} liter")),
+              _getRow("Spoelwater", Text(recipe.rinsingWater == null ? "- " : "${recipe.rinsingWater} liter")),
               _getRow("Bottelsuiker",
                   Text(recipe.bottleSugar?.getProductString() ?? "-")),
               const SizedBox(height: 20),
@@ -401,10 +393,8 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   Widget build(BuildContext context) {
     availableWidth = min(MediaQuery.of(context).size.width - 40, 350);
 
-    AppBar appBar = AppBar(
-      // Here we take the value from the MyHomePage object that was created by
-      // the App.build method, and use it to set our appbar title.
-      title: const Text("Recept"),
+    return Screen(
+      title: "Recept",
       actions: [
         Padding(
             padding: const EdgeInsets.only(right: 20.0),
@@ -421,89 +411,44 @@ class _RecipeDetailsState extends State<RecipeDetails> {
               ),
             )),
       ],
+      bottomButton: ElevatedButton(
+        onPressed: () {
+          if (recipe.amount != null && recipe.amount! > 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (BuildContext context) => BatchCreator(recipe: recipe),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("Recept heeft nog geen hoeveelheid.")));
+          }
+        },
+        child: const Text("Brouwplan maken"),
+      ),
+      child: Container(
+          padding: const EdgeInsets.all(10),
+          // width: 400,
+          child: MediaQuery.of(context).size.width >= 700
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    leftColumn(),
+                    const SizedBox(width: 50),
+                    rightColumn()
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    leftColumn(),
+                    const SizedBox(height: 20),
+                    rightColumn()
+                  ],
+                )),
     );
-
-    return WillPopScope(
-        onWillPop: _onWillPop,
-        child: Scaffold(
-            appBar: appBar,
-            body: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(children: [
-                  SizedBox(
-                      height: MediaQuery.of(context).size.height -
-                          appBar.preferredSize.height -
-                          150,
-                      child: SingleChildScrollView(
-                          child: Column(children: [
-                        SizedBox(
-                            height: MediaQuery.of(context).size.height -
-                                appBar.preferredSize.height -
-                                80,
-                            child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Flexible(
-                                      child: SingleChildScrollView(
-                                          child: Container(
-                                              padding: const EdgeInsets.all(10),
-                                              // width: 400,
-                                              child: MediaQuery.of(context)
-                                                          .size
-                                                          .width >=
-                                                      700
-                                                  ? Row(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        leftColumn(),
-                                                        const SizedBox(
-                                                            width: 50),
-                                                        rightColumn()
-                                                      ],
-                                                    )
-                                                  : Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .center,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        leftColumn(),
-                                                        const SizedBox(
-                                                            height: 20),
-                                                        rightColumn()
-                                                      ],
-                                                    ))))
-                                ])),
-                      ]))),
-                  const Divider(),
-                  // const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (recipe.amount != null && recipe.amount! > 0) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (BuildContext context) =>
-                                BatchCreator(recipe: recipe),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    "Recept heeft nog geen hoeveelheid.")));
-                      }
-                    },
-                    child: const Text("Brouwplan maken"),
-                  ),
-                ]))));
   }
 }
