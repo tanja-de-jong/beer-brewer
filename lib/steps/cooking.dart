@@ -1,3 +1,6 @@
+import 'package:beer_brewer/screen.dart';
+import 'package:beer_brewer/steps/cooling.dart';
+import 'package:beer_brewer/steps/steps.dart';
 import 'package:flutter/material.dart';
 
 import '../models/batch.dart';
@@ -16,39 +19,41 @@ class CookingStep extends StatefulWidget {
 class _CookingStepState extends State<CookingStep> {
   late Recipe recipe;
   late Batch batch;
-  Map<String, bool> steps = {};
+  List<String> steps = [];
 
   @override
   void initState() {
     batch = widget.batch;
 
-    for (String text in [
+    steps = [
       "Breng het wort aan een zacht rollende kook.",
       "Zorg er te allen tijde voor dat het deksel een beetje schuin op de pan staat.",
       "Voeg de hop toe volgens het kookschema.",
       "Vul na het koken, indien nodig, aan tot ${batch.amount} liter met heet water.",
       "Giet het wort voorzichtig over in de andere pan en probeer zoveel mogelijk resten achter te laten."
-    ]) {
-      steps[text] = false;
-    }
+    ];
 
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-      const SizedBox(height: 5),
-      ...steps.keys.map((step) => Row(children: [Checkbox(value: steps[step], onChanged: (value){
-        setState(() {
-          steps[step] = !(steps[step] ?? true);
-        });
-      }), Text(step)])),
+    return Screen(title: "Koken", bottomButton: ElevatedButton(
+      child: const Text("Volgende"),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+              builder: (context) => CoolingStep(
+                batch: widget.batch,
+              )),
+        );
+      },
+    ), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Steps(steps: steps),
       const SizedBox(height: 20),
       const Text("Kookschema", style: TextStyle(fontWeight: FontWeight.bold)),
       const SizedBox(height: 5),
       batch.getCookingSchedule()
-    ]);
+    ]));
   }
 }

@@ -1,5 +1,7 @@
+import 'package:beer_brewer/authentication/authentication.dart';
 import 'package:beer_brewer/batch/batch_details.dart';
 import 'package:beer_brewer/data/store.dart';
+import 'package:beer_brewer/main.dart';
 import 'package:beer_brewer/screen.dart';
 import 'package:beer_brewer/steps/cooling.dart';
 import 'package:beer_brewer/steps/fermentation.dart';
@@ -70,9 +72,24 @@ class _BatchesOverviewState extends State<BatchesOverview> {
         title: 'Batches',
         page: OverviewPage.batches,
         loading: loading,
-        child:
-        // Expanded(child:
-        DataTable(
+        actions: [
+          Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  Authentication.signOut(context: context);
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const AuthenticationPage()),
+                          (Route<dynamic> route) => false);
+                },
+                child: const Icon(
+                  Icons.logout,
+                  size: 26.0,
+                ),
+              )),
+        ],
+        child: DataTable(
           showCheckboxColumn: false,
           rows: Store.batches
               .map(
@@ -100,45 +117,6 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                 label: Text("Status",
                     style: TextStyle(fontWeight: FontWeight.bold))),
           ],
-        ))
-    // )
-    ;
-    return Center(
-        child: loading
-            ? const CircularProgressIndicator()
-            : Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: DataTable(
-                    showCheckboxColumn: false,
-                    rows: Store.batches
-                        .map(
-                          (b) => DataRow(
-                              cells: [
-                                DataCell(Text(b.name)),
-                                DataCell(Text(b.getStatus().text)),
-                              ],
-                              onSelectChanged: (bool? selected) async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute<void>(
-                                    builder: (BuildContext context) =>
-                                        BatchDetails(batch: b),
-                                  ),
-                                );
-                              }),
-                        )
-                        .toList(),
-                    columns: const [
-                      DataColumn(
-                          label: Text("Naam",
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text("Status",
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                  ),
-                )
-              ]));
+        ));
   }
 }

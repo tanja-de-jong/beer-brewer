@@ -124,6 +124,11 @@ class Store {
   }
 
   static Future<void> loadRecipes() async {
+    print("NOTIFICATIONS");
+    List list = await AwesomeNotifications().listScheduledNotifications();
+    for (var item in list) {
+      print(item);
+    }
     recipes = await DatabaseController.getRecipes();
   }
 

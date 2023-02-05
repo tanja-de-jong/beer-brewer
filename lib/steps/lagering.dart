@@ -1,10 +1,12 @@
+import 'package:beer_brewer/screen.dart';
+import 'package:beer_brewer/steps/steps.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../batch/batches_overview.dart';
 import '../data/store.dart';
 import '../form/TextFieldRow.dart';
 import '../models/batch.dart';
-import '../models/recipe.dart';
 
 class LageringStep extends StatefulWidget {
   final Batch batch;
@@ -18,31 +20,25 @@ class LageringStep extends StatefulWidget {
 
 class _LageringStepState extends State<LageringStep> {
   late Batch batch;
-  Map<String, bool> steps = {};
+  List<String> steps = ["Zet de emmer een week in de koelkast."];
 
   @override
   void initState() {
     batch = widget.batch;
-
-    for (String text in [
-      "Zet de emmer een week in de koelkast."
-    ]) {
-      steps[text] = false;
-    }
-
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-      const SizedBox(height: 5),
-      ...steps.keys.map((step) => Row(children: [Checkbox(value: steps[step], onChanged: (value){
-        setState(() {
-          steps[step] = !(steps[step] ?? true);
-        });
-      }), Text(step)])),
+    return Screen(title: "Lageren", bottomButton: ElevatedButton(onPressed: () {
+      Store.lagerBatch(widget.batch, Store.date);
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+              builder: (context) =>
+              const BatchesOverview()),
+              (Route<dynamic> route) => false);
+    }, child: const Text("Rond af")), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Steps(steps: steps),
       SizedBox(height: 20),
       TextFieldRow(
         label: "Datum",
@@ -53,6 +49,6 @@ class _LageringStepState extends State<LageringStep> {
           });
         },
       ),
-    ]);
+    ]));
   }
 }

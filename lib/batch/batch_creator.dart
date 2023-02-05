@@ -1,6 +1,7 @@
 import 'package:beer_brewer/batch/batches_overview.dart';
 import 'package:beer_brewer/form/DoubleTextFieldRow.dart';
 import 'package:beer_brewer/form/TextFieldRow.dart';
+import 'package:beer_brewer/screen.dart';
 import 'package:beer_brewer/util.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -253,186 +254,171 @@ class _BatchCreatorState extends State<BatchCreator> {
 
   @override
   Widget build(BuildContext context) {
-    AppBar appBar = AppBar(
-      title: const Text("Maak brouwplan"),
-      actions: [
-        if (widget.batch != null)
-          Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: GestureDetector(
-                onTap: () {
-                  Util.showDeleteDialog(context, "batch", () async {
-                    await Store.removeBatch(widget.batch!);
-                    updateProductAmounts(delete: true);
-                    if (mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute<void>(
-                            builder: (BuildContext context) => const BatchesOverview(),
-                          ),
-                              (route) => false);
-                    }
-                  }, deze: true);
+    return Screen(
+        title: widget.recipe == null ? "Maak recept" : "Bewerk recept",
+        actions: [
+          if (widget.batch != null)
+            Padding(
+                padding: const EdgeInsets.only(right: 20.0),
+                child: GestureDetector(
+                  onTap: () {
+                    Util.showDeleteDialog(context, "batch", () async {
+                      await Store.removeBatch(widget.batch!);
+                      updateProductAmounts(delete: true);
+                      if (mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute<void>(
+                              builder: (BuildContext context) => const BatchesOverview(),
+                            ),
+                                (route) => false);
+                      }
+                    }, deze: true);
+                  },
+                  child: const Icon(
+                    Icons.delete,
+                    size: 26.0,
+                  ),
+                )),
+        ],
+        loading: loading,
+        bottomButton: ElevatedButton(
+          onPressed: () {
+            Batch? batch = widget.batch;
+            Recipe? recipe = widget.recipe;
+            Mashing mashing = batch?.mashing ?? recipe!.mashing;
+            mashing.malts = maltMappings;
+            mashing.water = mashWater;
+            Cooking cooking = batch?.cooking ?? recipe!.cooking;
+            for (CookingScheduleStep step in cooking.steps) {
+              for (SpecToProducts stp in step.products) {
+                Iterable<SpecToProducts> allStps =
+                allMappings.values.expand((element) => element);
+                Iterable<SpecToProducts> stpsForSpec =
+                allStps.where((element) => element.spec == stp.spec);
+                step.products.remove(stp);
+                step.products.addAll(stpsForSpec);
+              }
+            }
+            Batch newBatch = Batch(
+                widget.batch?.id,
+                widget.batch?.name ?? widget.recipe!.name,
+                widget.batch?.recipeId ?? widget.recipe!.id!,
+                batchAmount,
+                widget.batch?.style ?? widget.recipe!.style,
+                widget.batch?.expStartSG ?? widget.recipe!.expStartSG,
+                widget.batch?.expFinalSG ?? widget.recipe!.expFinalSG,
+                widget.batch?.color ?? widget.recipe!.color,
+                widget.batch?.bitter ?? widget.recipe!.bitter,
+                mashing,
+                rinsingWater,
+                cooking,
+                yeastMappings.isNotEmpty ? yeastMappings[0] : null,
+                widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
+                widget.batch?.fermTempMax ?? widget.recipe!.fermTempMax,
+                bottleSugarMappings.isEmpty
+                    ? null
+                    : bottleSugarMappings[0],
+                explanation,
+                brewDate,
+                lagerDate,
+                bottleDate,
+                widget.batch?.sgMeasurements ?? {}, widget.batch?.notifications ?? {});
+            Store.saveBatch(newBatch);
+            updateProductAmounts();
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          BatchDetails(batch: newBatch)),
+                      (Route<dynamic> route) => route.isFirst);
+            }
+          },
+          child: const Text("Opslaan"),
+        ),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DoubleTextFieldRow(
+                label: "Hoeveelheid (L)",
+                initialValue: batchAmount,
+                props: const {"isEditable": false},
+                onChanged: (value) {
+                  if (value != null) updateBatchAmount(value);
                 },
-                child: const Icon(
-                  Icons.delete,
-                  size: 26.0,
-                ),
-              )),
-      ],
-    );
-
-    return Scaffold(
-        appBar: appBar,
-        body: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(children: [
-              SizedBox(
-                  height: MediaQuery.of(context).size.height -
-                      appBar.preferredSize.height -
-                      170,
-                  child: loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SingleChildScrollView(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                              DoubleTextFieldRow(
-                                label: "Hoeveelheid (L)",
-                                initialValue: batchAmount,
-                                props: const {"isEditable": false},
-                                onChanged: (value) {
-                                  if (value != null) updateBatchAmount(value);
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                              if (widget.batch != null) Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                const Text("Datum", style: TextStyle(fontWeight: FontWeight.bold)),
-                                TextFieldRow(label: "Brouwdatum", initialValue: brewDate != null ? DateFormat("dd-MM-yyyy").format(brewDate!) : null, onChanged: (value) {
-                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
-                                  if (date != null) {
-                                    setState(() {
-                                      brewDate = date;
-                                    });
-                                  }
-                                }),
-                                TextFieldRow(label: "Lagerdatum", initialValue: lagerDate != null ? DateFormat("dd-MM-yyyy").format(lagerDate!) : null, onChanged: (value) {
-                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
-                                  if (date != null) {
-                                    setState(() {
-                                      lagerDate = date;
-                                    });
-                                  }
-                                }),
-                                TextFieldRow(label: "Botteldatum", initialValue: bottleDate != null ? DateFormat("dd-MM-yyyy").format(bottleDate!) : null, onChanged: (value) {
-                                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
-                                  if (date != null) {
-                                    setState(() {
-                                      bottleDate = date;
-                                    });
-                                  }
-                                }),
-                              ],),
-                              if (widget.batch != null) const SizedBox(height: 10),
-                              Wrap(runSpacing: 15, spacing: 15, children: [
-                                getCategory(ProductSpecCategory.malt),
-                                getCategory(ProductSpecCategory.hop),
-                                getCategory(ProductSpecCategory.cookingSugar),
-                                getCategory(ProductSpecCategory.yeast),
-                                getCategory(ProductSpecCategory.bottleSugar),
-                                getCategory(ProductSpecCategory.other)
-                              ]),
-                                const SizedBox(height: 10),
-                                Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: const [
-                                      Text("Toelichting",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                                const SizedBox(height: 5),
-                                SizedBox(
-                                    height: 100,
-                                    child: TextFormField(
-                                      minLines:
-                                      6, // any number you need (It works as the rows for the textarea)
-                                      keyboardType: TextInputType.multiline,
-                                      maxLines: null,
-                                      decoration: InputDecoration(
-                                        //Add isDense true and zero Padding.
-                                        //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 10,
-                                            bottom: 10),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        //Add more decoration as you want here
-                                        //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
-                                      ),
-                                      onChanged: (value) {
-                                        explanation = value;
-                                      },
-                                    )),
-                            ]))),
-              const Divider(),
-              ElevatedButton(
-                onPressed: () {
-                  Batch? batch = widget.batch;
-                  Recipe? recipe = widget.recipe;
-                  Mashing mashing = batch?.mashing ?? recipe!.mashing;
-                  mashing.malts = maltMappings;
-                  mashing.water = mashWater;
-                  Cooking cooking = batch?.cooking ?? recipe!.cooking;
-                  for (CookingScheduleStep step in cooking.steps) {
-                    for (SpecToProducts stp in step.products) {
-                      Iterable<SpecToProducts> allStps =
-                          allMappings.values.expand((element) => element);
-                      Iterable<SpecToProducts> stpsForSpec =
-                          allStps.where((element) => element.spec == stp.spec);
-                      step.products.remove(stp);
-                      step.products.addAll(stpsForSpec);
-                    }
-                  }
-                  Batch newBatch = Batch(
-                      widget.batch?.id,
-                      widget.batch?.name ?? widget.recipe!.name,
-                      widget.batch?.recipeId ?? widget.recipe!.id!,
-                      batchAmount,
-                      widget.batch?.style ?? widget.recipe!.style,
-                      widget.batch?.expStartSG ?? widget.recipe!.expStartSG,
-                      widget.batch?.expFinalSG ?? widget.recipe!.expFinalSG,
-                      widget.batch?.color ?? widget.recipe!.color,
-                      widget.batch?.bitter ?? widget.recipe!.bitter,
-                      mashing,
-                      rinsingWater,
-                      cooking,
-                      yeastMappings.isNotEmpty ? yeastMappings[0] : null,
-                      widget.batch?.fermTempMin ?? widget.recipe!.fermTempMin,
-                      widget.batch?.fermTempMax ?? widget.recipe!.fermTempMax,
-                      bottleSugarMappings.isEmpty
-                          ? null
-                          : bottleSugarMappings[0],
-                      explanation,
-                      brewDate,
-                      lagerDate,
-                      bottleDate,
-                      widget.batch?.sgMeasurements ?? {}, widget.batch?.notifications ?? {});
-                  Store.saveBatch(newBatch);
-                  updateProductAmounts();
-                  if (mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                BatchDetails(batch: newBatch)),
-                        (Route<dynamic> route) => route.isFirst);
-                  }
-                },
-                child: const Text("Opslaan"),
               ),
-            ])));
+              const SizedBox(height: 10),
+              if (widget.batch != null) Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text("Datum", style: TextStyle(fontWeight: FontWeight.bold)),
+                TextFieldRow(label: "Brouwdatum", initialValue: brewDate != null ? DateFormat("dd-MM-yyyy").format(brewDate!) : null, onChanged: (value) {
+                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                  if (date != null) {
+                    setState(() {
+                      brewDate = date;
+                    });
+                  }
+                }),
+                TextFieldRow(label: "Lagerdatum", initialValue: lagerDate != null ? DateFormat("dd-MM-yyyy").format(lagerDate!) : null, onChanged: (value) {
+                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                  if (date != null) {
+                    setState(() {
+                      lagerDate = date;
+                    });
+                  }
+                }),
+                TextFieldRow(label: "Botteldatum", initialValue: bottleDate != null ? DateFormat("dd-MM-yyyy").format(bottleDate!) : null, onChanged: (value) {
+                  DateTime? date = DateFormat("dd-MM-yyyy").tryParse(value);
+                  if (date != null) {
+                    setState(() {
+                      bottleDate = date;
+                    });
+                  }
+                }),
+              ],),
+              if (widget.batch != null) const SizedBox(height: 10),
+              Wrap(runSpacing: 15, spacing: 15, children: [
+                getCategory(ProductSpecCategory.malt),
+                getCategory(ProductSpecCategory.hop),
+                getCategory(ProductSpecCategory.cookingSugar),
+                getCategory(ProductSpecCategory.yeast),
+                getCategory(ProductSpecCategory.bottleSugar),
+                getCategory(ProductSpecCategory.other)
+              ]),
+              const SizedBox(height: 10),
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: const [
+                    Text("Toelichting",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold)),
+                  ]),
+              const SizedBox(height: 5),
+              SizedBox(
+                  height: 100,
+                  child: TextFormField(
+                    minLines:
+                    6, // any number you need (It works as the rows for the textarea)
+                    keyboardType: TextInputType.multiline,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      //Add isDense true and zero Padding.
+                      //Add Horizontal padding using buttonPadding and Vertical padding by increasing buttonHeight instead of add Padding here so that The whole TextField Button become clickable, and also the dropdown menu open under The whole TextField Button.
+                      isDense: true,
+                      contentPadding: const EdgeInsets.only(
+                          left: 10,
+                          right: 10,
+                          top: 10,
+                          bottom: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      //Add more decoration as you want here
+                      //Add label If you want but add hint outside the decoration to be aligned in the button perfectly.
+                    ),
+                    onChanged: (value) {
+                      explanation = value;
+                    },
+                  )),
+            ]));
   }
 
   selectProductDialog(SpecToProducts stp, Function addProduct) {

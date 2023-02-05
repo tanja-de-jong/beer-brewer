@@ -119,6 +119,7 @@ class _ScreenState extends State<Screen> {
   Widget getTabbedContent() {
     return widget.tabs == null
         ? Scaffold(
+            resizeToAvoidBottomInset: false,
             appBar: getAppBar(),
             body: getBody(),
             bottomNavigationBar:
@@ -127,6 +128,7 @@ class _ScreenState extends State<Screen> {
         : DefaultTabController(
             length: widget.tabs!.length,
             child: Scaffold(
+                resizeToAvoidBottomInset: false,
                 appBar: getAppBar(),
                 bottomNavigationBar: selected != null
                     ? getMainBottomNavigationBar(selected!)
@@ -144,9 +146,11 @@ class _ScreenState extends State<Screen> {
   Widget getPaddedContent() {
     return Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [SizedBox(width: MediaQuery.of(context).size.width - 40, child: widget.child!)]));
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          SizedBox(
+              width: MediaQuery.of(context).size.width - 40,
+              child: widget.child!)
+        ]));
   }
 
   @override

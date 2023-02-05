@@ -8,16 +8,10 @@ import 'package:intl/intl.dart';
 
 import '../models/spec_to_products.dart';
 import '../steps/bottling.dart';
-import '../steps/brew_step.dart';
 import '../data/store.dart';
 import '../models/batch.dart';
 import '../models/product.dart';
-import '../steps/cooking.dart';
-import '../steps/cooling.dart';
-import '../steps/fermentation.dart';
-import '../steps/filtering.dart';
 import '../steps/lagering.dart';
-import '../steps/malting.dart';
 import '../steps/preparation.dart';
 import '../util.dart';
 import 'batch_creator.dart';
@@ -47,39 +41,6 @@ class _BatchDetailsState extends State<BatchDetails> {
         value
       ],
     );
-  }
-
-  List<Map<String, dynamic>> getBrewingSteps(Batch batch) {
-    return [
-      {"title": "Voorbereiding", "description": PreparationStep(batch: batch)},
-      {"title": "Maischen", "description": MaltingStep(batch: batch)},
-      {"title": "Filteren", "description": FilterStep(batch: batch)},
-      {"title": "Koken", "description": CookingStep(batch: batch)},
-      {
-        "title": "Afkoelen",
-        "description": CoolingStep(
-          batch: batch,
-        )
-      },
-      {
-        "title": "Vergisten",
-        "description": FermentationStep(
-          batch: batch,
-        )
-      },
-    ];
-  }
-
-  List<Map<String, dynamic>> getLageringSteps(Batch batch) {
-    return [
-      {"title": "Lageren", "description": LageringStep(batch: batch)},
-    ];
-  }
-
-  List<Map<String, dynamic>> getBottlingStep(Batch batch) {
-    return [
-      {"title": "Bottelen", "description": BottlingStep(batch: batch)},
-    ];
   }
 
   @override
@@ -460,8 +421,7 @@ class _BatchDetailsState extends State<BatchDetails> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => BrewStep(
-                      batch: batch, contentList: getBrewingSteps(batch))),
+                  builder: (context) => PreparationStep(batch: batch)),
             );
           },
           child: Text("Brouwen"));
@@ -471,11 +431,7 @@ class _BatchDetailsState extends State<BatchDetails> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => BrewStep(
-                        batch: batch,
-                        contentList: getLageringSteps(batch),
-                        phase: BatchPhase.lagering,
-                      )),
+                  builder: (context) => LageringStep(batch: batch)),
             );
           },
           child: Text("Lageren"));
@@ -485,10 +441,7 @@ class _BatchDetailsState extends State<BatchDetails> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => BrewStep(
-                      batch: batch,
-                      contentList: getLageringSteps(batch),
-                      phase: BatchPhase.lagering)),
+                  builder: (context) => LageringStep(batch: batch)),
             );
           },
           child: Text("Lageren"));
@@ -498,10 +451,7 @@ class _BatchDetailsState extends State<BatchDetails> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => BrewStep(
-                      batch: batch,
-                      contentList: getBottlingStep(batch),
-                      phase: BatchPhase.bottling)),
+                  builder: (context) => BottlingStep(batch: batch)),
             );
           },
           child: Text("Bottelen"));
@@ -511,10 +461,7 @@ class _BatchDetailsState extends State<BatchDetails> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => BrewStep(
-                      batch: batch,
-                      contentList: getBottlingStep(batch),
-                      phase: BatchPhase.bottling)),
+                  builder: (context) => BottlingStep(batch: batch)),
             );
           },
           child: Text("Bottelen"));
@@ -546,7 +493,7 @@ class _BatchDetailsState extends State<BatchDetails> {
         bottomButton: getBottomButton(),
         child: Column(children: [
           // width: 400,
-          MediaQuery.of(context).size.width >= 700
+          MediaQuery.of(context).size.width >= 800
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -1,3 +1,6 @@
+import 'package:beer_brewer/screen.dart';
+import 'package:beer_brewer/steps/fermentation.dart';
+import 'package:beer_brewer/steps/steps.dart';
 import 'package:flutter/material.dart';
 
 import '../models/batch.dart';
@@ -16,34 +19,34 @@ class CoolingStep extends StatefulWidget {
 class _CoolingStepState extends State<CoolingStep> {
   late Recipe recipe;
   late Batch batch;
-  Map<String, bool> steps = {};
+  List<String> steps = [
+    "Vanaf nu is het extra belangrijk om steriel te werk te gaan!",
+    "Zet de pan in de gootsteen en vul de gootsteen met koud water en ijsblokjes.",
+    "Zet de thermometer uit en weer aan en stel deze in op 26ºC met een afwijking van 1ºC.",
+    "Ververs af en toe het koude water."
+  ];
 
   @override
   void initState() {
     batch = widget.batch;
-
-    for (String text in [
-      "Vanaf nu is het extra belangrijk om steriel te werk te gaan!",
-      "Zet de pan in de gootsteen en vul de gootsteen met koud water en ijsblokjes.",
-      "Zet de thermometer uit en weer aan en stel deze in op 26ºC met een afwijking van 1ºC.",
-      "Ververs af en toe het koude water."
-    ]) {
-      steps[text] = false;
-    }
-
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-      const SizedBox(height: 5),
-      ...steps.keys.map((step) => Row(children: [Checkbox(value: steps[step], onChanged: (value){
-        setState(() {
-          steps[step] = !(steps[step] ?? true);
-        });
-      }), Text(step)])),
-    ]);
+    return Screen(title: "Koelen", bottomButton: ElevatedButton(
+      child: const Text("Volgende"),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+              builder: (context) => FermentationStep(
+                batch: widget.batch,
+              )),
+        );
+      },
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Steps(steps: steps),
+    ]));
   }
 }

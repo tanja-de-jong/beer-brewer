@@ -5,15 +5,6 @@ import 'data/store.dart';
 import 'models/batch.dart';
 
 class Notification {
-
-  static bool updateNotifications(Batch batch) {
-    if (batch.isReadyToDrink()) {
-      batch.notifications = {};
-      return true;
-    }
-    return false;
-  }
-
   static void cancelNotification(Batch batch, NotificationType type) {
     int? id = batch.notifications[type]?.toInt();
     if (id != null) {
@@ -39,6 +30,7 @@ class Notification {
       default: days = 0; break;
     }
     scheduleDate = (date ?? DateTime.now()).add(Duration(days: days));
+    scheduleDate = DateTime(scheduleDate.year, scheduleDate.month, scheduleDate.day, 9);
 
     Random random = Random();
     int id = random.nextInt(1000);
@@ -53,6 +45,9 @@ class Notification {
             channelKey: "basic_channel",
             title: getTitle(type),
             body: getBody(type),
+            payload: {
+              "batch": batch.id
+            }
           ),
           schedule: NotificationCalendar(year: scheduleDate.year,
               month: scheduleDate.month,

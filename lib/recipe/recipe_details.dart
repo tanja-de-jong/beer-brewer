@@ -428,8 +428,6 @@ class _RecipeDetailsState extends State<RecipeDetails> {
         child: const Text("Brouwplan maken"),
       ),
       child: Container(
-          padding: const EdgeInsets.all(10),
-          // width: 400,
           child: MediaQuery.of(context).size.width >= 700
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

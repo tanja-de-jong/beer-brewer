@@ -1,7 +1,10 @@
+import 'package:beer_brewer/screen.dart';
+import 'package:beer_brewer/steps/steps.dart';
 import 'package:flutter/material.dart';
 
 import '../models/batch.dart';
 import '../models/recipe.dart';
+import 'cooking.dart';
 
 class FilterStep extends StatefulWidget {
   final Batch batch;
@@ -16,32 +19,31 @@ class FilterStep extends StatefulWidget {
 class _FilterStepState extends State<FilterStep> {
   late Recipe recipe;
   late Batch batch;
-  Map<String, bool> steps = {};
+  List<String> steps = [
+    "Til de filterzak uit de pan en laat deze erboven uitlekken. Gebruik eventueel een vergiet.",
+    "Vul indien nodig de hoeveelheid water aan."
+  ];
 
   @override
   void initState() {
     batch = widget.batch;
-
-    for (String text in [
-      "Til de filterzak uit de pan en laat deze erboven uitlekken. Gebruik eventueel een vergiet.",
-      "Vul indien nodig de hoeveelheid water aan."
-    ]) {
-      steps[text] = false;
-    }
-
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text("Stappen", style: TextStyle(fontWeight: FontWeight.bold)),
-      const SizedBox(height: 5),
-      ...steps.keys.map((step) => Row(children: [Checkbox(value: steps[step], onChanged: (value){
-        setState(() {
-          steps[step] = !(steps[step] ?? true);
-        });
-      }), Text(step)])),
-    ]);
+    return Screen(title: "Filteren", bottomButton: ElevatedButton(
+      child: const Text("Volgende"),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+              builder: (context) => CookingStep(
+                batch: widget.batch,
+              )),
+        );
+      },
+    ), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Steps(steps: steps),
+    ]));
   }
 }
