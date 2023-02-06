@@ -363,20 +363,20 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                       .map((time) => CookingScheduleStep(
                           time,
                           hops[time]
-                                  ?.map((hs) => SpecToProducts(hs, [], null))
+                                  ?.map((hs) => SpecToProducts(hs, []))
                                   .toList() ??
                               []))
                       .toList());
                   if (cookingSugar.amount != null ||
                       cookingSugar.name != null) {
                     cooking.addStep(cookingSugarTime,
-                        [SpecToProducts(cookingSugar, [], null)]);
+                        [SpecToProducts(cookingSugar, [])]);
                   }
                   for (num? time in others.keys) {
                     cooking.addStep(
                         time,
                         others[time]!
-                            .map((ps) => SpecToProducts(ps, [], null))
+                            .map((ps) => SpecToProducts(ps, []))
                             .toList());
                   }
 
@@ -394,7 +394,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                       biab,
                       Mashing(
                           malts
-                              .map((m) => SpecToProducts(m, [], null))
+                              .map((m) => SpecToProducts(m, []))
                               .toList(),
                           mashSteps,
                           mashWater),

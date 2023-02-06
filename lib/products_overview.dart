@@ -271,7 +271,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
         ));
   }
 
-  Widget getStockFilterWidget(ProductCategory cat) {
+  Widget getStockFilterWidget() {
     return SizedBox(
         height: 30,
         child: ToggleButtons(
@@ -349,7 +349,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                         if (cat == ProductCategory.malt) getMaxEBCWidget(cat),
                         if (cat == ProductCategory.hop)
                           getTypeDropdown(Store.hopTypes, cat),
-                        getStockFilterWidget(cat)
+                        getStockFilterWidget()
                       ],
                     )),
                 getAddWidget()
