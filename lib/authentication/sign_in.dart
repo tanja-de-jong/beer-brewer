@@ -29,7 +29,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return Screen(title: "Beer Brewer", child: Center(
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            // crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (Authentication.error != null) Text(Authentication.error!, style: const TextStyle(color: Colors.red),),
               Container(

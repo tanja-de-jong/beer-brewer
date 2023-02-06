@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
     appId: '1:116124637798:web:c35e6ea5d9988a8d186ba7',
     messagingSenderId: '116124637798',
     projectId: 'beerbrewer-a7e42',
-    authDomain: 'beerbrewer-a7e42.firebaseapp.com',
+    authDomain: 'bier.tanjadejong.com',
     storageBucket: 'beerbrewer-a7e42.appspot.com',
     measurementId: 'G-41B3NTD5KD',
   );
