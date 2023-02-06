@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Product {
   String id;
   String name;
@@ -44,6 +46,16 @@ class Product {
             data["amount"]);
     }
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "category": describeEnum(ProductCategory.other),
+      "name": name,
+      "brand": brand,
+      "stores": stores,
+      "amount": amountInStock,
+    };
+  }
 }
 
 class Malt extends Product {
@@ -70,6 +82,16 @@ class Malt extends Product {
   String typeToString() {
     return type ?? "-";
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      ...super.toMap(),
+      "category": describeEnum(ProductCategory.malt),
+      "type": type,
+      "ebcMin": ebcMin,
+      "ebcMax": ebcMax
+    };
+  }
 }
 
 class Hop extends Product {
@@ -91,6 +113,16 @@ class Hop extends Product {
         data["alphaAcid"],
         data["shape"] == "korrels" ? HopShape.korrels : HopShape.bellen);
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      ...super.toMap(),
+      "category": describeEnum(ProductCategory.hop),
+      "type": type,
+      "alphaAcid": alphaAcid,
+      "shape": describeEnum(shape)
+    };
+  }
 }
 
 class Sugar extends Product {
@@ -100,6 +132,13 @@ class Sugar extends Product {
     return Sugar(
         id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      ...super.toMap(),
+      "category": describeEnum(ProductCategory.sugar),
+    };
+  }
 }
 
 class Yeast extends Product {
@@ -108,6 +147,13 @@ class Yeast extends Product {
   static Yeast create(String id, Map data) {
     return Yeast(
         id, data["name"], data["brand"] ?? "-", data["stores"], data["amount"]);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      ...super.toMap(),
+      "category": describeEnum(ProductCategory.yeast),
+    };
   }
 }
 

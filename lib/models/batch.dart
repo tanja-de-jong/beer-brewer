@@ -16,6 +16,7 @@ class Batch {
   num? expFinalSG;
   num? color;
   num? bitter;
+  bool biab;
   Mashing mashing;
   num? rinsingWater;
   Cooking cooking;
@@ -40,6 +41,7 @@ class Batch {
       this.expFinalSG,
       this.color,
       this.bitter,
+      this.biab,
       this.mashing,
       this.rinsingWater,
       this.cooking,
@@ -82,6 +84,7 @@ class Batch {
         data["expFinalSG"],
         data["color"],
         data["bitter"],
+        data["biab"] ?? true,
         Mashing.create(data["mashing"]),
         data["rinsingWater"],
         Cooking.create(data["cooking"]),

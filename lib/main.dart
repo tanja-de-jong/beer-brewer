@@ -115,13 +115,9 @@ class NotificationController {
   static Future<void> onActionReceivedMethod(
       ReceivedAction receivedAction) async {
     // Your code goes here
-    print("NOTIFICATIONS RECEIVED");
-    print(receivedAction.payload);
     if (receivedAction.payload != null &&
         receivedAction.payload!.containsKey("batch")) {
-      await Store.loadRecipes();
-      await Store.loadProducts();
-      await Store.loadBatches();
+      await Store.loadData();
 
       Iterable<Batch> batches = Store.batches
           .where((element) => element.id == receivedAction.payload!["batch"]!);

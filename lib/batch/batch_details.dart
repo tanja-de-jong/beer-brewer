@@ -89,8 +89,9 @@ class _BatchDetailsState extends State<BatchDetails> {
               _getRow("Bitterheid",
                   Text(batch.bitter == null ? "-" : "${batch.bitter} EBU")),
               const SizedBox(height: 10),
-              _getRow("Maischwater", Text("${batch.mashing.water} liter")),
-              _getRow("Spoelwater", Text("${batch.rinsingWater} liter")),
+              _getRow("BIAB", Text(batch.biab ? "Ja" : "Nee")),
+              _getRow("Maischwater", Text(batch.mashing.water == null ? "-" : "${batch.mashing.water} liter")),
+              if (!batch.biab) _getRow("Spoelwater", Text(batch.rinsingWater == null ? "-" : "${batch.rinsingWater} liter")),
               _getRow(
                   "Bottelsuiker",
                   Text(batch.bottleSugar == null ||

@@ -53,7 +53,8 @@ class _TextFieldRowState extends State<TextFieldRow> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
+      padding: const EdgeInsets.only(bottom: 5),
       width: 350,
       child: Row(mainAxisAlignment: widget.alignment, children: [
         Text(

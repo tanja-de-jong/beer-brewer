@@ -224,7 +224,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   }
 
   void loadData(ProductCategory cat) async {
-    await Store.loadProducts();
+    await Store.loadData(loadBatches: false, loadRecipes: false);
     setState(() {
       brands = products.map((p) => p.brand).toSet();
       loading = false;

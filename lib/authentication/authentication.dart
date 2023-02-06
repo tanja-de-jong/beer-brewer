@@ -1,5 +1,6 @@
 import 'package:beer_brewer/authentication/sign_in.dart';
 import 'package:beer_brewer/batch/batches_overview.dart';
+import 'package:beer_brewer/data/database_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

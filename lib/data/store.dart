@@ -95,7 +95,7 @@ class Store {
     "Zeus",
   ];
 
-  static Map<Type, List> products = {
+  static Map<Type, List<Product>> products = {
     Malt: [],
     Hop: [],
     Yeast: [],
@@ -106,8 +106,36 @@ class Store {
   static List<Recipe> recipes = [];
   static List<Batch> batches = [];
 
+  static Future<void> loadData({ bool loadProducts: true, bool loadRecipes: true, bool loadBatches: true}) async {
+    if (DatabaseController.db == null) {
+      await DatabaseController.setDB();
+    }
+
+    if (loadProducts) {
+      List<Product> allProducts = await DatabaseController.getProducts();
+      products[Malt] = allProducts.whereType<Malt>().toList();
+      products[Hop] = allProducts.whereType<Hop>().toList();
+      products[Yeast] = allProducts.whereType<Yeast>().toList();
+      products[Sugar] = allProducts.whereType<Sugar>().toList();
+      products[Product] = allProducts
+          .where((product) => !(product is Malt ||
+          product is Hop ||
+          product is Yeast ||
+          product is Sugar))
+          .toList();
+    }
+    if (loadRecipes) {
+      recipes = await DatabaseController.getRecipes();
+    }
+    if (loadBatches) {
+      batches = await DatabaseController.getBatches();
+      notificationIds =
+          batches.expand((b) => b.notifications.values).toList().cast<int>();
+    }
+  }
+
   static Future<Recipe> saveRecipe(Recipe recipe) async {
-    String id = DatabaseController.saveRecipe(recipe);
+    String id = await DatabaseController.saveRecipe(recipe);
     if (recipe.id == null) {
       recipe.id == id;
       Store.recipes.add(recipe);
@@ -123,16 +151,6 @@ class Store {
     recipes.remove(recipe);
   }
 
-  static Future<void> loadRecipes() async {
-    print("NOTIFICATIONS");
-    List list = await AwesomeNotifications().listScheduledNotifications();
-    for (var item in list) {
-      print(item);
-    }
-    recipes = await DatabaseController.getRecipes();
-  }
-
-  // TODO
   static Future<Batch> saveBatch(Batch batch) async {
     if (batch.id != null) {
       Batch existingBatch = Store.batches.firstWhere((b) => batch.id == b.id);
@@ -246,12 +264,6 @@ class Store {
     batches.remove(batch);
   }
 
-  static Future<void> loadBatches() async {
-    batches = await DatabaseController.getBatches();
-    notificationIds =
-        batches.expand((b) => b.notifications.values).toList().cast<int>();
-  }
-
   static Future<Product> saveProduct(
       String? id,
       ProductCategory category,
@@ -270,20 +282,6 @@ class Store {
       Store.products[category.productType]![idx] = product;
     }
     return product;
-  }
-
-  static Future<void> loadProducts() async {
-    List<Product> allProducts = await DatabaseController.getProducts();
-    products[Malt] = allProducts.whereType<Malt>().toList();
-    products[Hop] = allProducts.whereType<Hop>().toList();
-    products[Yeast] = allProducts.whereType<Yeast>().toList();
-    products[Sugar] = allProducts.whereType<Sugar>().toList();
-    products[Product] = allProducts
-        .where((product) => !(product is Malt ||
-            product is Hop ||
-            product is Yeast ||
-            product is Sugar))
-        .toList();
   }
 
   static Future<Product> updateAmountForProduct(

@@ -31,6 +31,9 @@ class BatchCreator extends StatefulWidget {
 
 class _BatchCreatorState extends State<BatchCreator> {
   bool loading = true;
+
+  late Recipe recipe;
+
   List<SpecToProducts> maltMappings = [];
   List<SpecToProducts> hopMappings = [];
   List<SpecToProducts> cookingSugarMappings = [];
@@ -43,7 +46,9 @@ class _BatchCreatorState extends State<BatchCreator> {
   late num batchAmount;
   String? explanation;
 
+  bool biab = true;
   num? mashWater;
+  TextEditingController mashWaterController = TextEditingController();
   num? rinsingWater;
 
   DateTime? brewDate;
@@ -178,7 +183,10 @@ class _BatchCreatorState extends State<BatchCreator> {
             }
           }
         }
-        if (mashWater != null) mashWater = mashWater! * ingredientRatio;
+        if (mashWater != null) {
+          mashWater = mashWater! * ingredientRatio;
+          mashWaterController.text = mashWater?.toString() ?? "";
+        }
         if (rinsingWater != null) rinsingWater = rinsingWater! * ingredientRatio;
         batchAmount = amount;
       });
@@ -188,12 +196,13 @@ class _BatchCreatorState extends State<BatchCreator> {
   @override
   void initState() {
     batchAmount = widget.batch?.amount ?? widget.recipe!.amount!;
-    Store.loadProducts().then((value) => setState(() {
+    Store.loadData(loadBatches: false, loadRecipes: false).then((value) => setState(() {
           loading = false;
         }));
 
     if (widget.batch != null) {
       Batch batch = widget.batch!;
+      recipe = Store.recipes.firstWhere((element) => element.id == batch.recipeId);
       maltMappings = batch.mashing.malts;
       hopMappings = batch.cooking.steps
           .expand((step) => step.products
@@ -217,7 +226,7 @@ class _BatchCreatorState extends State<BatchCreator> {
       lagerDate = batch.lagerDate;
       bottleDate = batch.bottleDate;
     } else {
-      Recipe recipe = widget.recipe!;
+      recipe = widget.recipe!;
       maltMappings = recipe.mashing.malts;
       hopMappings = recipe.cooking.steps
           .expand((step) => step.products
@@ -237,8 +246,8 @@ class _BatchCreatorState extends State<BatchCreator> {
               .where((p) => p.spec.category == ProductSpecCategory.other))
           .toList();
 
-      mashWater = recipe.mashing.water;
-      rinsingWater = recipe.rinsingWater;
+      mashWater = batchAmount * 1.5;
+      rinsingWater = null;
     }
 
     allMappings[ProductSpecCategory.malt] = maltMappings;
@@ -255,7 +264,7 @@ class _BatchCreatorState extends State<BatchCreator> {
   @override
   Widget build(BuildContext context) {
     return Screen(
-        title: widget.recipe == null ? "Maak recept" : "Bewerk recept",
+        title: widget.recipe == null ? "Maak batch" : "Bewerk batch",
         actions: [
           if (widget.batch != null)
             Padding(
@@ -309,6 +318,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                 widget.batch?.expFinalSG ?? widget.recipe!.expFinalSG,
                 widget.batch?.color ?? widget.recipe!.color,
                 widget.batch?.bitter ?? widget.recipe!.bitter,
+                biab,
                 mashing,
                 rinsingWater,
                 cooking,
@@ -346,6 +356,61 @@ class _BatchCreatorState extends State<BatchCreator> {
                   if (value != null) updateBatchAmount(value);
                 },
               ),
+              Container(
+                  padding: EdgeInsets.only(bottom: 5),
+                  width: 350,
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("BIAB"),
+                        SizedBox(
+                            height: 30,
+                            child: ToggleButtons(
+                              isSelected: [biab, !biab],
+                              onPressed: (value) {
+                                setState(() {
+                                  biab = value == 0;
+                                  if (biab) {
+                                    mashWater = batchAmount * 1.5;
+                                    mashWaterController.text = mashWater?.toString() ?? "";
+                                    rinsingWater = null;
+                                  } else {
+                                    num ratio = batchAmount / recipe.amount!;
+                                    mashWater = recipe.mashing.water == null ? null : recipe.mashing.water! * ratio;
+                                    mashWaterController.text = mashWater?.toString() ?? "";
+                                    rinsingWater = recipe.rinsingWater == null ? null : recipe.rinsingWater! * ratio;
+                                  }
+                                });
+                              },
+                              children: const [
+                                Padding(
+                                    padding:
+                                    EdgeInsets.only(left: 10, right: 10),
+                                    child: Text("Ja")),
+                                Padding(
+                                    padding:
+                                    EdgeInsets.only(left: 10, right: 10),
+                                    child: Text("Nee"))
+                              ],
+                            ))
+                      ])),
+              DoubleTextFieldRow(
+                  label: "Maischwater (L)",
+                  initialValue: mashWater,
+                  controller: mashWaterController,
+                  onChanged: (value) {
+                    setState(() {
+                      mashWater = value;
+                    });
+                  }),
+              if (!biab) DoubleTextFieldRow(
+                  label: "Spoelwater (L)",
+                  initialValue: rinsingWater,
+                  onChanged: (value) {
+                    setState(() {
+                      rinsingWater = value;
+                    });
+                  }),
               const SizedBox(height: 10),
               if (widget.batch != null) Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Text("Datum", style: TextStyle(fontWeight: FontWeight.bold)),

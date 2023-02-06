@@ -16,6 +16,7 @@ class Recipe {
   num? efficiency;
   num? color;
   num? bitter;
+  bool biab;
   late Mashing mashing;
   num? rinsingWater;
   late Cooking cooking;
@@ -36,6 +37,7 @@ class Recipe {
       this.efficiency,
       this.color,
       this.bitter,
+      this.biab,
       mashing,
       this.rinsingWater,
       cooking,
@@ -60,6 +62,7 @@ class Recipe {
       data["efficiency"],
       data["color"],
       data["bitter"],
+      data["biab"] ?? false,
       Mashing.create(data["mashing"]),
       data["rinsingWater"],
       Cooking.create(data["cooking"]),

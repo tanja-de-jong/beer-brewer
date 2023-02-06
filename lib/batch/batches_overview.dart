@@ -57,11 +57,9 @@ class _BatchesOverviewState extends State<BatchesOverview> {
 
   @override
   void initState() {
-    Store.loadRecipes();
-    Store.loadProducts()
-        .then((value) => Store.loadBatches().then((value) => setState(() {
-              loading = false;
-            })));
+    Store.loadData().then((value) => setState(() {
+          loading = false;
+        }));
 
     super.initState();
   }
@@ -81,7 +79,7 @@ class _BatchesOverviewState extends State<BatchesOverview> {
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
                           builder: (context) => const AuthenticationPage()),
-                          (Route<dynamic> route) => false);
+                      (Route<dynamic> route) => false);
                 },
                 child: const Icon(
                   Icons.logout,

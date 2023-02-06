@@ -40,7 +40,9 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   num? efficiency;
   num? color;
   num? bitter;
+  bool biab = false;
   num? mashWater;
+  TextEditingController mashWaterController = TextEditingController();
   num? rinsingWater;
 
   List<MaltSpec> malts = [];
@@ -261,7 +263,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
   }
 
   Future<void> initData() async {
-    await Store.loadProducts();
+    await Store.loadData(loadBatches: false, loadRecipes: false);
     setState(() {
       if (recipe != null) {
         name = recipe?.name;
@@ -274,6 +276,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
             recipe?.efficiency == null ? null : (recipe?.efficiency)! * 100;
         color = recipe?.color;
         bitter = recipe?.bitter;
+        biab = recipe?.biab ?? false;
         mashWater = recipe?.mashing.water;
         rinsingWater = recipe?.rinsingWater;
         malts =
@@ -388,6 +391,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                       efficiency == null ? null : efficiency! / 100,
                       color,
                       bitter,
+                      biab,
                       Mashing(
                           malts
                               .map((m) => SpecToProducts(m, [], null))
@@ -469,6 +473,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                     onChanged: (value) {
                       setState(() {
                         amount = value;
+                        if (biab && amount != null) {
+                          mashWater = amount! * 1.5;
+                          mashWaterController.text = mashWater.toString();
+                          rinsingWater = null;
+                        }
                       });
                     }),
               ]),
@@ -493,15 +502,49 @@ class _RecipeCreatorState extends State<RecipeCreator> {
                         bitter = value;
                       });
                     }),
+                Container(
+                  padding: EdgeInsets.only(bottom: 5),
+                    width: 350,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("BIAB"),
+                          SizedBox(
+                              height: 30,
+                              child: ToggleButtons(
+                                isSelected: [biab, !biab],
+                                onPressed: (value) {
+                                  setState(() {
+                                    biab = value == 0;
+                                    if (biab && amount != null) {
+                                      mashWater = amount! * 1.5;
+                                      mashWaterController.text = mashWater.toString();
+                                      rinsingWater = null;
+                                    }
+                                  });
+                                },
+                                children: const [
+                                  Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 10, right: 10),
+                                      child: Text("Ja")),
+                                  Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 10, right: 10),
+                                      child: Text("Nee"))
+                                ],
+                              ))
+                        ])),
                 DoubleTextFieldRow(
                     label: "Maischwater (L)",
                     initialValue: mashWater,
+                    controller: mashWaterController,
                     onChanged: (value) {
                       setState(() {
                         mashWater = value;
                       });
                     }),
-                DoubleTextFieldRow(
+                if (!biab) DoubleTextFieldRow(
                     label: "Spoelwater (L)",
                     initialValue: rinsingWater,
                     onChanged: (value) {

@@ -17,7 +17,7 @@ class _RecipesOverviewState extends State<RecipesOverview> {
 
   @override
   void initState() {
-    Store.loadRecipes().then((value) => setState(() {
+    Store.loadData(loadProducts: false, loadBatches: false).then((value) => setState(() {
           loading = false;
         }));
     super.initState();
