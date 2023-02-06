@@ -12,7 +12,6 @@ import 'package:multi_select_flutter/util/multi_select_item.dart';
 import 'package:multi_select_flutter/util/multi_select_list_type.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../components/label.dart';
 import '../data/store.dart';
 import '../models/spec_to_products.dart';
 import '../models/batch.dart';
@@ -607,7 +606,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       getStockFilterWidget(),
                       if (cat == ProductSpecCategory.malt || cat == ProductSpecCategory.hop) SizedBox(height: 5),
-                      getTypeDropdown(
+                      if (cat == ProductSpecCategory.malt || cat == ProductSpecCategory.hop) getTypeDropdown(
                           cat == ProductSpecCategory.malt
                               ? Store.maltTypes
                               : Store.hopTypes,
@@ -632,7 +631,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                   ]),
                 if (screenWidth < 380)
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    getTypeDropdown(
+                    if (cat == ProductSpecCategory.malt || cat == ProductSpecCategory.hop) getTypeDropdown(
                         cat == ProductSpecCategory.malt
                             ? Store.maltTypes
                             : Store.hopTypes,
@@ -751,6 +750,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                     child: selectedProduct == null
                         ? Column(children: [
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const SizedBox(width: 5),
                                 const Text(
@@ -758,7 +758,7 @@ class _BatchCreatorState extends State<BatchCreator> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(width: 5),
-                                Text(spec.getProductString())
+                                Expanded(child: Text(spec.getProductString()))
                               ],
                             ),
                             const SizedBox(height: 15),
