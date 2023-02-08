@@ -39,18 +39,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // @override
-  // void initState() {
-  //   // Only after at least the action method is set, the notification events are delivered
-  //   AwesomeNotifications().setListeners(
-  //       onActionReceivedMethod:         NotificationController.onActionReceivedMethod,
-  //       onNotificationCreatedMethod:    NotificationController.onNotificationCreatedMethod,
-  //       onNotificationDisplayedMethod:  NotificationController.onNotificationDisplayedMethod,
-  //       onDismissActionReceivedMethod:  NotificationController.onDismissActionReceivedMethod
-  //   );
 
-  //   super.initState();
-  // }
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -59,6 +48,7 @@ class _MyAppState extends State<MyApp> {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
+        debugShowCheckedModeBanner: false,
         home: const AuthenticationPage());
   }
 }

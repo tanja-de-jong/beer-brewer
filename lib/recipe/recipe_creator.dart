@@ -114,6 +114,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           focusNode: addOtherFocusNode,
           controller: otherControllers[0],
           label: "Soort",
+          width: MediaQuery.of(context).size.width - 200,
           initialValue: otherName,
           onChanged: (value) {
             setState(() {
@@ -126,6 +127,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
               .cast<String>()),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: otherControllers[1],
           initialValue: otherAmount,
           onChanged: (value) {
@@ -135,6 +137,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Tijd (min)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: otherControllers[2],
           initialValue: otherTime,
           onChanged: (value) {
@@ -151,6 +154,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           focusNode: addHopFocusNode,
           controller: hopControllers[0],
           label: "Soort",
+          width: MediaQuery.of(context).size.width - 200,
           initialValue: hopType,
           onChanged: (value) {
             setState(() {
@@ -160,6 +164,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           items: Store.hopTypes),
       DoubleTextFieldRow(
           label: "Alfazuur (%)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: hopControllers[1],
           initialValue: hopAlphaAcid,
           onChanged: (value) {
@@ -169,6 +174,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: hopControllers[2],
           initialValue: hopAmount,
           onChanged: (value) {
@@ -178,6 +184,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Tijd (min)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: hopControllers[3],
           initialValue: hopTime,
           onChanged: (value) {
@@ -193,6 +200,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
       DropDownRow(
           focusNode: addMaltFocusNode,
           label: "Type",
+          width: MediaQuery.of(context).size.width - 200,
           controller: maltControllers[0],
           onChanged: (value) {
             setState(() {
@@ -216,6 +224,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           ]),
       DoubleTextFieldRow(
           label: "Min EBC",
+          width: MediaQuery.of(context).size.width - 200,
           controller: maltControllers[1],
           onChanged: (value) {
             setState(() {
@@ -224,6 +233,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Max EBC",
+          width: MediaQuery.of(context).size.width - 200,
           controller: maltControllers[2],
           onChanged: (value) {
             setState(() {
@@ -232,6 +242,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Hoeveelheid (g)",
+          width: MediaQuery.of(context).size.width - 200,
           controller: maltControllers[3],
           onChanged: (value) {
             setState(() {
@@ -245,6 +256,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
     return [
       DoubleTextFieldRow(
           label: "Temperatuur (°C)",
+          width: MediaQuery.of(context).size.width - 200,
           initialValue: mashTemp,
           onChanged: (value) {
             setState(() {
@@ -253,6 +265,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           }),
       DoubleTextFieldRow(
           label: "Tijd (minuten)",
+          width: MediaQuery.of(context).size.width - 200,
           initialValue: mashTime,
           onChanged: (value) {
             setState(() {

@@ -34,7 +34,7 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   Set<String> brands = {};
 
   Widget getProductGroup(ProductCategory cat) {
-    products = Store.products[cat.productType]! as List<Product>;
+    products = Store.products[cat.productType]!;
     filterProducts(cat);
     return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
       DataTable(
