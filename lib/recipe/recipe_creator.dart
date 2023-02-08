@@ -95,6 +95,11 @@ class _RecipeCreatorState extends State<RecipeCreator> {
     TextEditingController()
   ];
 
+  List<TextEditingController> mashStepsControllers = [
+    TextEditingController(),
+    TextEditingController()
+  ];
+
   List<TextEditingController> hopControllers = [
     TextEditingController(),
     TextEditingController(),
@@ -258,6 +263,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           label: "Temperatuur (°C)",
           width: MediaQuery.of(context).size.width - 200,
           initialValue: mashTemp,
+          controller: mashStepsControllers[0],
           onChanged: (value) {
             setState(() {
               mashTemp = value;
@@ -267,6 +273,7 @@ class _RecipeCreatorState extends State<RecipeCreator> {
           label: "Tijd (minuten)",
           width: MediaQuery.of(context).size.width - 200,
           initialValue: mashTime,
+          controller: mashStepsControllers[1],
           onChanged: (value) {
             setState(() {
               mashTime = value;
@@ -1155,6 +1162,10 @@ class _RecipeCreatorState extends State<RecipeCreator> {
 
                                       mashTemp = null;
                                       mashTime = null;
+
+                                      for (var controller in mashStepsControllers) {
+                                        controller.clear();
+                                      }
                                     });
                                   },
                             child: const Text("Voeg toe")),
