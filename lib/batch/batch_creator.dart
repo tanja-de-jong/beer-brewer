@@ -90,9 +90,6 @@ class _BatchCreatorState extends State<BatchCreator> {
   }
 
   Widget getProductsForSpec(SpecToProducts stp) {
-    // List<SpecToProducts> selectedProducts = allMappings[stp.spec.category]!
-    //     .where((stp) => stp.spec == spec && stp.product != null)
-    //     .toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -105,8 +102,6 @@ class _BatchCreatorState extends State<BatchCreator> {
               selectProductDialog(stp, addProductForSpec);
             },
             child: const Text("Voeg toe")
-            // icon: Icon(Icons.arrow_forward),
-            // splashRadius: 18,
             )
       ]),
       ...stp.products!.map((sel) => Row(

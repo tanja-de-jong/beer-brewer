@@ -41,7 +41,9 @@ class Util {
                   Center(
                       child: Wrap(spacing: 10, children: [
                     OutlinedButton(
-                        onPressed: onConfirm, child: const Text('Ja')),
+                        onPressed: () {
+                          if (onConfirm != null) onConfirm();
+                        }, child: const Text('Ja')),
                     ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);

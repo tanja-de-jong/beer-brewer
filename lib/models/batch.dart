@@ -188,6 +188,21 @@ class Batch {
     }
   }
 
+  int? daysLeft(BatchStatus status) {
+    DateTime today = DateTime.now();
+    if (status == BatchStatus.waitingForFermentation) {
+      DateTime endDate = brewDate!.add(const Duration(days: 21));
+      return endDate.difference(today).inDays;
+    } else if (status == BatchStatus.waitingForLagering) {
+      DateTime endDate = lagerDate!.add(const Duration(days: 7));
+      return endDate.difference(today).inDays;
+    } else if (status == BatchStatus.waitingForAfterFermentation) {
+      DateTime endDate = lagerDate!.add(const Duration(days: 21));
+      return endDate.difference(today).inDays;
+    }
+    return null;
+  }
+
   // For Brewing in a Bag
   String getBiabWater() {
     return Util.prettify(amount * 1.5) ?? "-";
@@ -263,7 +278,16 @@ class Batch {
                     child: Text("${cs.time} min")),
                 Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Text(p.name)),
+                    child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(p.name),
+                          if (pi.explanation != null) Text(pi.explanation!,
+                              style: TextStyle(
+                                  fontStyle: FontStyle
+                                      .italic))
+                        ])),
                 Padding(
                     padding: const EdgeInsets.all(10),
                     child: Text(Util.amountToString(pi.amount))),

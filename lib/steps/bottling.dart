@@ -36,7 +36,7 @@ class _BottlingStepState extends State<BottlingStep> {
     setState(() {
       steps = [
         "Zorg dat de flesjes schoon en steriel zijn.",
-        "Schenk het bier voorzichtig over in een pan, zodat het besinksel achterblijft.",
+        "Schenk het bier voorzichtig over in een pan, zodat het bezinksel achterblijft.",
         "Spoel de emmer schoon en schenk het bier hier weer in terug."
       ];
 

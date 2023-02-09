@@ -12,6 +12,7 @@ import 'package:beer_brewer/steps/cooking.dart';
 import 'package:flutter/material.dart';
 
 import '../models/batch.dart';
+import '../settings.dart';
 
 class BatchesOverview extends StatefulWidget {
   const BatchesOverview({Key? key}) : super(key: key);
@@ -75,14 +76,12 @@ class _BatchesOverviewState extends State<BatchesOverview> {
               padding: const EdgeInsets.only(right: 20.0),
               child: GestureDetector(
                 onTap: () {
-                  Authentication.signOut(context: context);
-                  Navigator.of(context).pushAndRemoveUntil(
+                  Navigator.of(context).push(
                       MaterialPageRoute(
-                          builder: (context) => const AuthenticationPage()),
-                      (Route<dynamic> route) => false);
+                          builder: (context) => const Settings()));
                 },
                 child: const Icon(
-                  Icons.logout,
+                  Icons.settings,
                   size: 26.0,
                 ),
               )),

@@ -33,11 +33,13 @@ class _BatchDetailsState extends State<BatchDetails> {
   Row _getRow(String label, Widget value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           "$label:",
           style: const TextStyle(fontStyle: FontStyle.italic),
         ),
+        const SizedBox(width: 5),
         value
       ],
     );
@@ -90,15 +92,35 @@ class _BatchDetailsState extends State<BatchDetails> {
                   Text(batch.bitter == null ? "-" : "${batch.bitter} EBU")),
               const SizedBox(height: 10),
               _getRow("BIAB", Text(batch.biab ? "Ja" : "Nee")),
-              _getRow("Maischwater", Text(batch.mashing.water == null ? "-" : "${batch.mashing.water} liter")),
-              if (!batch.biab) _getRow("Spoelwater", Text(batch.rinsingWater == null ? "-" : "${batch.rinsingWater} liter")),
+              _getRow(
+                  "Maischwater",
+                  Text(batch.mashing.water == null
+                      ? "-"
+                      : "${batch.mashing.water} liter")),
+              if (!batch.biab)
+                _getRow(
+                    "Spoelwater",
+                    Text(batch.rinsingWater == null
+                        ? "-"
+                        : "${batch.rinsingWater} liter")),
               _getRow(
                   "Bottelsuiker",
-                  Text(batch.bottleSugar == null ||
-                      batch.bottleSugar!.products == null ||
-                      batch.bottleSugar!.products!.isEmpty
-                      ? "-"
-                      : "${Util.amountToString(batch.bottleSugar!.products![0].amount)}/L ${batch.bottleSugar!.products![0].product.name}")),
+                  Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                        Text(batch.bottleSugar == null ||
+                                batch.bottleSugar!.products == null ||
+                                batch.bottleSugar!.products!.isEmpty
+                            ? "-"
+                            : "${Util.amountToString(batch.bottleSugar!.products![0].amount)}/L ${batch.bottleSugar!.products![0].product.name}"),
+                        if (batch.bottleSugar?.products?[0].explanation != null)
+                          Text(
+                            batch.bottleSugar!.products![0].explanation!,
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.right,
+                          )
+                      ]))),
               const SizedBox(height: 20),
               const Text(
                 "Status",
@@ -122,7 +144,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                       ? const Text("-")
                       : Text(
                           DateFormat("dd-MM-yyyy").format(batch.bottleDate!))),
-              _getRow("Status", Text(batch.getStatus().text)),
+              _getRow("Status", Text(batch.getStatus().text + (batch.daysLeft(batch.getStatus()) == null ? "" : " (nog ${batch.daysLeft(batch.getStatus())} dagen)"))),
               const SizedBox(height: 20),
               if (batch.sgMeasurements.isNotEmpty)
                 Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -290,7 +312,18 @@ class _BatchDetailsState extends State<BatchDetails> {
                                         (pi) => TableRow(children: [
                                           Padding(
                                               padding: const EdgeInsets.all(10),
-                                              child: Text(pi.product.name)),
+                                              child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(pi.product.name),
+                                                    if (pi.explanation != null)
+                                                      Text(pi.explanation,
+                                                          style: TextStyle(
+                                                              fontStyle:
+                                                                  FontStyle
+                                                                      .italic))
+                                                  ])),
                                           Padding(
                                               padding: const EdgeInsets.all(10),
                                               child: Text((pi.product as Malt)
@@ -377,12 +410,25 @@ class _BatchDetailsState extends State<BatchDetails> {
                                       TableRow(children: [
                                         Padding(
                                             padding: const EdgeInsets.all(10),
-                                            child: Text(batch
-                                                    .yeast
-                                                    ?.products?[0]
-                                                    .product
-                                                    .name ??
-                                                "-")),
+                                            child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(batch.yeast?.products?[0]
+                                                          .product.name ??
+                                                      "-"),
+                                                  if (batch.yeast?.products?[0]
+                                                          .explanation !=
+                                                      null)
+                                                    Text(
+                                                        batch
+                                                            .yeast!
+                                                            .products![0]
+                                                            .explanation!,
+                                                        style: TextStyle(
+                                                            fontStyle: FontStyle
+                                                                .italic))
+                                                ])),
                                         Padding(
                                             padding: const EdgeInsets.all(10),
                                             child: Text(batch
@@ -537,7 +583,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(children: [
-                        TextFieldRow(
+                      TextFieldRow(
                         label: "Datum",
                         initialValue: sgDate,
                         onChanged: (value) {

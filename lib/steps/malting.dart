@@ -52,7 +52,7 @@ class _MaltingStepState extends State<MaltingStep> {
             );
           },
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Steps(steps: steps),
           const SizedBox(height: 20),
           const Text("Maischschema",

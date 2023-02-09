@@ -7,6 +7,9 @@ import '../models/recipe.dart';
 import '../notification.dart';
 
 class Store {
+
+  static String groupId = "";
+
   static DateTime? date;
   static num? startSG; // TODO: necessary for FermentationStep => refactor
 
@@ -108,7 +111,7 @@ class Store {
 
   static Future<void> loadData({ bool loadProducts: true, bool loadRecipes: true, bool loadBatches: true}) async {
     if (DatabaseController.db == null) {
-      await DatabaseController.setDB();
+      groupId = await DatabaseController.setDB();
     }
 
     if (loadProducts) {
@@ -132,6 +135,26 @@ class Store {
       notificationIds =
           batches.expand((b) => b.notifications.values).toList().cast<int>();
     }
+  }
+
+  static Future<List<String>> getMembers(String groupId) async {
+    return await DatabaseController.getMembers(groupId);
+  }
+
+  static void addMember(String email) {
+    DatabaseController.addMember(groupId, email);
+  }
+
+  static void removeMember(String email) {
+    DatabaseController.removeMember(groupId, email);
+  }
+
+  static Future<List<String>> getGroups(email) async {
+    return await DatabaseController.getGroups(email);
+  }
+
+  static Future<String> getGroupName(String groupId) async {
+    return await DatabaseController.getGroupName(groupId);
   }
 
   static Future<Recipe> saveRecipe(Recipe recipe) async {

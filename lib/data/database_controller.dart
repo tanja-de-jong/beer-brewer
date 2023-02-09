@@ -11,26 +11,66 @@ import '../models/recipe.dart';
 class DatabaseController {
   static DocumentReference<Map<String, dynamic>>? db;
   
-  static Future<void> setDB() async {
-    String? groupId = await getGroupId(Authentication.email!.toLowerCase());
-    if (groupId == null) {
-      groupId = FirebaseFirestore.instance.collection("groups").doc().id;
-      FirebaseFirestore.instance.collection("users").doc(Authentication.email!.toLowerCase()).set({"groupId": groupId});
-    }
+  static Future<String> setDB() async {
+    String groupId = await getGroupId(Authentication.email!.toLowerCase());
     db = FirebaseFirestore.instance.collection("groups").doc(groupId);
+    return groupId;
+  }
+  
+  static Future<List<String>> getMembers(String groupId) async {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = (await FirebaseFirestore.instance.collection("users").where("groups", arrayContains: Store.groupId).get()).docs;
+    return docs.map((doc) => doc.id).toList();
   }
 
-  static Future<String?> getGroupId(String email) async {
-    String email = Authentication.email!.toLowerCase();
+  static void addMember(String groupId, String email) {
+    FirebaseFirestore.instance.collection("users").doc(email).set({"groups": FieldValue.arrayUnion([groupId])}, SetOptions(merge: true));
+  }
+
+  static void removeMember(String groupId, String email) async {
+    DocumentSnapshot<Map<String, dynamic>> user = await FirebaseFirestore.instance.collection("users").doc(email).get();
+    var groups = user.data()?["groups"];
+
+    if (groups != null && groups is List) {
+      if (groups.contains(groupId)) {
+        await FirebaseFirestore.instance.collection("users").doc(email).update({"groups": FieldValue.arrayRemove([groupId])});
+        if (groups.length == 1) {
+          await getGroupId(email);
+        }
+      }
+      if (groups.isEmpty) {
+        await getGroupId(email);
+      }
+    }
+  }
+
+  static Future<String> getGroupId(String email) async {
     DocumentSnapshot<Map<String, dynamic>> doc = await FirebaseFirestore.instance.collection("users").doc(email).get();
     Map<String, dynamic>? data = doc.data();
-    if (data != null && data.containsKey("groupId")) {
-      return data["groupId"];
+    if (data != null && data.containsKey("groups") && (data["groups"] is List) && data["groups"].isNotEmpty) {
+      return data["default"] ?? data["groups"].first;
     } else {
       String newGroupId = FirebaseFirestore.instance.collection("groups").doc().id;
-      FirebaseFirestore.instance.collection("users").doc(email).set({"groupId": newGroupId});
+      FirebaseFirestore.instance.collection("groups").doc(newGroupId).set({"name": "Standaard"});
+      FirebaseFirestore.instance.collection("users").doc(email).set({"default": newGroupId, "groups": [newGroupId]});
       return newGroupId;
     }
+  }
+  static Future<List<String>> getGroups(String email) async {
+    DocumentSnapshot<Map<String, dynamic>> doc = await FirebaseFirestore.instance.collection("users").doc(email).get();
+    Map<String, dynamic>? data = doc.data();
+    if (data != null && data.containsKey("groups") && (data["groups"] is List) && data["groups"].isNotEmpty) {
+      return data["groups"].cast<String>();
+    }
+    return [];
+  }
+
+  static Future<String> getGroupName(String groupId) async {
+    DocumentSnapshot<Map<String, dynamic>> doc = await FirebaseFirestore.instance.collection("groups").doc(groupId).get();
+    Map<String, dynamic>? data = doc.data();
+    if (data != null && data.containsKey("name")) {
+      return data["name"].toString();
+    }
+    return "";
   }
   
   static Future<void> migrateData() async {
