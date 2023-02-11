@@ -250,7 +250,7 @@ class _BatchDetailsState extends State<BatchDetails> {
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold))),
                         ]),
-                        ...(shoppingList.keys.toList()..sort()).map(
+                        ...(shoppingList.keys.toList()).map(
                           (product) => TableRow(children: [
                             Padding(
                                 padding: const EdgeInsets.all(10),

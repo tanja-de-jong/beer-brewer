@@ -12,6 +12,7 @@ class Screen extends StatefulWidget {
   final OverviewPage page;
   final bool scroll;
   final Map<String, Widget>? tabs;
+  final TabController? tabController;
   final Widget? bottomButton;
 
   const Screen(
@@ -23,6 +24,7 @@ class Screen extends StatefulWidget {
       this.page = OverviewPage.other,
       this.scroll = true,
       this.tabs,
+      this.tabController,
       this.bottomButton})
       : super(key: key);
 
@@ -65,6 +67,7 @@ class _ScreenState extends State<Screen> {
         bottom: widget.tabs == null
             ? null
             : TabBar(
+          controller: widget.tabController,
                 labelPadding: const EdgeInsets.all(0),
                 tabs: widget.tabs!.keys
                     .map((e) => Tab(height: 20, text: e))
@@ -93,7 +96,7 @@ class _ScreenState extends State<Screen> {
           : Column(children: [
               SizedBox(
                   height: getBodyHeight(),
-                  child: TabBarView(children: widget.tabs!.values.toList())),
+                  child: TabBarView(controller: widget.tabController, children: widget.tabs!.values.toList())),
               if (widget.bottomButton != null)
                 Column(
                   children: [
@@ -155,7 +158,13 @@ class _ScreenState extends State<Screen> {
 
   @override
   Widget build(BuildContext context) {
-    return getTabbedContent();
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: getAppBar(),
+      body: getBody(),
+      bottomNavigationBar:
+      selected != null ? getMainBottomNavigationBar(selected!) : null,
+    );
   }
 
   BottomNavigationBar getMainBottomNavigationBar(int selected) {

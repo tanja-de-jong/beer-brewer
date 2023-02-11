@@ -19,7 +19,8 @@ class ProductsOverview extends StatefulWidget {
   State<ProductsOverview> createState() => _ProductsOverviewState();
 }
 
-class _ProductsOverviewState extends State<ProductsOverview> {
+class _ProductsOverviewState extends State<ProductsOverview>
+    with TickerProviderStateMixin {
   bool loading = true;
   int selected = 0;
   List<Product> products = [];
@@ -32,6 +33,8 @@ class _ProductsOverviewState extends State<ProductsOverview> {
   List<String> filteredHopTypes = [];
 
   Set<String> brands = {};
+
+  late TabController tabController;
 
   Widget getProductGroup(ProductCategory cat) {
     products = Store.products[cat.productType]!;
@@ -121,10 +124,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
             .toList(),
         columns: [
           const DataColumn(
-              label:
-              SizedBox(
+              label: SizedBox(
                   width: 150,
-                  child: Text("Naam", style: TextStyle(fontWeight: FontWeight.bold)))),
+                  child: Text("Naam",
+                      style: TextStyle(fontWeight: FontWeight.bold)))),
           if (cat == ProductCategory.malt || cat == ProductCategory.hop)
             const DataColumn(
                 label: SizedBox(
@@ -138,10 +141,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                     child: Text("Vorm",
                         style: TextStyle(fontWeight: FontWeight.bold)))),
           const DataColumn(
-              label:
-              SizedBox(
+              label: SizedBox(
                   width: 100,
-                  child: Text("Merk", style: TextStyle(fontWeight: FontWeight.bold)))),
+                  child: Text("Merk",
+                      style: TextStyle(fontWeight: FontWeight.bold)))),
           const DataColumn(
               label: SizedBox(
                   width: 60,
@@ -149,10 +152,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                       style: TextStyle(fontWeight: FontWeight.bold)))),
           if (cat == ProductCategory.malt)
             const DataColumn(
-                label:
-                SizedBox(
+                label: SizedBox(
                     width: 100,
-                    child: Text("EBC", style: TextStyle(fontWeight: FontWeight.bold)))),
+                    child: Text("EBC",
+                        style: TextStyle(fontWeight: FontWeight.bold)))),
           if (cat == ProductCategory.hop)
             const DataColumn(
                 label: SizedBox(
@@ -359,6 +362,10 @@ class _ProductsOverviewState extends State<ProductsOverview> {
 
   @override
   void initState() {
+    tabController = TabController(length: 5, vsync: this)
+      ..addListener(() {
+        selected = tabController.index;
+      });
     loadData(ProductCategory.values.first);
     super.initState();
   }
@@ -373,31 +380,34 @@ class _ProductsOverviewState extends State<ProductsOverview> {
 
   Widget getTabView(ProductCategory cat) {
     return Column(children: [
-      Padding(padding: const EdgeInsets.only(top: 20, bottom: 10, left: 10, right: 10), child: getButtonBar(cat)),
+      Padding(
+          padding:
+              const EdgeInsets.only(top: 20, bottom: 10, left: 10, right: 10),
+          child: getButtonBar(cat)),
       Expanded(
-        child: ListView(
-          children: [Center(
-              child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                                child: getProductGroup(cat))
-                          ]))))]))
+          child: ListView(children: [
+        Center(
+            child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [SizedBox(child: getProductGroup(cat))]))))
+      ]))
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Screen(
-        title: 'Products',
-        page: OverviewPage.products,
-        loading: loading,
-        scroll: false,
-        tabs: getTabs());
+      title: 'Products',
+      page: OverviewPage.products,
+      loading: loading,
+      scroll: false,
+      tabs: getTabs(),
+      tabController: tabController
+    );
   }
 
   showAddDialog(Product? product, void Function(Product) onChange,
@@ -437,7 +447,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                         children: [
                           TextFieldRow(
                             label: 'Naam',
-                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: name,
                             onChanged: (value) {
                               setState(() {
@@ -448,7 +457,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             DropDownRow(
                               label: "Soort",
-                              width: MediaQuery.of(context).size.width - 250,
                               initialValue: type,
                               items: Store.maltTypes,
                               onChanged: (value) {
@@ -459,7 +467,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                             ),
                           DropDownRow(
                             label: 'Merk',
-                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: brand,
                             onChanged: (value) {
                               setState(() {
@@ -471,7 +478,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Min EBC",
-                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: ebcMin,
                                 onChanged: (value) {
                                   setState(() {
@@ -481,7 +487,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.malt)
                             TextFieldRow(
                                 label: "Max EBC",
-                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: ebcMax,
                                 onChanged: (value) {
                                   setState(() {
@@ -491,7 +496,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DropDownRow(
                                 label: "Type",
-                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: hopType,
                                 onChanged: (value) {
                                   setState(() {
@@ -502,7 +506,6 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DropDownRow(
                               label: "Vorm",
-                              width: MediaQuery.of(context).size.width - 250,
                               initialValue: hopShape,
                               onChanged: (value) {
                                 setState(() {
@@ -515,17 +518,17 @@ class _ProductsOverviewState extends State<ProductsOverview> {
                           if (category == ProductCategory.hop)
                             DoubleTextFieldRow(
                                 label: "Alfazuur (%)",
-                                width: MediaQuery.of(context).size.width - 250,
                                 initialValue: alphaAcid,
                                 onChanged: (value) {
                                   setState(() {
                                     alphaAcid = value;
                                   });
                                 }),
-                          TextFieldRow(label: 'Te koop', width: MediaQuery.of(context).size.width - 250,),
+                          TextFieldRow(
+                            label: 'Te koop',
+                          ),
                           DoubleTextFieldRow(
                             label: 'Op voorraad (g)',
-                            width: MediaQuery.of(context).size.width - 250,
                             initialValue: amount,
                             onChanged: (value) {
                               setState(() {
@@ -636,7 +639,9 @@ class _ProductsOverviewState extends State<ProductsOverview> {
       builder: (ctx) {
         return MultiSelectDialog(
           items: items.map((e) => MultiSelectItem(e, e)).toList(),
-          initialValue: cat == ProductCategory.malt ? filteredMaltTypes : filteredHopTypes,
+          initialValue: cat == ProductCategory.malt
+              ? filteredMaltTypes
+              : filteredHopTypes,
           searchable: true,
           onConfirm: (values) {
             setState(() {
