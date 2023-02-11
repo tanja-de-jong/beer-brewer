@@ -1,4 +1,5 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:beer_brewer/authentication/authentication.dart';
 import 'package:beer_brewer/data/database_controller.dart';
 
 import '../models/batch.dart';
@@ -109,10 +110,14 @@ class Store {
   static List<Recipe> recipes = [];
   static List<Batch> batches = [];
 
+  static List<String> newGroups = [];
+
   static Future<void> loadData({ bool loadProducts: true, bool loadRecipes: true, bool loadBatches: true}) async {
     if (DatabaseController.db == null) {
       groupId = await DatabaseController.setDB();
     }
+
+    newGroups = await DatabaseController.getNewGroupNames(Authentication.email!);
 
     if (loadProducts) {
       List<Product> allProducts = await DatabaseController.getProducts();
@@ -141,7 +146,7 @@ class Store {
     return await DatabaseController.getMembers(groupId);
   }
 
-  static void addMember(String email) {
+  static void addMember(String groupId, String email) {
     DatabaseController.addMember(groupId, email);
   }
 

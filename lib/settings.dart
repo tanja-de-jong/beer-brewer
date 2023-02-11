@@ -20,7 +20,7 @@ class _SettingsState extends State<Settings> {
   Map<String, List<String>> groups = {};
   Map<String, String> groupNames = {};
   bool showAddForm = false;
-  String? email;
+  Map<String, String> emails = {};
   TextEditingController controller = TextEditingController();
 
   void loadData() async {
@@ -45,8 +45,8 @@ class _SettingsState extends State<Settings> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 5),
-        IconButton(onPressed: () {}, icon: Icon(Icons.edit), iconSize: 15,
-          splashRadius: 15,),
+        // IconButton(onPressed: () {}, icon: Icon(Icons.edit), iconSize: 15,
+        //   splashRadius: 15,),
       ]),
       ...(members..sort((a, b) => a.toLowerCase() == Authentication.email!.toLowerCase() ? 0 : 1)).map((m) => Row(
         children: [
@@ -88,19 +88,19 @@ class _SettingsState extends State<Settings> {
               children: [
                 TextFieldRow(label: "E-mailadres", controller: controller, onChanged: (value) {
                   setState(() {
-                    email = value.toLowerCase();
+                    emails[groupId] = value.toLowerCase();
                   });
                 },),
                 const SizedBox(height: 10),
                 OutlinedButton(
-                    onPressed: email == null || email!.isEmpty
+                    onPressed: emails[groupId] == null || emails[groupId]!.isEmpty
                         ? null
                         : () {
                       setState(() {
-                        Store.addMember(email!);
-                        members.add(email!);
+                        Store.addMember(groupId, emails[groupId]!);
+                        members.add(emails[groupId]!);
 
-                        email = null;
+                        emails.remove(groupId);
                         controller.clear();
                         showAddForm = false;
                       });

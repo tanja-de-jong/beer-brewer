@@ -49,6 +49,7 @@ class _BatchDetailsState extends State<BatchDetails> {
   void initState() {
     batch = widget.batch;
     status = batch.getStatus();
+
     super.initState();
   }
 
@@ -144,7 +145,12 @@ class _BatchDetailsState extends State<BatchDetails> {
                       ? const Text("-")
                       : Text(
                           DateFormat("dd-MM-yyyy").format(batch.bottleDate!))),
-              _getRow("Status", Text(batch.getStatus().text + (batch.daysLeft(batch.getStatus()) == null ? "" : " (nog ${batch.daysLeft(batch.getStatus())} dagen)"))),
+              _getRow(
+                  "Status",
+                  Text(batch.getStatus().text +
+                      (batch.daysLeft(batch.getStatus()) == null
+                          ? ""
+                          : " (nog ${batch.daysLeft(batch.getStatus())} dagen)"))),
               const SizedBox(height: 20),
               if (batch.sgMeasurements.isNotEmpty)
                 Row(mainAxisAlignment: MainAxisAlignment.start, children: [

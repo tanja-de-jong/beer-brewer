@@ -1,5 +1,4 @@
 import 'package:beer_brewer/data/store.dart';
-import 'package:beer_brewer/notification.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,14 +15,35 @@ class DatabaseController {
     db = FirebaseFirestore.instance.collection("groups").doc(groupId);
     return groupId;
   }
+
+  static Future<List<String>> getNewGroupNames(String email) async {
+    DocumentSnapshot<Map<String, dynamic>> user = await FirebaseFirestore.instance.collection("users").doc(email).get();
+    Map<String, dynamic>? data = user.data();
+    if (data != null && data.containsKey("new") && (data["new"] is List) && data["new"].isNotEmpty) {
+      List<String> newGroupIds = data["new"].cast<String>();
+      List<String> names = [];
+      for (String id in newGroupIds) {
+        names.add(await getGroupName(id));
+      }
+      removeNewGroupNames(email);
+      return names;
+    }
+    return [];
+  }
+
+  static void removeNewGroupNames(String email) {
+    FirebaseFirestore.instance.collection("users").doc(email).update({
+      "new": []
+    });
+  }
   
   static Future<List<String>> getMembers(String groupId) async {
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = (await FirebaseFirestore.instance.collection("users").where("groups", arrayContains: Store.groupId).get()).docs;
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = (await FirebaseFirestore.instance.collection("users").where("groups", arrayContains: groupId).get()).docs;
     return docs.map((doc) => doc.id).toList();
   }
 
   static void addMember(String groupId, String email) {
-    FirebaseFirestore.instance.collection("users").doc(email).set({"groups": FieldValue.arrayUnion([groupId])}, SetOptions(merge: true));
+    FirebaseFirestore.instance.collection("users").doc(email).set({"groups": FieldValue.arrayUnion([groupId]), "new": FieldValue.arrayUnion([groupId])}, SetOptions(merge: true));
   }
 
   static void removeMember(String groupId, String email) async {
@@ -70,7 +90,7 @@ class DatabaseController {
     if (data != null && data.containsKey("name")) {
       return data["name"].toString();
     }
-    return "";
+    return "-";
   }
   
   static Future<void> migrateData() async {

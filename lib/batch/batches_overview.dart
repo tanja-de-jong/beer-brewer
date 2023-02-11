@@ -56,9 +56,22 @@ class _BatchesOverviewState extends State<BatchesOverview> {
     return "${DateTime.now().difference(date).inDays} dagen";
   }
 
+  void showSnackBar() {
+    if (Store.newGroups.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.blue,
+        showCloseIcon: true,
+          duration: Duration(minutes: 1000),
+          content: Text(Store.newGroups.length == 1
+              ? "Je bent toegevoegd aan de groep: '${Store.newGroups.first}'"
+              : "Je bent toegevoegd aan de groepen: ${Store.newGroups.join(', ')}")));
+    }
+  }
+
   @override
   void initState() {
     Store.loadData().then((value) => setState(() {
+          showSnackBar();
           loading = false;
         }));
 
@@ -76,9 +89,8 @@ class _BatchesOverviewState extends State<BatchesOverview> {
               padding: const EdgeInsets.only(right: 20.0),
               child: GestureDetector(
                 onTap: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const Settings()));
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const Settings()));
                 },
                 child: const Icon(
                   Icons.settings,
