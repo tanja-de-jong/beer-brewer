@@ -58,7 +58,7 @@ class Batch {
 
   static Batch create(String id, Map data) {
     Map<DateTime, num> sgMeasurements = {};
-    if (data.containsKey("sgMeasurements")) {
+    if (data.containsKey("sgMeasurements") && data["sgMeasurements"] != null) {
       List sgData = data["sgMeasurements"];
       for (var sg in sgData) {
         sgMeasurements.putIfAbsent(sg["date"].toDate(), () => sg["SG"]);
@@ -66,14 +66,13 @@ class Batch {
     }
 
     Map<NotificationType, num> notifications = {};
-    if (data.containsKey("notifications")) {
+    if (data.containsKey("notifications") && data["notifications"] != null) {
       List notificationData = data["notifications"];
       for (var n in notificationData) {
         NotificationType type = NotificationType.values.firstWhere((e) => e.name == n["type"]);
         notifications[type] = n["id"];
       }
     }
-
     return Batch(
         id,
         data["name"],
